@@ -1,4 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { sql } from "@vercel/postgres";
 
 interface NotifyBody {
   phone?: unknown;
@@ -99,6 +100,8 @@ const handler = async (
       json(res, 502, { error: "textbelt_failed", detail: tbJson.error });
       return;
     }
+    sql`INSERT INTO notify_log (phone, message) VALUES (${phone}, ${message.slice(0, 1500)})`
+      .catch((err) => console.error("[notify] db log failed", err));
     json(res, 200, { ok: true, textId: tbJson.textId, quotaRemaining: tbJson.quotaRemaining });
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err);

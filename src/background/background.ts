@@ -4,7 +4,7 @@
 declare const __NOTIFY_ENDPOINT__: string;
 declare const __NOTIFY_SECRET__: string;
 
-import { getFavorites, getNotify } from "../shared/settings.js";
+import { getFavorites, getNotify, getNotifyTimestamp, setNotifyTimestamp, clearNotifyTimestamp } from "../shared/settings.js";
 
 interface ExtensionSyncSettings {
   enabled: boolean;
@@ -17,11 +17,7 @@ interface NotifyResult {
   error?: string;
 }
 
-// Per-user-id debounce so a chatty WebSocket doesn't spam SMS.
-// In-memory only; resets when the service worker is unloaded — that's fine
-// for this size of app (Chrome unloads after ~30s idle).
-const DEBOUNCE_MS = 10 * 60 * 1000;
-const lastNotifiedAt = new Map<string, number>();
+const DEBOUNCE_MS = 15 * 60 * 1000;
 
 chrome.runtime.onInstalled.addListener(async (details) => {
   console.log("[bg] onInstalled", details.reason);
@@ -76,18 +72,17 @@ const handleFavoriteAwake = async (userId: string): Promise<NotifyResult> => {
     return { ok: false, error: "not_favorited" };
   }
   const now = Date.now();
-  const last = lastNotifiedAt.get(userId) ?? 0;
+  const last = await getNotifyTimestamp(userId);
   if (now - last < DEBOUNCE_MS) {
     return { ok: false, error: "debounced" };
   }
-  lastNotifiedAt.set(userId, now);
+  await setNotifyTimestamp(userId, now);
 
   const result = await sendNotify(
     `Sniffies: favorited cruiser ${userId} is online.`,
   );
   if (!result.ok) {
-    // Roll back the debounce so the next event can retry.
-    lastNotifiedAt.delete(userId);
+    await clearNotifyTimestamp(userId);
   }
   return result;
 };

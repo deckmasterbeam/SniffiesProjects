@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS notify_log (
+  id       SERIAL PRIMARY KEY,
+  phone    TEXT NOT NULL,
+  message  TEXT NOT NULL,
+  sent_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);

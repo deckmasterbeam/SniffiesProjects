@@ -4,6 +4,7 @@ export const SETTINGS_KEYS = {
   debug: "debug",
   favorites: "favorites",
   notify: "notify",
+  notifyTimestamps: "notifyTimestamps",
 } as const;
 
 export interface NotifySettings {
@@ -23,6 +24,7 @@ export interface ExtensionLocalSettings {
   debug: boolean;
   favorites: FavoritesMap;
   notify: NotifySettings;
+  notifyTimestamps: Record<string, number>;
 }
 
 export const DEFAULT_NOTIFY: NotifySettings = {
@@ -35,6 +37,7 @@ export const DEFAULT_LOCAL_SETTINGS: ExtensionLocalSettings = {
   debug: false,
   favorites: {},
   notify: DEFAULT_NOTIFY,
+  notifyTimestamps: {},
 };
 
 export const getLocalSettings = async (): Promise<ExtensionLocalSettings> => {
@@ -74,4 +77,23 @@ export const getNotify = async (): Promise<NotifySettings> => {
 
 export const setNotify = async (next: NotifySettings): Promise<void> => {
   await chrome.storage.local.set({ [SETTINGS_KEYS.notify]: next });
+};
+
+export const getNotifyTimestamp = async (userId: string): Promise<number> => {
+  const { notifyTimestamps } = await getLocalSettings();
+  return notifyTimestamps[userId] ?? 0;
+};
+
+export const setNotifyTimestamp = async (userId: string, ts: number): Promise<void> => {
+  const { notifyTimestamps } = await getLocalSettings();
+  await chrome.storage.local.set({
+    [SETTINGS_KEYS.notifyTimestamps]: { ...notifyTimestamps, [userId]: ts },
+  });
+};
+
+export const clearNotifyTimestamp = async (userId: string): Promise<void> => {
+  const { notifyTimestamps } = await getLocalSettings();
+  const next = { ...notifyTimestamps };
+  delete next[userId];
+  await chrome.storage.local.set({ [SETTINGS_KEYS.notifyTimestamps]: next });
 };
