@@ -5,7 +5,11 @@
   right: 12px;
   z-index: 2147483647;
   padding: 6px 10px;
-  font: 12px/1.2 system-ui, -apple-system, "Segoe UI", sans-serif;
+  font:
+    12px/1.2 system-ui,
+    -apple-system,
+    "Segoe UI",
+    sans-serif;
   background: #111;
   color: #fff;
   border-radius: 6px;

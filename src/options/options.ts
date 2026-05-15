@@ -11,8 +11,7 @@ const load = async (): Promise<void> => {
 
 const save = async (event: SubmitEvent): Promise<void> => {
   event.preventDefault();
-  const enabled =
-    enabledInput instanceof HTMLInputElement ? enabledInput.checked : true;
+  const enabled = enabledInput instanceof HTMLInputElement ? enabledInput.checked : true;
   await chrome.storage.sync.set({ enabled });
   if (saveStatus) {
     saveStatus.textContent = "Saved.";

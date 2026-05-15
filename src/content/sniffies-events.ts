@@ -1,11 +1,7 @@
 declare const __SEEN_EVENTS_LOGGING__: boolean;
 
-// Isolated-world content script on sniffies.com.
-// Listens for parsed WebSocket events forwarded by the MAIN-world hook
-// (via window.postMessage). When a "UserAwake" event arrives for a favorited
-// user id, asks the background to send an SMS via the Twilio backend.
-
 import {
+  DEFAULT_NOTIFY,
   SETTINGS_KEYS,
   getLocalSettings,
   recordSeenEvent,
@@ -16,7 +12,7 @@ import {
 const TAG = "[sniffies-events]";
 
 let favorites: FavoritesMap = {};
-let notify: NotifySettings = { phone: "", endpoint: "", secret: "" };
+let notify: NotifySettings = { ...DEFAULT_NOTIFY };
 
 const hasNotifyConfig = (): boolean => Boolean(notify.phone);
 
@@ -54,7 +50,9 @@ const isUserJoinedEvent = (value: unknown): value is UserJoinedEvent => {
   const v = value as Record<string, unknown>;
   if (v.eventName !== "userJoined") return false;
   const d = v.data;
-  return typeof d === "object" && d !== null && typeof (d as Record<string, unknown>)._id === "string";
+  return (
+    typeof d === "object" && d !== null && typeof (d as Record<string, unknown>)._id === "string"
+  );
 };
 
 const notifyFavorite = (userId: string, trigger: string): void => {
@@ -116,9 +114,6 @@ chrome.storage.onChanged.addListener((changes, area) => {
   const notifyChange = changes[SETTINGS_KEYS.notify];
   if (notifyChange) {
     const next = notifyChange.newValue;
-    notify =
-      next && typeof next === "object"
-        ? (next as NotifySettings)
-        : { phone: "", endpoint: "", secret: "" };
+    notify = next && typeof next === "object" ? (next as NotifySettings) : { ...DEFAULT_NOTIFY };
   }
 });

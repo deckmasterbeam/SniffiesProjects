@@ -159,10 +159,7 @@ const refreshAllInjections = (): void => {
   }
 };
 
-const injectIntoNameLabel = (
-  nameLabel: HTMLElement,
-  selection: ProfileSelection,
-): void => {
+const injectIntoNameLabel = (nameLabel: HTMLElement, selection: ProfileSelection): void => {
   const screen = nameLabel.closest(APP_SCREEN_SELECTOR);
   if (!screen) {
     return;

@@ -6,11 +6,7 @@ interface NotifyBody {
   message?: unknown;
 }
 
-const json = (
-  res: VercelResponse,
-  status: number,
-  body: Record<string, unknown>,
-): void => {
+const json = (res: VercelResponse, status: number, body: Record<string, unknown>): void => {
   res.status(status).json(body);
 };
 
@@ -41,10 +37,7 @@ const applyCors = (req: VercelRequest, res: VercelResponse): void => {
 
 const REQUIRED_ENV = ["SHARED_SECRET", "TEXTBELT_KEY", "POSTGRES_URL", "DAILY_SMS_LIMIT"] as const;
 
-const handler = async (
-  req: VercelRequest,
-  res: VercelResponse,
-): Promise<void> => {
+const handler = async (req: VercelRequest, res: VercelResponse): Promise<void> => {
   const missing = REQUIRED_ENV.filter((k) => !process.env[k]);
   if (missing.length) {
     console.error("[notify] missing env vars:", missing.join(", "));
@@ -98,19 +91,30 @@ const handler = async (
   }
 
   const postgresUrl = process.env.POSTGRES_URL;
-  if (postgresUrl) {
-    const sql = neon(postgresUrl);
+  const sql = postgresUrl ? neon(postgresUrl) : null;
+  const dailyLimit = parseInt(process.env.DAILY_SMS_LIMIT ?? "10", 10);
+
+  if (sql) {
     try {
       const [priorityRow, countRow] = await Promise.all([
         sql`SELECT 1 FROM priority_numbers WHERE phone = ${phone} LIMIT 1`,
         sql`SELECT COUNT(*)::int AS count FROM notify_log WHERE phone = ${phone} AND sent_at >= NOW() - INTERVAL '24 hours'`,
       ]);
-      const dailyLimit = parseInt(process.env.DAILY_SMS_LIMIT ?? "10", 10);
       const isPriority = priorityRow.length > 0;
       const count = (countRow[0] as { count: number }).count;
       if (!isPriority && count >= dailyLimit) {
-        console.warn("[notify] daily limit reached for phone", phone, "count:", count, "limit:", dailyLimit);
-        json(res, 429, { error: "daily_limit_reached", detail: "This number has been notified 10 times in the last 24 hours." });
+        console.warn(
+          "[notify] daily limit reached for phone",
+          phone,
+          "count:",
+          count,
+          "limit:",
+          dailyLimit,
+        );
+        json(res, 429, {
+          error: "daily_limit_reached",
+          detail: `This number has been notified ${dailyLimit} times in the last 24 hours.`,
+        });
         return;
       }
     } catch (err) {
@@ -124,14 +128,18 @@ const handler = async (
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ phone, message: message.slice(0, 1500), key: textbeltKey }),
     });
-    const tbJson = (await tbRes.json()) as { success: boolean; textId?: string; error?: string; quotaRemaining?: number };
+    const tbJson = (await tbRes.json()) as {
+      success: boolean;
+      textId?: string;
+      error?: string;
+      quotaRemaining?: number;
+    };
     if (!tbJson.success) {
       console.error("[notify] textbelt error", tbJson.error);
       json(res, 502, { error: "textbelt_failed", detail: tbJson.error });
       return;
     }
-    if (postgresUrl) {
-      const sql = neon(postgresUrl);
+    if (sql) {
       try {
         await sql`INSERT INTO notify_log (phone, message) VALUES (${phone}, ${message.slice(0, 1500)})`;
       } catch (err) {

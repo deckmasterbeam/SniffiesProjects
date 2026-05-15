@@ -1,5 +1,7 @@
 import {
   DEFAULT_NOTIFY,
+  PHONE_E164_REGEX,
+  SETTINGS_KEYS,
   getLocalSettings,
   setDebug,
   setNotify,
@@ -22,7 +24,7 @@ const setDebugFieldsVisible = (visible: boolean): void => {
   }
 };
 
-const STORAGE_KEY_TEST_USED = "notifyTestUsed";
+const STORAGE_KEY_TEST_USED = SETTINGS_KEYS.notifyTestUsed;
 
 const setTestButtonEnabled = (enabled: boolean): void => {
   if (testBtn instanceof HTMLButtonElement) {
@@ -38,10 +40,8 @@ const setStatus = (text: string): void => {
 
 const readNotifyForm = (): NotifySettings => ({
   phone: phoneInput instanceof HTMLInputElement ? phoneInput.value.trim() : "",
-  endpoint:
-    endpointInput instanceof HTMLInputElement ? endpointInput.value.trim() : "",
-  secret:
-    secretInput instanceof HTMLInputElement ? secretInput.value.trim() : "",
+  endpoint: endpointInput instanceof HTMLInputElement ? endpointInput.value.trim() : "",
+  secret: secretInput instanceof HTMLInputElement ? secretInput.value.trim() : "",
 });
 
 const init = async (): Promise<void> => {
@@ -61,7 +61,8 @@ const init = async (): Promise<void> => {
     secretInput.value = merged.secret;
   }
 
-  const { [STORAGE_KEY_TEST_USED]: testUsed } = await chrome.storage.local.get(STORAGE_KEY_TEST_USED);
+  const { [STORAGE_KEY_TEST_USED]: testUsed } =
+    await chrome.storage.local.get(STORAGE_KEY_TEST_USED);
   setTestButtonEnabled(!testUsed);
 };
 
@@ -81,7 +82,7 @@ openFavoritesBtn?.addEventListener("click", () => {
 
 saveBtn?.addEventListener("click", async () => {
   const next = readNotifyForm();
-  if (next.phone && !/^\+[1-9]\d{6,14}$/.test(next.phone)) {
+  if (next.phone && !PHONE_E164_REGEX.test(next.phone)) {
     setStatus("Phone must be E.164 format, e.g. +15551234567");
     if (phoneInput instanceof HTMLInputElement) {
       phoneInput.classList.add("invalid");

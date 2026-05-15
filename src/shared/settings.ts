@@ -1,12 +1,13 @@
-// Shared settings keys and helpers backed by chrome.storage.local.
-
 export const SETTINGS_KEYS = {
   debug: "debug",
   favorites: "favorites",
   notify: "notify",
   notifyTimestamps: "notifyTimestamps",
+  notifyTestUsed: "notifyTestUsed",
   seenEvents: "seenEvents",
 } as const;
+
+export const PHONE_E164_REGEX = /^\+[1-9]\d{6,14}$/;
 
 export interface NotifySettings {
   phone: string;

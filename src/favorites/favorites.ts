@@ -87,9 +87,7 @@ const render = (favorites: FavoritesMap): void => {
   }
   grid.replaceChildren();
 
-  const entries = Object.entries(favorites).sort(
-    ([, a], [, b]) => b.favoritedAt - a.favoritedAt,
-  );
+  const entries = Object.entries(favorites).sort(([, a], [, b]) => b.favoritedAt - a.favoritedAt);
 
   if (summary) {
     summary.textContent =
@@ -101,8 +99,7 @@ const render = (favorites: FavoritesMap): void => {
   if (entries.length === 0) {
     const empty = document.createElement("div");
     empty.className = "empty-state";
-    empty.textContent =
-      "Click the star next to a cruiser's name on sniffies.com to add them here.";
+    empty.textContent = "Click the star next to a cruiser's name on sniffies.com to add them here.";
     grid.append(empty);
     return;
   }
@@ -130,15 +127,17 @@ chrome.storage.onChanged.addListener((changes, area) => {
   }
   const tsChange = changes[SETTINGS_KEYS.notifyTimestamps];
   if (tsChange) {
-    notifyTimestamps = tsChange.newValue && typeof tsChange.newValue === "object"
-      ? (tsChange.newValue as Record<string, number>)
-      : {};
+    notifyTimestamps =
+      tsChange.newValue && typeof tsChange.newValue === "object"
+        ? (tsChange.newValue as Record<string, number>)
+        : {};
   }
   const favChange = changes[SETTINGS_KEYS.favorites];
   if (favChange) {
-    currentFavorites = favChange.newValue && typeof favChange.newValue === "object"
-      ? (favChange.newValue as FavoritesMap)
-      : {};
+    currentFavorites =
+      favChange.newValue && typeof favChange.newValue === "object"
+        ? (favChange.newValue as FavoritesMap)
+        : {};
   }
   if (favChange || tsChange) {
     render(currentFavorites);

@@ -7,7 +7,11 @@
   --accent: #ff5500;
   --accent-hover: #e04a00;
   --radius: 8px;
-  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    sans-serif;
 }
 
 * {
@@ -89,7 +93,9 @@ button.secondary {
   background: transparent;
   color: var(--muted);
   cursor: pointer;
-  transition: border-color 0.15s, color 0.15s;
+  transition:
+    border-color 0.15s,
+    color 0.15s;
 }
 
 button.secondary:hover:not(:disabled) {

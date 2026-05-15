@@ -31,9 +31,8 @@ const DEBUG = true; // Set to false to disable logging in this script.
     url: string | URL,
     protocols?: string | string[],
   ): WebSocket {
-    const socket = protocols === undefined
-      ? new NativeWebSocket(url)
-      : new NativeWebSocket(url, protocols);
+    const socket =
+      protocols === undefined ? new NativeWebSocket(url) : new NativeWebSocket(url, protocols);
 
     if (isTargetUrl(url)) {
       console.log(`${TAG} open`, url);
