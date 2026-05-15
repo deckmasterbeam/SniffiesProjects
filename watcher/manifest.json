@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "Sniffies Watcher",
+  "version": "0.1.0",
+  "description": "Watches Sniffies WebSocket events and sends SMS notifications for favorited users.",
+  "permissions": ["storage"],
+  "host_permissions": ["*://sniffies.com/*", "*://*.sniffies.com/*"],
+  "background": {
+    "service_worker": "src/background/background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://sniffies.com/*", "*://*.sniffies.com/*"],
+      "js": ["src/content/sniffies-ws-hook.js"],
+      "run_at": "document_start",
+      "world": "MAIN",
+      "all_frames": true
+    },
+    {
+      "matches": ["*://sniffies.com/*", "*://*.sniffies.com/*"],
+      "js": ["src/content/sniffies-events.js"],
+      "run_at": "document_start"
+    }
+  ]
+}
