@@ -6,6 +6,7 @@
   "scripts": {
     "build": "node --env-file=.env scripts/build.mjs",
     "watch": "node --env-file=.env scripts/build.mjs --watch",
+    "package:safari-ios": "node scripts/package-safari-ios.mjs",
     "icons": "node scripts/generate-icons.mjs",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write .",

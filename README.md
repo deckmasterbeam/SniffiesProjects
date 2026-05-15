@@ -51,6 +51,51 @@ Rebuild (`yarn build` or keep `yarn watch` running), then click the **reload**
 (↻) button on the extension's card in `chrome://extensions`. For content-script
 changes, also reload the affected tabs.
 
+## Safari on iOS
+
+Safari supports MV3 web extensions on iOS 15.4+, but they must be shipped as
+a native iOS app that hosts the extension. Apple provides
+`safari-web-extension-converter` (bundled with Xcode) to generate the
+wrapping Xcode project from the same `dist/` folder used for Chrome.
+
+Prerequisites (macOS only):
+
+- Xcode 15+ with Command Line Tools (`xcode-select --install`)
+- An Apple Developer account for signing if you want to run on a real device
+
+Steps:
+
+```bash
+yarn install
+yarn build                  # produces dist/
+yarn package:safari-ios     # runs xcrun safari-web-extension-converter
+```
+
+Optional flags:
+
+```bash
+yarn package:safari-ios --bundle-id com.example.sniffies --app-name "Sniffies" --open
+```
+
+The generated Xcode project lands in `safari/`. Open the `.xcodeproj`, set
+your signing team, pick an iOS Simulator or device, and Run. On the
+device, enable the extension under **Settings → Safari → Extensions** and
+grant the sniffies.com host permission.
+
+### iOS caveats
+
+- **Background notifications won't fire when Safari is closed.** The SMS
+  flow relies on the service worker staying alive — on iOS, extension
+  background pages only run while Safari is the foreground app with a
+  sniffies tab open.
+- `world: "MAIN"` content scripts (the WS / geo / events hooks) require
+  **Safari 17+ (iOS 17+)**. On older iOS those injections silently no-op.
+- `<all_urls>` host access must be granted per-site by the user in
+  Safari's site settings; there is no blanket "all sites" toggle.
+- `chrome.storage.sync` is backed by iCloud on Safari and may be
+  unavailable when the user is signed out of iCloud — code already falls
+  back to `storage.local` where it matters.
+
 ## SMS notifications (Twilio backend)
 
 The extension can text you when a favorited cruiser comes online. SMS goes

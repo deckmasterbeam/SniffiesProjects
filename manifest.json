@@ -5,6 +5,11 @@
   "description": "A starter template for a Chrome extension (Manifest V3).",
   "permissions": ["storage", "activeTab", "scripting", "geolocation"],
   "host_permissions": ["<all_urls>"],
+  "browser_specific_settings": {
+    "safari": {
+      "strict_min_version": "15.4"
+    }
+  },
   "action": {
     "default_title": "Chrome Extension Template",
     "default_popup": "src/popup/popup.html",
