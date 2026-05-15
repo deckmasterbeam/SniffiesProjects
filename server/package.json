@@ -5,7 +5,7 @@
   "description": "Vercel function that sends an SMS via TextBelt on behalf of the Sniffies extension.",
   "type": "module",
   "dependencies": {
-    "@vercel/postgres": "^0.10.0"
+    "@neondatabase/serverless": "^1.1.0"
   },
   "devDependencies": {
     "@types/node": "^22.7.5",

@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { sql } from "@vercel/postgres";
+import { neon } from "@neondatabase/serverless";
 
 interface NotifyBody {
   phone?: unknown;
@@ -39,10 +39,17 @@ const applyCors = (req: VercelRequest, res: VercelResponse): void => {
   res.setHeader("Access-Control-Max-Age", "600");
 };
 
+const REQUIRED_ENV = ["SHARED_SECRET", "TEXTBELT_KEY", "POSTGRES_URL"] as const;
+
 const handler = async (
   req: VercelRequest,
   res: VercelResponse,
 ): Promise<void> => {
+  const missing = REQUIRED_ENV.filter((k) => !process.env[k]);
+  if (missing.length) {
+    console.error("[notify] missing env vars:", missing.join(", "));
+  }
+
   applyCors(req, res);
 
   if (req.method === "OPTIONS") {
@@ -100,8 +107,12 @@ const handler = async (
       json(res, 502, { error: "textbelt_failed", detail: tbJson.error });
       return;
     }
-    sql`INSERT INTO notify_log (phone, message) VALUES (${phone}, ${message.slice(0, 1500)})`
-      .catch((err) => console.error("[notify] db log failed", err));
+    const postgresUrl = process.env.POSTGRES_URL;
+    if (postgresUrl) {
+      const sql = neon(postgresUrl);
+      sql`INSERT INTO notify_log (phone, message) VALUES (${phone}, ${message.slice(0, 1500)})`
+        .catch((err) => console.error("[notify] db log failed", err));
+    }
     json(res, 200, { ok: true, textId: tbJson.textId, quotaRemaining: tbJson.quotaRemaining });
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err);

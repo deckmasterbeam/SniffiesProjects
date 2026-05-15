@@ -18,7 +18,7 @@ const notifyDebugFields = document.getElementById("notify-debug-fields");
 
 const setDebugFieldsVisible = (visible: boolean): void => {
   if (notifyDebugFields instanceof HTMLElement) {
-    notifyDebugFields.hidden = !visible;
+    notifyDebugFields.style.display = visible ? "flex" : "none";
   }
 };
 
