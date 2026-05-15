@@ -1,7 +1,7 @@
 // Build script: bundles TS entry points with esbuild and copies static assets into dist/.
 
 import { context, build } from "esbuild";
-import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { cp, mkdir, rm } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -28,6 +28,11 @@ const copyAssets = async () => {
     const to = join(distDir, rel);
     await mkdir(dirname(to), { recursive: true });
     await cp(from, to);
+  }
+
+  const iconsDir = join(root, "icons");
+  if (existsSync(iconsDir)) {
+    await cp(iconsDir, join(distDir, "icons"), { recursive: true });
   }
 };
 
