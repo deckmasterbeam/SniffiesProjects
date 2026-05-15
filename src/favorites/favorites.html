@@ -13,12 +13,28 @@
         <p id="summary" class="hint">Loading...</p>
       </header>
       <section id="grid" class="grid" aria-live="polite"></section>
+
+      <section class="events-section">
+        <h2>Seen WebSocket Events</h2>
+        <p class="hint">First payload observed per event type. Updates live.</p>
+        <table id="events-table" class="events-table">
+          <thead>
+            <tr>
+              <th>Event</th>
+              <th>First Payload</th>
+            </tr>
+          </thead>
+          <tbody id="events-body"></tbody>
+        </table>
+        <p id="events-empty" class="hint events-empty">No events seen yet. Open sniffies.com to start capturing.</p>
+      </section>
       <template id="card-template">
         <article class="card">
           <div class="card-image" data-role="image"></div>
           <div class="card-body">
             <div class="card-id" data-role="user-id"></div>
             <div class="card-meta" data-role="favorited-at"></div>
+            <div class="card-meta" data-role="notified-at"></div>
           </div>
         </article>
       </template>

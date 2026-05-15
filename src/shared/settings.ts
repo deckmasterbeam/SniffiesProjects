@@ -5,6 +5,7 @@ export const SETTINGS_KEYS = {
   favorites: "favorites",
   notify: "notify",
   notifyTimestamps: "notifyTimestamps",
+  seenEvents: "seenEvents",
 } as const;
 
 export interface NotifySettings {
@@ -25,6 +26,7 @@ export interface ExtensionLocalSettings {
   favorites: FavoritesMap;
   notify: NotifySettings;
   notifyTimestamps: Record<string, number>;
+  seenEvents: Record<string, unknown>;
 }
 
 export const DEFAULT_NOTIFY: NotifySettings = {
@@ -38,6 +40,7 @@ export const DEFAULT_LOCAL_SETTINGS: ExtensionLocalSettings = {
   favorites: {},
   notify: DEFAULT_NOTIFY,
   notifyTimestamps: {},
+  seenEvents: {},
 };
 
 export const getLocalSettings = async (): Promise<ExtensionLocalSettings> => {
@@ -77,6 +80,14 @@ export const getNotify = async (): Promise<NotifySettings> => {
 
 export const setNotify = async (next: NotifySettings): Promise<void> => {
   await chrome.storage.local.set({ [SETTINGS_KEYS.notify]: next });
+};
+
+export const recordSeenEvent = async (eventName: string, data: unknown): Promise<void> => {
+  const { seenEvents } = await getLocalSettings();
+  if (Object.prototype.hasOwnProperty.call(seenEvents, eventName)) return;
+  await chrome.storage.local.set({
+    [SETTINGS_KEYS.seenEvents]: { ...seenEvents, [eventName]: data },
+  });
 };
 
 export const getNotifyTimestamp = async (userId: string): Promise<number> => {

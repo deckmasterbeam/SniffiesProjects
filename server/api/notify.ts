@@ -39,7 +39,7 @@ const applyCors = (req: VercelRequest, res: VercelResponse): void => {
   res.setHeader("Access-Control-Max-Age", "600");
 };
 
-const REQUIRED_ENV = ["SHARED_SECRET", "TEXTBELT_KEY", "POSTGRES_URL"] as const;
+const REQUIRED_ENV = ["SHARED_SECRET", "TEXTBELT_KEY", "POSTGRES_URL", "DAILY_SMS_LIMIT"] as const;
 
 const handler = async (
   req: VercelRequest,
@@ -83,9 +83,11 @@ const handler = async (
     json(res, 400, { error: "invalid_phone", detail: "Use E.164, e.g. +15551234567" });
     return;
   }
-  // TODO: gate to only the format of messages that the sniffies extension sends
-  if (!message) {
-    json(res, 400, { error: "missing_message" });
+  const isValidMessage =
+    message === "Sniffies extension: test message" ||
+    /^Sniffies: favorited cruiser [0-9a-f]{24} is online\.$/.test(message);
+  if (!isValidMessage) {
+    json(res, 400, { error: "invalid_message" });
     return;
   }
 
@@ -93,6 +95,27 @@ const handler = async (
   if (!textbeltKey) {
     json(res, 500, { error: "server_misconfigured", detail: "TEXTBELT_KEY not set" });
     return;
+  }
+
+  const postgresUrl = process.env.POSTGRES_URL;
+  if (postgresUrl) {
+    const sql = neon(postgresUrl);
+    try {
+      const [priorityRow, countRow] = await Promise.all([
+        sql`SELECT 1 FROM priority_numbers WHERE phone = ${phone} LIMIT 1`,
+        sql`SELECT COUNT(*)::int AS count FROM notify_log WHERE phone = ${phone} AND sent_at >= NOW() - INTERVAL '24 hours'`,
+      ]);
+      const dailyLimit = parseInt(process.env.DAILY_SMS_LIMIT ?? "10", 10);
+      const isPriority = priorityRow.length > 0;
+      const count = (countRow[0] as { count: number }).count;
+      if (!isPriority && count >= dailyLimit) {
+        console.warn("[notify] daily limit reached for phone", phone, "count:", count, "limit:", dailyLimit);
+        json(res, 429, { error: "daily_limit_reached", detail: "This number has been notified 10 times in the last 24 hours." });
+        return;
+      }
+    } catch (err) {
+      console.error("[notify] rate limit check failed", err);
+    }
   }
 
   try {
@@ -107,7 +130,6 @@ const handler = async (
       json(res, 502, { error: "textbelt_failed", detail: tbJson.error });
       return;
     }
-    const postgresUrl = process.env.POSTGRES_URL;
     if (postgresUrl) {
       const sql = neon(postgresUrl);
       try {

@@ -153,6 +153,10 @@ button#open-favorites {
   border-color: var(--accent);
 }
 
+.field input.invalid {
+  border-color: #e03;
+}
+
 #notify-debug-fields {
   display: flex;
   flex-direction: column;

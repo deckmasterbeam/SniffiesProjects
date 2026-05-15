@@ -1,3 +1,5 @@
+declare const __SEEN_EVENTS_LOGGING__: boolean;
+
 // Isolated-world content script on sniffies.com.
 // Listens for parsed WebSocket events forwarded by the MAIN-world hook
 // (via window.postMessage). When a "UserAwake" event arrives for a favorited
@@ -6,6 +8,7 @@
 import {
   SETTINGS_KEYS,
   getLocalSettings,
+  recordSeenEvent,
   type FavoritesMap,
   type NotifySettings,
 } from "../shared/settings.js";
@@ -15,8 +18,7 @@ const TAG = "[sniffies-events]";
 let favorites: FavoritesMap = {};
 let notify: NotifySettings = { phone: "", endpoint: "", secret: "" };
 
-const hasNotifyConfig = (): boolean =>
-  Boolean(notify.phone && notify.endpoint && notify.secret);
+const hasNotifyConfig = (): boolean => Boolean(notify.phone);
 
 interface ForwardedMessage {
   source: "sniffies-ws-hook";
@@ -37,41 +39,57 @@ interface UserAwakeEvent {
 }
 
 const isUserAwakeEvent = (value: unknown): value is UserAwakeEvent => {
-  if (typeof value !== "object" || value === null) {
-    return false;
-  }
+  if (typeof value !== "object" || value === null) return false;
   const v = value as Record<string, unknown>;
   return v.eventName === "UserAwake" && typeof v.data === "string";
 };
 
-const handleParsed = (parsed: unknown): void => {
-  if (!isUserAwakeEvent(parsed)) {
-    return;
-  }
-  const userId = parsed.data;
-  if (!Object.prototype.hasOwnProperty.call(favorites, userId)) {
-    return;
-  }
+interface UserJoinedEvent {
+  eventName: "userJoined";
+  data: { _id: string; data: unknown };
+}
+
+const isUserJoinedEvent = (value: unknown): value is UserJoinedEvent => {
+  if (typeof value !== "object" || value === null) return false;
+  const v = value as Record<string, unknown>;
+  if (v.eventName !== "userJoined") return false;
+  const d = v.data;
+  return typeof d === "object" && d !== null && typeof (d as Record<string, unknown>)._id === "string";
+};
+
+const notifyFavorite = (userId: string, trigger: string): void => {
+  if (!Object.prototype.hasOwnProperty.call(favorites, userId)) return;
   if (!hasNotifyConfig()) {
-    console.log(`${TAG} favorite woke up but notify is not configured`, userId);
+    console.log(`${TAG} [${trigger}] favorite active but notify not configured`, userId);
     return;
   }
-  console.log(`${TAG} favorite woke up, requesting SMS`, userId);
+  console.log(`${TAG} [${trigger}] favorite active, requesting SMS`, userId);
   chrome.runtime
     .sendMessage({ type: "NOTIFY_FAVORITE_AWAKE", userId })
-    .catch((err) => {
-      console.error(`${TAG} sendMessage failed`, err);
-    });
+    .catch((err) => console.error(`${TAG} sendMessage failed`, err));
+};
+
+const handleParsed = (parsed: unknown): void => {
+  if (isUserAwakeEvent(parsed)) {
+    notifyFavorite(parsed.data, "UserAwake");
+  } else if (isUserJoinedEvent(parsed)) {
+    notifyFavorite(parsed.data._id, "userJoined");
+  }
 };
 
 window.addEventListener("message", (event: MessageEvent) => {
-  if (event.source !== window) {
-    return;
+  if (event.source !== window) return;
+  if (!isForwardedMessage(event.data)) return;
+
+  const { parsed } = event.data;
+  if (__SEEN_EVENTS_LOGGING__ && typeof parsed === "object" && parsed !== null) {
+    const eventName = (parsed as Record<string, unknown>).eventName;
+    if (typeof eventName === "string") {
+      void recordSeenEvent(eventName, parsed);
+    }
   }
-  if (!isForwardedMessage(event.data)) {
-    return;
-  }
-  handleParsed(event.data.parsed);
+
+  handleParsed(parsed);
 });
 
 // Load current settings + favorites, then watch for changes.

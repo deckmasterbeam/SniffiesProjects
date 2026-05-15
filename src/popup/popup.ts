@@ -81,12 +81,24 @@ openFavoritesBtn?.addEventListener("click", () => {
 
 saveBtn?.addEventListener("click", async () => {
   const next = readNotifyForm();
+  if (next.phone && !/^\+[1-9]\d{6,14}$/.test(next.phone)) {
+    setStatus("Phone must be E.164 format, e.g. +15551234567");
+    if (phoneInput instanceof HTMLInputElement) {
+      phoneInput.classList.add("invalid");
+      phoneInput.focus();
+    }
+    return;
+  }
+  if (phoneInput instanceof HTMLInputElement) {
+    phoneInput.classList.remove("invalid");
+  }
   await setNotify(next);
   setStatus("Saved.");
 });
 
 if (phoneInput instanceof HTMLInputElement) {
   phoneInput.addEventListener("input", async () => {
+    phoneInput.classList.remove("invalid");
     await chrome.storage.local.set({ [STORAGE_KEY_TEST_USED]: false });
     setTestButtonEnabled(true);
   });
