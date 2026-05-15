@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sniffies Favorites</title>
+    <link rel="stylesheet" href="favorites.css" />
+  </head>
+  <body>
+    <main class="page">
+      <header class="page-header">
+        <h1>Favorites</h1>
+        <p id="summary" class="hint">Loading...</p>
+      </header>
+      <section id="grid" class="grid" aria-live="polite"></section>
+      <template id="card-template">
+        <article class="card">
+          <div class="card-image" data-role="image"></div>
+          <div class="card-body">
+            <div class="card-id" data-role="user-id"></div>
+            <div class="card-meta" data-role="favorited-at"></div>
+          </div>
+        </article>
+      </template>
+    </main>
+    <script src="favorites.js" type="module"></script>
+  </body>
+</html>

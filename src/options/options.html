@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Options</title>
+    <link rel="stylesheet" href="options.css" />
+  </head>
+  <body>
+    <main class="options">
+      <h1>Options</h1>
+      <form id="options-form">
+        <label class="row">
+          <input type="checkbox" id="enabled" />
+          <span>Enable extension</span>
+        </label>
+        <button type="submit">Save</button>
+        <span id="save-status" aria-live="polite"></span>
+      </form>
+    </main>
+    <script src="options.js" type="module"></script>
+  </body>
+</html>

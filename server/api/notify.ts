@@ -1,0 +1,110 @@
+import type { VercelRequest, VercelResponse } from "@vercel/node";
+
+interface NotifyBody {
+  phone?: unknown;
+  message?: unknown;
+}
+
+const json = (
+  res: VercelResponse,
+  status: number,
+  body: Record<string, unknown>,
+): void => {
+  res.status(status).json(body);
+};
+
+const isAllowedOrigin = (origin: string | undefined): boolean => {
+  const allow = process.env.ALLOWED_ORIGINS?.trim();
+  if (!allow) {
+    return true; // dev: allow all
+  }
+  if (!origin) {
+    return false;
+  }
+  return allow
+    .split(",")
+    .map((s) => s.trim())
+    .includes(origin);
+};
+
+const applyCors = (req: VercelRequest, res: VercelResponse): void => {
+  const origin = req.headers.origin;
+  if (origin && isAllowedOrigin(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Vary", "Origin");
+  }
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.setHeader("Access-Control-Max-Age", "600");
+};
+
+const handler = async (
+  req: VercelRequest,
+  res: VercelResponse,
+): Promise<void> => {
+  applyCors(req, res);
+
+  if (req.method === "OPTIONS") {
+    res.status(204).end();
+    return;
+  }
+
+  if (req.method !== "POST") {
+    json(res, 405, { error: "method_not_allowed" });
+    return;
+  }
+
+  const sharedSecret = process.env.SHARED_SECRET;
+  if (!sharedSecret) {
+    json(res, 500, { error: "server_misconfigured", detail: "SHARED_SECRET not set" });
+    return;
+  }
+
+  const auth = req.headers.authorization;
+  const expected = `Bearer ${sharedSecret}`;
+  if (auth !== expected) {
+    json(res, 401, { error: "unauthorized" });
+    return;
+  }
+
+  const body = (req.body ?? {}) as NotifyBody;
+  const phone = typeof body.phone === "string" ? body.phone.trim() : "";
+  const message = typeof body.message === "string" ? body.message.trim() : "";
+
+  if (!/^\+[1-9]\d{6,14}$/.test(phone)) {
+    json(res, 400, { error: "invalid_phone", detail: "Use E.164, e.g. +15551234567" });
+    return;
+  }
+  // TODO: gate to only the format of messages that the sniffies extension sends
+  if (!message) {
+    json(res, 400, { error: "missing_message" });
+    return;
+  }
+
+  const textbeltKey = process.env.TEXTBELT_KEY;
+  if (!textbeltKey) {
+    json(res, 500, { error: "server_misconfigured", detail: "TEXTBELT_KEY not set" });
+    return;
+  }
+
+  try {
+    const tbRes = await fetch("https://textbelt.com/text", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ phone, message: message.slice(0, 1500), key: textbeltKey }),
+    });
+    const tbJson = (await tbRes.json()) as { success: boolean; textId?: string; error?: string; quotaRemaining?: number };
+    if (!tbJson.success) {
+      console.error("[notify] textbelt error", tbJson.error);
+      json(res, 502, { error: "textbelt_failed", detail: tbJson.error });
+      return;
+    }
+    json(res, 200, { ok: true, textId: tbJson.textId, quotaRemaining: tbJson.quotaRemaining });
+  } catch (err) {
+    const detail = err instanceof Error ? err.message : String(err);
+    console.error("[notify] textbelt error", detail);
+    json(res, 502, { error: "textbelt_failed", detail });
+  }
+};
+
+export default handler;

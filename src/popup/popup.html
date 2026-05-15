@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Popup</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <main class="popup">
+      <h1>Sniffies Plug-ins</h1>
+      <label class="row">
+        <input id="debug-toggle" type="checkbox" />
+        <span>Debug mode</span>
+      </label>
+      <p id="status" class="hint">Shows extracted user ids on profile panels.</p>
+      <button id="open-favorites" class="primary" type="button">Open favorites</button>
+
+      <section class="section">
+        <h2>Notifications</h2>
+        <p class="hint">Text me when a favorited cruiser wakes up.</p>
+        <label class="field">
+          <span>Phone (E.164)</span>
+          <input id="notify-phone" type="tel" placeholder="+15551234567" autocomplete="off" />
+        </label>
+        <div id="notify-debug-fields" hidden>
+          <label class="field">
+            <span>Endpoint URL</span>
+            <input id="notify-endpoint" type="url" placeholder="https://your-app.vercel.app/api/notify" autocomplete="off" />
+          </label>
+          <label class="field">
+            <span>Shared secret</span>
+            <input id="notify-secret" type="password" placeholder="override build-time default" autocomplete="off" />
+          </label>
+        </div>
+        <div class="actions">
+          <button id="notify-save" class="primary" type="button">Save</button>
+          <button id="notify-test" class="primary" type="button">Send test</button>
+        </div>
+        <p id="notify-status" class="hint" aria-live="polite"></p>
+      </section>
+    </main>
+    <script src="popup.js" type="module"></script>
+  </body>
+</html>
