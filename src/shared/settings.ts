@@ -5,6 +5,7 @@ export const SETTINGS_KEYS = {
   notifyTimestamps: "notifyTimestamps",
   notifyTestUsed: "notifyTestUsed",
   seenEvents: "seenEvents",
+  geoOverride: "geoOverride",
 } as const;
 
 export const PHONE_E164_REGEX = /^\+[1-9]\d{6,14}$/;
@@ -14,6 +15,20 @@ export interface NotifySettings {
   endpoint: string;
   secret: string;
 }
+
+export interface GeoOverride {
+  enabled: boolean;
+  latitude: number;
+  longitude: number;
+  accuracy: number;
+}
+
+export const DEFAULT_GEO_OVERRIDE: GeoOverride = {
+  enabled: false,
+  latitude: 0,
+  longitude: 0,
+  accuracy: 10,
+};
 
 export interface FavoriteEntry {
   favoritedAt: number;
@@ -28,6 +43,7 @@ export interface ExtensionLocalSettings {
   notify: NotifySettings;
   notifyTimestamps: Record<string, number>;
   seenEvents: Record<string, unknown>;
+  geoOverride: GeoOverride;
 }
 
 export const DEFAULT_NOTIFY: NotifySettings = {
@@ -42,6 +58,7 @@ export const DEFAULT_LOCAL_SETTINGS: ExtensionLocalSettings = {
   notify: DEFAULT_NOTIFY,
   notifyTimestamps: {},
   seenEvents: {},
+  geoOverride: DEFAULT_GEO_OVERRIDE,
 };
 
 export const getLocalSettings = async (): Promise<ExtensionLocalSettings> => {
@@ -101,6 +118,15 @@ export const setNotifyTimestamp = async (userId: string, ts: number): Promise<vo
   await chrome.storage.local.set({
     [SETTINGS_KEYS.notifyTimestamps]: { ...notifyTimestamps, [userId]: ts },
   });
+};
+
+export const getGeoOverride = async (): Promise<GeoOverride> => {
+  const { geoOverride } = await getLocalSettings();
+  return { ...DEFAULT_GEO_OVERRIDE, ...geoOverride };
+};
+
+export const setGeoOverride = async (next: GeoOverride): Promise<void> => {
+  await chrome.storage.local.set({ [SETTINGS_KEYS.geoOverride]: next });
 };
 
 export const clearNotifyTimestamp = async (userId: string): Promise<void> => {

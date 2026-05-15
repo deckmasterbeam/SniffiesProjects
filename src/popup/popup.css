@@ -178,3 +178,45 @@ button#open-favorites {
 #notify-status {
   min-height: 14px;
 }
+
+details.collapsible {
+  padding: 0;
+}
+
+details.collapsible summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  user-select: none;
+}
+
+details.collapsible summary::-webkit-details-marker {
+  display: none;
+}
+
+details.collapsible summary::after {
+  content: "›";
+  margin-left: auto;
+  font-size: 16px;
+  color: var(--muted);
+  transform: rotate(90deg);
+  transition: transform 0.15s;
+}
+
+details.collapsible[open] summary::after {
+  transform: rotate(270deg);
+}
+
+details.collapsible summary h2 {
+  margin: 0;
+}
+
+.collapsible-body {
+  padding: 0 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}

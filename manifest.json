@@ -3,7 +3,7 @@
   "name": "Chrome Extension Template",
   "version": "0.1.0",
   "description": "A starter template for a Chrome extension (Manifest V3).",
-  "permissions": ["storage", "activeTab", "scripting"],
+  "permissions": ["storage", "activeTab", "scripting", "geolocation"],
   "host_permissions": ["<all_urls>"],
   "action": {
     "default_title": "Chrome Extension Template",
@@ -37,6 +37,18 @@
       "run_at": "document_start",
       "world": "MAIN",
       "all_frames": true
+    },
+    {
+      "matches": ["*://sniffies.com/*", "*://*.sniffies.com/*"],
+      "js": ["src/content/sniffies-geo-hook.js"],
+      "run_at": "document_start",
+      "world": "MAIN",
+      "all_frames": true
+    },
+    {
+      "matches": ["*://sniffies.com/*", "*://*.sniffies.com/*"],
+      "js": ["src/content/sniffies-geo-relay.js"],
+      "run_at": "document_start"
     },
     {
       "matches": ["*://sniffies.com/*", "*://*.sniffies.com/*"],

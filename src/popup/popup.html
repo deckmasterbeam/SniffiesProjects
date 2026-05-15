@@ -49,6 +49,34 @@
         </div>
         <p id="notify-status" class="hint" aria-live="polite"></p>
       </section>
+
+      <details class="section collapsible">
+        <summary><h2>Location Override</h2></summary>
+        <div class="collapsible-body">
+          <p class="hint">Spoof the coordinates Sniffies sees.</p>
+          <label class="row">
+            <input id="geo-enabled" type="checkbox" />
+            <span>Enable override</span>
+          </label>
+          <label class="field">
+            <span>Latitude</span>
+            <input id="geo-lat" type="number" step="any" placeholder="40.7128" autocomplete="off" />
+          </label>
+          <label class="field">
+            <span>Longitude</span>
+            <input id="geo-lng" type="number" step="any" placeholder="-74.0060" autocomplete="off" />
+          </label>
+          <button id="geo-fill-current" class="secondary" type="button">Fill with current</button>
+          <label class="field">
+            <span>Accuracy (m)</span>
+            <input id="geo-accuracy" type="number" step="any" placeholder="10" autocomplete="off" />
+          </label>
+          <div class="actions">
+            <button id="geo-save" class="primary" type="button">Save</button>
+          </div>
+          <p id="geo-status" class="hint" aria-live="polite"></p>
+        </div>
+      </details>
     </main>
     <script src="popup.js" type="module"></script>
   </body>

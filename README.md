@@ -16,6 +16,8 @@ I have a couple of ideas to plug into sniffies, this extension is intended to ex
 4. View list of favorited profiles
    - also entry point to view record of unqiue events
 
+5. Change the location that Sniffies sees
+
 ## Build
 
 Sources live in `src/` as TypeScript. The build bundles them with esbuild and

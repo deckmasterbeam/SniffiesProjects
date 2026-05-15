@@ -3,6 +3,7 @@ declare const __SEEN_EVENTS_LOGGING__: boolean;
 import {
   SETTINGS_KEYS,
   getLocalSettings,
+  setFavorite,
   type FavoriteEntry,
   type FavoritesMap,
 } from "../shared/settings.js";
@@ -76,6 +77,13 @@ const renderCard = (userId: string, entry: FavoriteEntry): HTMLElement => {
   if (notifiedEl) {
     const ts = notifyTimestamps[userId];
     notifiedEl.textContent = ts ? `Notified ${formatDate(ts)}` : "Not yet notified";
+  }
+
+  const unfavoriteBtn = card.querySelector<HTMLButtonElement>('[data-role="unfavorite"]');
+  if (unfavoriteBtn) {
+    unfavoriteBtn.addEventListener("click", () => {
+      void setFavorite(userId, false);
+    });
   }
 
   return card;

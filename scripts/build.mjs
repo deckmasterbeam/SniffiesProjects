@@ -17,6 +17,8 @@ const tsEntries = [
   "src/background/background.ts",
   "src/content/content.ts",
   "src/content/sniffies-ws-hook.ts",
+  "src/content/sniffies-geo-hook.ts",
+  "src/content/sniffies-geo-relay.ts",
   "src/content/sniffies-profile-id.ts",
   "src/content/sniffies-events.ts",
   "src/popup/popup.ts",
