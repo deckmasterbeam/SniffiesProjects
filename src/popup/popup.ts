@@ -22,6 +22,14 @@ const setDebugFieldsVisible = (visible: boolean): void => {
   }
 };
 
+const STORAGE_KEY_TEST_USED = "notifyTestUsed";
+
+const setTestButtonEnabled = (enabled: boolean): void => {
+  if (testBtn instanceof HTMLButtonElement) {
+    testBtn.disabled = !enabled;
+  }
+};
+
 const setStatus = (text: string): void => {
   if (notifyStatus) {
     notifyStatus.textContent = text;
@@ -52,6 +60,9 @@ const init = async (): Promise<void> => {
   if (secretInput instanceof HTMLInputElement) {
     secretInput.value = merged.secret;
   }
+
+  const { [STORAGE_KEY_TEST_USED]: testUsed } = await chrome.storage.local.get(STORAGE_KEY_TEST_USED);
+  setTestButtonEnabled(!testUsed);
 };
 
 if (debugToggle instanceof HTMLInputElement) {
@@ -74,9 +85,18 @@ saveBtn?.addEventListener("click", async () => {
   setStatus("Saved.");
 });
 
+if (phoneInput instanceof HTMLInputElement) {
+  phoneInput.addEventListener("input", async () => {
+    await chrome.storage.local.set({ [STORAGE_KEY_TEST_USED]: false });
+    setTestButtonEnabled(true);
+  });
+}
+
 testBtn?.addEventListener("click", async () => {
   const next = readNotifyForm();
   await setNotify(next);
+  await chrome.storage.local.set({ [STORAGE_KEY_TEST_USED]: true });
+  setTestButtonEnabled(false);
   setStatus("Sending test...");
   try {
     const response = await chrome.runtime.sendMessage({

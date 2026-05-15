@@ -110,8 +110,11 @@ const handler = async (
     const postgresUrl = process.env.POSTGRES_URL;
     if (postgresUrl) {
       const sql = neon(postgresUrl);
-      sql`INSERT INTO notify_log (phone, message) VALUES (${phone}, ${message.slice(0, 1500)})`
-        .catch((err) => console.error("[notify] db log failed", err));
+      try {
+        await sql`INSERT INTO notify_log (phone, message) VALUES (${phone}, ${message.slice(0, 1500)})`;
+      } catch (err) {
+        console.error("[notify] db log failed", err);
+      }
     }
     json(res, 200, { ok: true, textId: tbJson.textId, quotaRemaining: tbJson.quotaRemaining });
   } catch (err) {
