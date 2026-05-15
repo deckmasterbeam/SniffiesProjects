@@ -33,13 +33,6 @@
     },
     {
       "matches": ["*://sniffies.com/*", "*://*.sniffies.com/*"],
-      "js": ["src/content/sniffies-ws-hook.js"],
-      "run_at": "document_start",
-      "world": "MAIN",
-      "all_frames": true
-    },
-    {
-      "matches": ["*://sniffies.com/*", "*://*.sniffies.com/*"],
       "js": ["src/content/sniffies-geo-hook.js"],
       "run_at": "document_start",
       "world": "MAIN",
@@ -54,11 +47,6 @@
       "matches": ["*://sniffies.com/*", "*://*.sniffies.com/*"],
       "js": ["src/content/sniffies-profile-id.js"],
       "run_at": "document_idle"
-    },
-    {
-      "matches": ["*://sniffies.com/*", "*://*.sniffies.com/*"],
-      "js": ["src/content/sniffies-events.js"],
-      "run_at": "document_start"
     }
   ],
   "options_page": "src/options/options.html",

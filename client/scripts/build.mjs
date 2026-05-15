@@ -9,18 +9,15 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = resolve(__dirname, "..");
-const srcDir = join(root, "src");
 const distDir = join(root, "dist");
 const watch = process.argv.includes("--watch");
 
 const tsEntries = [
   "src/background/background.ts",
   "src/content/content.ts",
-  "src/content/sniffies-ws-hook.ts",
   "src/content/sniffies-geo-hook.ts",
   "src/content/sniffies-geo-relay.ts",
   "src/content/sniffies-profile-id.ts",
-  "src/content/sniffies-events.ts",
   "src/popup/popup.ts",
   "src/options/options.ts",
   "src/favorites/favorites.ts",
@@ -70,7 +67,6 @@ const buildOptions = {
   define: {
     __NOTIFY_ENDPOINT__: JSON.stringify(process.env.NOTIFY_ENDPOINT ?? ""),
     __NOTIFY_SECRET__: JSON.stringify(process.env.NOTIFY_SECRET ?? ""),
-    __SEEN_EVENTS_LOGGING__: String(process.env.enableSeenEventsLogging === "true"),
   },
 };
 

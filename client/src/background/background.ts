@@ -4,13 +4,7 @@
 declare const __NOTIFY_ENDPOINT__: string;
 declare const __NOTIFY_SECRET__: string;
 
-import {
-  getFavorites,
-  getNotify,
-  getNotifyTimestamp,
-  setNotifyTimestamp,
-  clearNotifyTimestamp,
-} from "../shared/settings.js";
+import { getNotify } from "../shared/settings.js";
 
 interface ExtensionSyncSettings {
   enabled: boolean;
@@ -23,9 +17,7 @@ interface NotifyResult {
   error?: string;
 }
 
-const DEBOUNCE_MS = 15 * 60 * 1000;
 const MSG_TEST = "Sniffies extension: test message";
-const MSG_AWAKE = (userId: string) => `Sniffies: favorited cruiser ${userId} is online.`;
 
 chrome.runtime.onInstalled.addListener(async (details) => {
   console.log("[bg] onInstalled", details.reason);
@@ -74,25 +66,6 @@ const sendNotify = async (message: string): Promise<NotifyResult> => {
   return { ok: true, sid: body.sid };
 };
 
-const handleFavoriteAwake = async (userId: string): Promise<NotifyResult> => {
-  const favorites = await getFavorites();
-  if (!Object.prototype.hasOwnProperty.call(favorites, userId)) {
-    return { ok: false, error: "not_favorited" };
-  }
-  const now = Date.now();
-  const last = await getNotifyTimestamp(userId);
-  if (now - last < DEBOUNCE_MS) {
-    return { ok: false, error: "debounced" };
-  }
-  await setNotifyTimestamp(userId, now);
-
-  const result = await sendNotify(MSG_AWAKE(userId));
-  if (!result.ok) {
-    await clearNotifyTimestamp(userId);
-  }
-  return result;
-};
-
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message?.type === "GET_SETTINGS") {
     chrome.storage.sync.get(null).then((settings) => {
@@ -103,16 +76,6 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 
   if (message?.type === "NOTIFY_TEST") {
     sendNotify(MSG_TEST).then((result) => {
-      sendResponse(result);
-    });
-    return true;
-  }
-
-  if (message?.type === "NOTIFY_FAVORITE_AWAKE" && typeof message.userId === "string") {
-    handleFavoriteAwake(message.userId).then((result) => {
-      if (!result.ok && result.error !== "debounced") {
-        console.warn("[bg] notify failed", result.error, message.userId);
-      }
       sendResponse(result);
     });
     return true;
