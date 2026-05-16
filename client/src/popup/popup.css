@@ -109,7 +109,7 @@ button.secondary:disabled {
   cursor: not-allowed;
 }
 
-button#open-favorites {
+button#open-settings {
   align-self: flex-start;
 }
 
@@ -163,20 +163,10 @@ button#open-favorites {
   border-color: #e03;
 }
 
-#notify-debug-fields {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
 .actions {
   display: flex;
   gap: 8px;
   align-items: center;
-}
-
-#notify-status {
-  min-height: 14px;
 }
 
 details.collapsible {

@@ -1,56 +1,21 @@
 export const SETTINGS_KEYS = {
-  favorites: "favorites",
-  notify: "notify",
-  notifyTimestamps: "notifyTimestamps",
   seenEvents: "seenEvents",
+  notifyTimestamps: "notifyTimestamps",
 } as const;
 
-export interface NotifySettings {
-  phone: string;
-  endpoint: string;
-  secret: string;
-}
-
-export interface FavoriteEntry {
-  favoritedAt: number;
-  profilePicUrl: string | null;
-}
-
-export type FavoritesMap = Record<string, FavoriteEntry>;
-
-export const DEFAULT_NOTIFY: NotifySettings = {
-  phone: "",
-  endpoint: "",
-  secret: "",
-};
-
 interface WatcherLocalSettings {
-  favorites: FavoritesMap;
-  notify: NotifySettings;
-  notifyTimestamps: Record<string, number>;
   seenEvents: Record<string, unknown>;
+  notifyTimestamps: Record<string, number>;
 }
 
 const DEFAULT_LOCAL_SETTINGS: WatcherLocalSettings = {
-  favorites: {},
-  notify: DEFAULT_NOTIFY,
-  notifyTimestamps: {},
   seenEvents: {},
+  notifyTimestamps: {},
 };
 
-export const getLocalSettings = async (): Promise<WatcherLocalSettings> => {
+const getLocalSettings = async (): Promise<WatcherLocalSettings> => {
   const stored = await chrome.storage.local.get(DEFAULT_LOCAL_SETTINGS);
   return { ...DEFAULT_LOCAL_SETTINGS, ...stored } as WatcherLocalSettings;
-};
-
-export const getFavorites = async (): Promise<FavoritesMap> => {
-  const { favorites } = await getLocalSettings();
-  return favorites;
-};
-
-export const getNotify = async (): Promise<NotifySettings> => {
-  const { notify } = await getLocalSettings();
-  return { ...DEFAULT_NOTIFY, ...notify };
 };
 
 export const recordSeenEvent = async (eventName: string, data: unknown): Promise<void> => {

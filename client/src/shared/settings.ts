@@ -1,20 +1,11 @@
 export const SETTINGS_KEYS = {
-  debug: "debug",
-  favorites: "favorites",
-  notify: "notify",
-  notifyTimestamps: "notifyTimestamps",
-  notifyTestUsed: "notifyTestUsed",
-  seenEvents: "seenEvents",
+  guid: "guid",
+  phone: "phone",
   geoOverride: "geoOverride",
+  geoSectionOpen: "geoSectionOpen",
 } as const;
 
 export const PHONE_E164_REGEX = /^\+[1-9]\d{6,14}$/;
-
-export interface NotifySettings {
-  phone: string;
-  endpoint: string;
-  secret: string;
-}
 
 export interface GeoOverride {
   enabled: boolean;
@@ -30,35 +21,18 @@ export const DEFAULT_GEO_OVERRIDE: GeoOverride = {
   accuracy: 10,
 };
 
-export interface FavoriteEntry {
-  favoritedAt: number;
-  profilePicUrl: string | null;
-}
-
-export type FavoritesMap = Record<string, FavoriteEntry>;
-
 export interface ExtensionLocalSettings {
-  debug: boolean;
-  favorites: FavoritesMap;
-  notify: NotifySettings;
-  notifyTimestamps: Record<string, number>;
-  seenEvents: Record<string, unknown>;
+  guid: string;
+  phone: string;
   geoOverride: GeoOverride;
+  geoSectionOpen: boolean;
 }
-
-export const DEFAULT_NOTIFY: NotifySettings = {
-  phone: "",
-  endpoint: "",
-  secret: "",
-};
 
 export const DEFAULT_LOCAL_SETTINGS: ExtensionLocalSettings = {
-  debug: false,
-  favorites: {},
-  notify: DEFAULT_NOTIFY,
-  notifyTimestamps: {},
-  seenEvents: {},
+  guid: "",
+  phone: "",
   geoOverride: DEFAULT_GEO_OVERRIDE,
+  geoSectionOpen: false,
 };
 
 export const getLocalSettings = async (): Promise<ExtensionLocalSettings> => {
@@ -66,72 +40,6 @@ export const getLocalSettings = async (): Promise<ExtensionLocalSettings> => {
   return { ...DEFAULT_LOCAL_SETTINGS, ...stored } as ExtensionLocalSettings;
 };
 
-export const setDebug = async (debug: boolean): Promise<void> => {
-  await chrome.storage.local.set({ [SETTINGS_KEYS.debug]: debug });
-};
-
-export const getFavorites = async (): Promise<FavoritesMap> => {
-  const { favorites } = await getLocalSettings();
-  return favorites;
-};
-
-export const setFavorite = async (
-  userId: string,
-  favorite: boolean,
-  profilePicUrl: string | null = null,
-): Promise<FavoritesMap> => {
-  const current = await getFavorites();
-  const next: FavoritesMap = { ...current };
-  if (favorite) {
-    next[userId] = { favoritedAt: Date.now(), profilePicUrl };
-  } else {
-    delete next[userId];
-  }
-  await chrome.storage.local.set({ [SETTINGS_KEYS.favorites]: next });
-  return next;
-};
-
-export const getNotify = async (): Promise<NotifySettings> => {
-  const { notify } = await getLocalSettings();
-  return { ...DEFAULT_NOTIFY, ...notify };
-};
-
-export const setNotify = async (next: NotifySettings): Promise<void> => {
-  await chrome.storage.local.set({ [SETTINGS_KEYS.notify]: next });
-};
-
-export const recordSeenEvent = async (eventName: string, data: unknown): Promise<void> => {
-  const { seenEvents } = await getLocalSettings();
-  if (Object.prototype.hasOwnProperty.call(seenEvents, eventName)) return;
-  await chrome.storage.local.set({
-    [SETTINGS_KEYS.seenEvents]: { ...seenEvents, [eventName]: data },
-  });
-};
-
-export const getNotifyTimestamp = async (userId: string): Promise<number> => {
-  const { notifyTimestamps } = await getLocalSettings();
-  return notifyTimestamps[userId] ?? 0;
-};
-
-export const setNotifyTimestamp = async (userId: string, ts: number): Promise<void> => {
-  const { notifyTimestamps } = await getLocalSettings();
-  await chrome.storage.local.set({
-    [SETTINGS_KEYS.notifyTimestamps]: { ...notifyTimestamps, [userId]: ts },
-  });
-};
-
-export const getGeoOverride = async (): Promise<GeoOverride> => {
-  const { geoOverride } = await getLocalSettings();
-  return { ...DEFAULT_GEO_OVERRIDE, ...geoOverride };
-};
-
 export const setGeoOverride = async (next: GeoOverride): Promise<void> => {
   await chrome.storage.local.set({ [SETTINGS_KEYS.geoOverride]: next });
-};
-
-export const clearNotifyTimestamp = async (userId: string): Promise<void> => {
-  const { notifyTimestamps } = await getLocalSettings();
-  const next = { ...notifyTimestamps };
-  delete next[userId];
-  await chrome.storage.local.set({ [SETTINGS_KEYS.notifyTimestamps]: next });
 };

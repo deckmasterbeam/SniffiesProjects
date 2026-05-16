@@ -20,7 +20,7 @@ const tsEntries = [
   "src/content/sniffies-profile-id.ts",
   "src/popup/popup.ts",
   "src/options/options.ts",
-  "src/favorites/favorites.ts",
+  "src/settings/settings.ts",
 ];
 
 const staticAssets = [
@@ -30,8 +30,8 @@ const staticAssets = [
   "src/options/options.html",
   "src/options/options.css",
   "src/content/content.css",
-  "src/favorites/favorites.html",
-  "src/favorites/favorites.css",
+  "src/settings/settings.html",
+  "src/settings/settings.css",
 ];
 
 const copyAssets = async () => {
@@ -65,8 +65,13 @@ const buildOptions = {
   sourcemap: true,
   logLevel: "info",
   define: {
-    __NOTIFY_ENDPOINT__: JSON.stringify(process.env.NOTIFY_ENDPOINT ?? ""),
-    __NOTIFY_SECRET__: JSON.stringify(process.env.NOTIFY_SECRET ?? ""),
+    __SERVER_BASE__: JSON.stringify(process.env.SERVER_BASE ?? ""),
+    __CLIENT_SECRET__: JSON.stringify(process.env.CLIENT_SECRET ?? ""),
+    __SAVE_NUMBER_ENDPOINT__: JSON.stringify(
+      process.env.SAVE_NUMBER_ENDPOINT ??
+        (process.env.SERVER_BASE ? `${process.env.SERVER_BASE}/api/save-number` : ""),
+    ),
+    __DEBUG__: String(process.env.DEBUG === "true"),
   },
 };
 

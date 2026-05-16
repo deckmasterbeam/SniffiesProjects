@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sniffies Settings</title>
+    <link rel="stylesheet" href="settings.css" />
+  </head>
+  <body>
+    <main class="page">
+      <header class="page-header">
+        <h1>Sniffies Settings</h1>
+      </header>
+
+      <section class="phone-section">
+        <h2>Notifications</h2>
+        <p class="hint">Your number for wakeup alerts.</p>
+        <label class="field">
+          <span>Phone (E.164)</span>
+          <input id="phone-input" type="tel" placeholder="+15551234567" autocomplete="off" />
+        </label>
+        <div class="row">
+          <button id="phone-save" class="save-btn" type="button">Save</button>
+          <p id="phone-status" class="hint" aria-live="polite"></p>
+        </div>
+      </section>
+
+      <section class="recovery-section">
+        <h2>Recover access</h2>
+        <p class="hint">Already registered? Text your code to this device, or paste it in directly.</p>
+        <div class="row">
+          <button id="send-guid-btn" class="save-btn" type="button">Text me my code</button>
+          <p id="recovery-status" class="hint" aria-live="polite"></p>
+        </div>
+        <label class="field" style="margin-top: 8px">
+          <span>Paste code</span>
+          <div class="row">
+            <input id="code-input" type="text" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" autocomplete="off" />
+            <button id="code-save" class="save-btn" type="button">Apply</button>
+          </div>
+        </label>
+      </section>
+
+      <section class="favorites-section">
+        <h2>Favorites</h2>
+        <p id="summary" class="hint">Loading...</p>
+        <div id="grid" class="grid" aria-live="polite"></div>
+      </section>
+
+      <template id="card-template">
+        <article class="card">
+          <div class="card-image" data-role="image"></div>
+          <div class="card-body">
+            <div class="card-id" data-role="user-id"></div>
+            <div class="card-meta" data-role="favorited-at"></div>
+            <button class="unfavorite-btn" data-role="unfavorite" type="button">Remove</button>
+          </div>
+        </article>
+      </template>
+    </main>
+    <script src="settings.js" type="module"></script>
+  </body>
+</html>

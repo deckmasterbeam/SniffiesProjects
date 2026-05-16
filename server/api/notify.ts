@@ -1,48 +1,13 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { neon } from "@neondatabase/serverless";
+import { json, applyCors, requireWatcherAuth, requireDb } from "./_shared.js";
 
 interface NotifyBody {
-  phone?: unknown;
-  message?: unknown;
+  userId?: unknown;
 }
 
-const json = (res: VercelResponse, status: number, body: Record<string, unknown>): void => {
-  res.status(status).json(body);
-};
-
-const isAllowedOrigin = (origin: string | undefined): boolean => {
-  const allow = process.env.ALLOWED_ORIGINS?.trim();
-  if (!allow) {
-    return true; // dev: allow all
-  }
-  if (!origin) {
-    return false;
-  }
-  return allow
-    .split(",")
-    .map((s) => s.trim())
-    .includes(origin);
-};
-
-const applyCors = (req: VercelRequest, res: VercelResponse): void => {
-  const origin = req.headers.origin;
-  if (origin && isAllowedOrigin(origin)) {
-    res.setHeader("Access-Control-Allow-Origin", origin);
-    res.setHeader("Vary", "Origin");
-  }
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  res.setHeader("Access-Control-Max-Age", "600");
-};
-
-const REQUIRED_ENV = ["SHARED_SECRET", "TEXTBELT_KEY", "POSTGRES_URL", "DAILY_SMS_LIMIT"] as const;
+const DAILY_LIMIT_DEFAULT = 10;
 
 const handler = async (req: VercelRequest, res: VercelResponse): Promise<void> => {
-  const missing = REQUIRED_ENV.filter((k) => !process.env[k]);
-  if (missing.length) {
-    console.error("[notify] missing env vars:", missing.join(", "));
-  }
-
   applyCors(req, res);
 
   if (req.method === "OPTIONS") {
@@ -55,32 +20,12 @@ const handler = async (req: VercelRequest, res: VercelResponse): Promise<void> =
     return;
   }
 
-  const sharedSecret = process.env.SHARED_SECRET;
-  if (!sharedSecret) {
-    json(res, 500, { error: "server_misconfigured", detail: "SHARED_SECRET not set" });
-    return;
-  }
-
-  const auth = req.headers.authorization;
-  const expected = `Bearer ${sharedSecret}`;
-  if (auth !== expected) {
-    json(res, 401, { error: "unauthorized" });
-    return;
-  }
+  if (!requireWatcherAuth(req, res)) return;
 
   const body = (req.body ?? {}) as NotifyBody;
-  const phone = typeof body.phone === "string" ? body.phone.trim() : "";
-  const message = typeof body.message === "string" ? body.message.trim() : "";
-
-  if (!/^\+[1-9]\d{6,14}$/.test(phone)) {
-    json(res, 400, { error: "invalid_phone", detail: "Use E.164, e.g. +15551234567" });
-    return;
-  }
-  const isValidMessage =
-    message === "Sniffies extension: test message" ||
-    /^Sniffies: favorited cruiser [0-9a-f]{24} is online\.$/.test(message);
-  if (!isValidMessage) {
-    json(res, 400, { error: "invalid_message" });
+  const userId = typeof body.userId === "string" ? body.userId.trim() : "";
+  if (!userId) {
+    json(res, 400, { error: "userId_required" });
     return;
   }
 
@@ -90,67 +35,74 @@ const handler = async (req: VercelRequest, res: VercelResponse): Promise<void> =
     return;
   }
 
-  const postgresUrl = process.env.POSTGRES_URL;
-  const sql = postgresUrl ? neon(postgresUrl) : null;
-  const dailyLimit = parseInt(process.env.DAILY_SMS_LIMIT ?? "10", 10);
+  const sql = requireDb(res);
+  if (!sql) return;
 
-  if (sql) {
-    try {
-      const [priorityRow, countRow] = await Promise.all([
-        sql`SELECT 1 FROM priority_numbers WHERE phone = ${phone} LIMIT 1`,
-        sql`SELECT COUNT(*)::int AS count FROM notify_log WHERE phone = ${phone} AND sent_at >= NOW() - INTERVAL '24 hours'`,
-      ]);
-      const isPriority = priorityRow.length > 0;
-      const count = (countRow[0] as { count: number }).count;
-      if (!isPriority && count >= dailyLimit) {
-        console.warn(
-          "[notify] daily limit reached for phone",
-          phone,
-          "count:",
-          count,
-          "limit:",
-          dailyLimit,
-        );
-        json(res, 429, {
-          error: "daily_limit_reached",
-          detail: `This number has been notified ${dailyLimit} times in the last 24 hours.`,
-        });
-        return;
-      }
-    } catch (err) {
-      console.error("[notify] rate limit check failed", err);
-    }
-  }
+  const dailyLimit = parseInt(process.env.DAILY_SMS_LIMIT ?? String(DAILY_LIMIT_DEFAULT), 10);
+  const message = `Sniffies: a favorited cruiser is online.`;
 
   try {
-    const tbRes = await fetch("https://textbelt.com/text", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ phone, message: message.slice(0, 1500), key: textbeltKey }),
-    });
-    const tbJson = (await tbRes.json()) as {
-      success: boolean;
-      textId?: string;
-      error?: string;
-      quotaRemaining?: number;
-    };
-    if (!tbJson.success) {
-      console.error("[notify] textbelt error", tbJson.error);
-      json(res, 502, { error: "textbelt_failed", detail: tbJson.error });
+    const subscriberRows = await sql`
+      SELECT pr.phone
+      FROM favorites f
+      JOIN phone_registrations pr ON pr.guid = f.guid
+      WHERE f.user_id = ${userId}
+    `;
+    const phones = (subscriberRows as { phone: string }[]).map((r) => r.phone);
+
+    if (phones.length === 0) {
+      json(res, 200, { ok: true, sent: 0, detail: "no_subscribers" });
       return;
     }
-    if (sql) {
+
+    let sent = 0;
+    const errors: string[] = [];
+
+    for (const phone of phones) {
       try {
-        await sql`INSERT INTO notify_log (phone, message) VALUES (${phone}, ${message.slice(0, 1500)})`;
+        const [priorityRow, countRow] = await Promise.all([
+          sql`SELECT 1 FROM priority_numbers WHERE phone = ${phone} LIMIT 1`,
+          sql`SELECT COUNT(*)::int AS count FROM notify_log WHERE phone = ${phone} AND sent_at >= NOW() - INTERVAL '24 hours'`,
+        ]);
+        const isPriority = priorityRow.length > 0;
+        const count = (countRow[0] as { count: number }).count;
+        if (!isPriority && count >= dailyLimit) {
+          errors.push(`${phone}: daily_limit`);
+          continue;
+        }
       } catch (err) {
-        console.error("[notify] db log failed", err);
+        console.error("[notify] rate-limit check failed for", phone, err);
+      }
+
+      try {
+        const tbRes = await fetch("https://textbelt.com/text", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ phone, message, key: textbeltKey }),
+        });
+        const tbJson = (await tbRes.json()) as { success: boolean; error?: string };
+        if (!tbJson.success) {
+          errors.push(`${phone}: ${tbJson.error}`);
+          continue;
+        }
+        await sql`INSERT INTO notify_log (phone, message) VALUES (${phone}, ${message})`.catch(
+          (e) => console.error("[notify] log failed", e),
+        );
+        sent++;
+      } catch (err) {
+        errors.push(`${phone}: ${err instanceof Error ? err.message : String(err)}`);
       }
     }
-    json(res, 200, { ok: true, textId: tbJson.textId, quotaRemaining: tbJson.quotaRemaining });
+
+    json(res, 200, {
+      ok: true,
+      sent,
+      total: phones.length,
+      ...(errors.length ? { errors } : {}),
+    });
   } catch (err) {
-    const detail = err instanceof Error ? err.message : String(err);
-    console.error("[notify] textbelt error", detail);
-    json(res, 502, { error: "textbelt_failed", detail });
+    console.error("[notify] db error", err);
+    json(res, 500, { error: "db_error" });
   }
 };
 

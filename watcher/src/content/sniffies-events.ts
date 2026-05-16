@@ -1,20 +1,8 @@
 declare const __SEEN_EVENTS_LOGGING__: boolean;
 
-import {
-  DEFAULT_NOTIFY,
-  SETTINGS_KEYS,
-  getLocalSettings,
-  recordSeenEvent,
-  type FavoritesMap,
-  type NotifySettings,
-} from "../shared/settings.js";
+import { recordSeenEvent } from "../shared/settings.js";
 
 const TAG = "[sniffies-events]";
-
-let favorites: FavoritesMap = {};
-let notify: NotifySettings = { ...DEFAULT_NOTIFY };
-
-const hasNotifyConfig = (): boolean => Boolean(notify.phone);
 
 interface ForwardedMessage {
   source: "sniffies-ws-hook";
@@ -55,13 +43,8 @@ const isUserJoinedEvent = (value: unknown): value is UserJoinedEvent => {
   );
 };
 
-const notifyFavorite = (userId: string, trigger: string): void => {
-  if (!Object.prototype.hasOwnProperty.call(favorites, userId)) return;
-  if (!hasNotifyConfig()) {
-    console.log(`${TAG} [${trigger}] favorite active but notify not configured`, userId);
-    return;
-  }
-  console.log(`${TAG} [${trigger}] favorite active, requesting SMS`, userId);
+const notifyUser = (userId: string, trigger: string): void => {
+  console.log(`${TAG} [${trigger}] user active, forwarding to background`, userId);
   chrome.runtime
     .sendMessage({ type: "NOTIFY_FAVORITE_AWAKE", userId })
     .catch((err) => console.error(`${TAG} sendMessage failed`, err));
@@ -69,9 +52,9 @@ const notifyFavorite = (userId: string, trigger: string): void => {
 
 const handleParsed = (parsed: unknown): void => {
   if (isUserAwakeEvent(parsed)) {
-    notifyFavorite(parsed.data, "UserAwake");
+    notifyUser(parsed.data, "UserAwake");
   } else if (isUserJoinedEvent(parsed)) {
-    notifyFavorite(parsed.data._id, "userJoined");
+    notifyUser(parsed.data._id, "userJoined");
   }
 };
 
@@ -90,30 +73,4 @@ window.addEventListener("message", (event: MessageEvent) => {
   handleParsed(parsed);
 });
 
-// Load current settings + favorites, then watch for changes.
-void getLocalSettings().then((settings) => {
-  favorites = settings.favorites;
-  notify = settings.notify;
-  console.log(
-    `${TAG} initialized; favorites =`,
-    Object.keys(favorites).length,
-    "notify configured =",
-    hasNotifyConfig(),
-  );
-});
-
-chrome.storage.onChanged.addListener((changes, area) => {
-  if (area !== "local") {
-    return;
-  }
-  const favChange = changes[SETTINGS_KEYS.favorites];
-  if (favChange) {
-    const next = favChange.newValue;
-    favorites = next && typeof next === "object" ? (next as FavoritesMap) : {};
-  }
-  const notifyChange = changes[SETTINGS_KEYS.notify];
-  if (notifyChange) {
-    const next = notifyChange.newValue;
-    notify = next && typeof next === "object" ? (next as NotifySettings) : { ...DEFAULT_NOTIFY };
-  }
-});
+console.log(`${TAG} initialized`);
