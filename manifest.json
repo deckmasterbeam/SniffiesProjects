@@ -5,6 +5,9 @@
   "description": "A starter template for a Chrome extension (Manifest V3).",
   "permissions": ["storage", "activeTab", "scripting", "geolocation"],
   "host_permissions": ["<all_urls>"],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' https://api.mapbox.com; worker-src 'self' blob:; child-src blob:; connect-src 'self' https://*.mapbox.com https://*.tiles.mapbox.com https://events.mapbox.com; img-src 'self' data: blob: https://*.mapbox.com https://*.tiles.mapbox.com; style-src 'self' 'unsafe-inline' https://api.mapbox.com; object-src 'self';"
+  },
   "browser_specific_settings": {
     "safari": {
       "strict_min_version": "15.4"

@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Popup</title>
     <link rel="stylesheet" href="popup.css" />
+    <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.css" />
+    <script
+      src="https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.js"
+      crossorigin="anonymous"
+    ></script>
   </head>
   <body>
     <main class="popup">
@@ -58,15 +63,23 @@
             <input id="geo-enabled" type="checkbox" />
             <span>Enable override</span>
           </label>
-          <label class="field">
-            <span>Latitude</span>
-            <input id="geo-lat" type="number" step="any" placeholder="40.7128" autocomplete="off" />
-          </label>
-          <label class="field">
-            <span>Longitude</span>
-            <input id="geo-lng" type="number" step="any" placeholder="-74.0060" autocomplete="off" />
-          </label>
-          <button id="geo-fill-current" class="secondary" type="button">Fill with current</button>
+          <div id="geo-map" class="map-picker" role="application" aria-label="Location map picker" tabindex="0">
+            <div id="geo-map-canvas" class="map-picker__canvas" aria-hidden="true"></div>
+            <div class="map-picker__pin" aria-hidden="true"></div>
+            <p id="geo-map-fallback" class="map-picker__fallback" hidden></p>
+          </div>
+          <p class="hint">Drag or click the map to center the override.</p>
+          <div class="coords-grid">
+            <label class="field">
+              <span>Latitude</span>
+              <input id="geo-lat" type="number" step="any" placeholder="40.7128" autocomplete="off" />
+            </label>
+            <label class="field">
+              <span>Longitude</span>
+              <input id="geo-lng" type="number" step="any" placeholder="-74.0060" autocomplete="off" />
+            </label>
+          </div>
+          <button id="geo-fill-current" class="secondary" type="button">Use current location</button>
           <label class="field">
             <span>Accuracy (m)</span>
             <input id="geo-accuracy" type="number" step="any" placeholder="10" autocomplete="off" />

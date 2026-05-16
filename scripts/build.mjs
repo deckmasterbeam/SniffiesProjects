@@ -70,6 +70,7 @@ const buildOptions = {
   define: {
     __NOTIFY_ENDPOINT__: JSON.stringify(process.env.NOTIFY_ENDPOINT ?? ""),
     __NOTIFY_SECRET__: JSON.stringify(process.env.NOTIFY_SECRET ?? ""),
+    __MAPBOX_TOKEN__: JSON.stringify(process.env.MAPBOX_TOKEN ?? ""),
     __SEEN_EVENTS_LOGGING__: String(process.env.enableSeenEventsLogging === "true"),
   },
 };
