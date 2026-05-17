@@ -6,7 +6,9 @@
 
   type PatchedGeo = Geolocation & { __sniffiesPatched?: boolean };
   const geo = navigator.geolocation as PatchedGeo | undefined;
-  if (!geo || geo.__sniffiesPatched) return;
+  if (!geo || geo.__sniffiesPatched) {
+    return;
+  }
 
   interface OverrideCoords {
     latitude: number;
@@ -18,15 +20,21 @@
 
   // Receive override settings from isolated world
   window.addEventListener("message", (event) => {
-    if (event.source !== window) return;
+    if (event.source !== window) {
+      return;
+    }
     const msg = event.data as Record<string, unknown> | null;
-    if (!msg || msg.source !== "sniffies-geo-relay") return;
+    if (!msg || msg.source !== "sniffies-geo-relay") {
+      return;
+    }
     override = (msg.coords as OverrideCoords) ?? null;
     console.log(TAG, "override updated", override);
   });
 
   const applyOverride = (position: GeolocationPosition): GeolocationPosition => {
-    if (!override) return position;
+    if (!override) {
+      return position;
+    }
     const ov = override;
     return {
       coords: {
@@ -48,7 +56,8 @@
     } as GeolocationPosition;
   };
 
-  const wrapSuccess = (callback: PositionCallback): PositionCallback =>
+  const wrapSuccess =
+    (callback: PositionCallback): PositionCallback =>
     (position) => {
       console.log(TAG, "position", {
         lat: position.coords.latitude,

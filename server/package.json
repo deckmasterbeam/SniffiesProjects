@@ -5,7 +5,9 @@
   "description": "Vercel function that sends an SMS via TextBelt on behalf of the Sniffies extension.",
   "type": "module",
   "scripts": {
-    "test": "vitest run"
+    "test": "vitest run",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0"
@@ -13,6 +15,7 @@
   "devDependencies": {
     "@types/node": "^22.7.5",
     "@vercel/node": "^3.2.21",
+    "prettier": "^3.8.3",
     "typescript": "^5.6.3",
     "vitest": "^4.1.6"
   }

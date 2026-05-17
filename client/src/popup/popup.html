@@ -8,47 +8,18 @@
   </head>
   <body>
     <main class="popup">
-      <h1>Sniffies Plug-ins</h1>
-      <label class="row">
-        <input id="debug-toggle" type="checkbox" />
-        <span>Debug mode</span>
-      </label>
-      <p id="status" class="hint">Shows extracted user ids on profile panels.</p>
-      <button id="open-favorites" class="primary" type="button">Open favorites</button>
-
-      <section class="section">
-        <h2>Notifications</h2>
-        <p class="hint">Text me when a favorited cruiser wakes up.</p>
-        <label class="field">
-          <span>Phone (E.164)</span>
-          <input id="notify-phone" type="tel" placeholder="+15551234567" autocomplete="off" />
-        </label>
-        <div id="notify-debug-fields">
-          <label class="field">
-            <span>Endpoint URL</span>
-            <input
-              id="notify-endpoint"
-              type="url"
-              placeholder="https://your-app.vercel.app/api/notify"
-              autocomplete="off"
-            />
-          </label>
-          <label class="field">
-            <span>Shared secret</span>
-            <input
-              id="notify-secret"
-              type="password"
-              placeholder="override build-time default"
-              autocomplete="off"
-            />
-          </label>
-        </div>
-        <div class="actions">
-          <button id="notify-save" class="primary" type="button">Save</button>
-          <button id="notify-test" class="secondary" type="button">Send test</button>
-        </div>
-        <p id="notify-status" class="hint" aria-live="polite"></p>
-      </section>
+      <header class="popup-header">
+        <h1>Sniffies Plug-ins</h1>
+        <button
+          id="open-settings"
+          class="primary"
+          type="button"
+          title="Settings"
+          aria-label="Open settings"
+        >
+          ⚙
+        </button>
+      </header>
 
       <details class="section collapsible">
         <summary><h2>Location Override</h2></summary>
@@ -64,11 +35,17 @@
           </label>
           <label class="field">
             <span>Longitude</span>
-            <input id="geo-lng" type="number" step="any" placeholder="-74.0060" autocomplete="off" />
+            <input
+              id="geo-lng"
+              type="number"
+              step="any"
+              placeholder="-74.0060"
+              autocomplete="off"
+            />
           </label>
           <button id="geo-fill-current" class="secondary" type="button">Fill with current</button>
           <label class="field">
-            <span>Accuracy (m)</span>
+            <span>Accuracy (m) (randomized)</span>
             <input id="geo-accuracy" type="number" step="any" placeholder="10" autocomplete="off" />
           </label>
           <div class="actions">

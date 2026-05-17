@@ -109,8 +109,25 @@ button.secondary:disabled {
   cursor: not-allowed;
 }
 
-button#open-favorites {
-  align-self: flex-start;
+.popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.icon-btn {
+  background: transparent;
+  border: none;
+  padding: 2px 4px;
+  cursor: pointer;
+  font-size: 16px;
+  color: var(--accent);
+  line-height: 1;
+  transition: color 0.15s;
+}
+
+.icon-btn:hover {
+  color: var(--accent-hover);
 }
 
 .section {
@@ -163,20 +180,10 @@ button#open-favorites {
   border-color: #e03;
 }
 
-#notify-debug-fields {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
 .actions {
   display: flex;
   gap: 8px;
   align-items: center;
-}
-
-#notify-status {
-  min-height: 14px;
 }
 
 details.collapsible {
@@ -201,6 +208,7 @@ details.collapsible summary::after {
   content: "›";
   margin-left: auto;
   font-size: 16px;
+  line-height: 1;
   color: var(--muted);
   transform: rotate(90deg);
   transition: transform 0.15s;

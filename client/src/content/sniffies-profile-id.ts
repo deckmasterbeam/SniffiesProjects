@@ -1,17 +1,20 @@
 // Runs in the isolated world on sniffies.com.
 // - Listens for clicks on profile markers ([data-testid="cv-marker-avatar-image"]).
-// - Extracts the user id (and profile pic URL) from the marker's
-//   background-image URL.
+// - Extracts the user id (and profile pic URL) from the marker's background-image URL.
 // - When a profile panel (#app-screen) renders its cruiserNameLabel span,
 //   injects a star toggle (always shown) and the user id text (debug-gated).
 
-import {
-  DEFAULT_LOCAL_SETTINGS,
-  SETTINGS_KEYS,
-  getLocalSettings,
-  setFavorite,
-  type FavoritesMap,
-} from "../shared/settings.js";
+declare const __DEBUG__: boolean;
+declare const __SERVER_BASE__: string;
+declare const __CLIENT_SECRET__: string;
+declare const __NOTIFICATIONS_ENABLED__: boolean;
+
+import { SETTINGS_KEYS, getLocalSettings } from "../shared/settings.js";
+
+const clientHeaders = (): Record<string, string> => ({
+  "Content-Type": "application/json",
+  Authorization: `Bearer ${__CLIENT_SECRET__}`,
+});
 
 const TAG = "[sniffies-profile-id]";
 const MARKER_SELECTOR = '[data-testid="cv-marker-avatar-image"]';
@@ -26,12 +29,36 @@ interface ProfileSelection {
   profilePicUrl: string | null;
 }
 
-let lastSelection: ProfileSelection | null = null;
-let debugEnabled = DEFAULT_LOCAL_SETTINGS.debug;
-let favorites: FavoritesMap = { ...DEFAULT_LOCAL_SETTINGS.favorites };
+interface ApiFavoriteEntry {
+  user_id: string;
+  profile_pic_url: string | null;
+  favorited_at: string;
+}
 
-const isFavorite = (userId: string): boolean =>
-  Object.prototype.hasOwnProperty.call(favorites, userId);
+let lastSelection: ProfileSelection | null = null;
+let favoritedIds = new Set<string>();
+let currentGuid = "";
+
+const isFavorite = (userId: string): boolean => favoritedIds.has(userId);
+
+const fetchFavorites = async (guid: string): Promise<void> => {
+  if (!guid || !__SERVER_BASE__) {
+    return;
+  }
+  try {
+    const res = await fetch(`${__SERVER_BASE__}/api/favorites?guid=${encodeURIComponent(guid)}`, {
+      headers: clientHeaders(),
+    });
+    if (!res.ok) {
+      return;
+    }
+    const data = (await res.json()) as { ok: boolean; favorites: ApiFavoriteEntry[] };
+    favoritedIds = new Set((data.favorites ?? []).map((f) => f.user_id));
+    refreshAllInjections();
+  } catch (err) {
+    console.error(`${TAG} fetchFavorites failed`, err);
+  }
+};
 
 const extractUserIdFromUrl = (url: string): string | null => {
   try {
@@ -64,17 +91,11 @@ const renderStar = (star: HTMLElement, userId: string): void => {
   const isFav = isFavorite(userId);
   star.textContent = isFav ? STAR_ON : STAR_OFF;
   star.setAttribute("aria-pressed", String(isFav));
-  if (isFav) {
-    const at = favorites[userId]?.favoritedAt;
-    const when = at ? new Date(at).toLocaleString() : "";
-    star.title = when ? `Favorited ${when} — click to unfavorite` : "Unfavorite";
-  } else {
-    star.title = "Favorite";
-  }
+  star.title = isFav ? "Unfavorite" : "Favorite";
 };
 
 const renderIdText = (idText: HTMLElement): void => {
-  idText.style.display = debugEnabled ? "" : "none";
+  idText.style.display = __DEBUG__ ? "" : "none";
 };
 
 const buildInjection = (selection: ProfileSelection): HTMLElement => {
@@ -104,22 +125,38 @@ const buildInjection = (selection: ProfileSelection): HTMLElement => {
   ].join(";");
   star.addEventListener("click", async (event) => {
     event.stopPropagation();
+    if (!currentGuid) {
+      console.warn(`${TAG} no guid — open settings to register your phone`);
+      return;
+    }
     const next = !isFavorite(userId);
-    // Optimistic UI update; storage write will also broadcast via onChanged.
+    // Optimistic UI update.
     if (next) {
-      favorites = {
-        ...favorites,
-        [userId]: { favoritedAt: Date.now(), profilePicUrl },
-      };
+      favoritedIds.add(userId);
     } else {
-      const { [userId]: _removed, ...rest } = favorites;
-      favorites = rest;
+      favoritedIds.delete(userId);
     }
     renderStar(star, userId);
     try {
-      await setFavorite(userId, next, profilePicUrl);
+      await fetch(`${__SERVER_BASE__}/api/favorites`, {
+        method: "POST",
+        headers: clientHeaders(),
+        body: JSON.stringify({
+          guid: currentGuid,
+          userId,
+          profilePicUrl,
+          favorite: next,
+        }),
+      });
     } catch (err) {
       console.error(`${TAG} failed to persist favorite`, err);
+      // Roll back optimistic update.
+      if (next) {
+        favoritedIds.delete(userId);
+      } else {
+        favoritedIds.add(userId);
+      }
+      renderStar(star, userId);
     }
   });
 
@@ -160,6 +197,9 @@ const refreshAllInjections = (): void => {
 };
 
 const injectIntoNameLabel = (nameLabel: HTMLElement, selection: ProfileSelection): void => {
+  if (!__NOTIFICATIONS_ENABLED__) {
+    return;
+  }
   const screen = nameLabel.closest(APP_SCREEN_SELECTOR);
   if (!screen) {
     return;
@@ -172,7 +212,6 @@ const injectIntoNameLabel = (nameLabel: HTMLElement, selection: ProfileSelection
     }
     existing.remove();
   }
-
   const node = buildInjection(selection);
   nameLabel.insertAdjacentElement("afterend", node);
   console.log(`${TAG} injected for user`, selection.userId);
@@ -188,8 +227,6 @@ const tryInjectIntoScreen = (screen: Element): void => {
   }
 };
 
-// Watch the whole document for the app-screen and its name label appearing or
-// changing. Angular swaps content in/out, so we can't rely on a one-shot wait.
 const observer = new MutationObserver((mutations) => {
   if (!lastSelection) {
     return;
@@ -215,7 +252,6 @@ const startObserving = (): void => {
   observer.observe(document.body, { childList: true, subtree: true });
 };
 
-// Use capture so we see the click even if Angular stops propagation.
 document.addEventListener(
   "click",
   (event) => {
@@ -234,7 +270,6 @@ document.addEventListener(
     }
     lastSelection = selection;
     console.log(`${TAG} marker clicked`, selection);
-
     const screen = document.querySelector(APP_SCREEN_SELECTOR);
     if (screen) {
       tryInjectIntoScreen(screen);
@@ -249,38 +284,23 @@ if (document.body) {
   document.addEventListener("DOMContentLoaded", startObserving, { once: true });
 }
 
-// Load initial state and react to changes from popup / other tabs.
-void getLocalSettings().then((settings) => {
-  debugEnabled = settings.debug;
-  favorites = settings.favorites;
-  console.log(
-    `${TAG} debug =`,
-    settings.debug,
-    " favorites =",
-    Object.keys(settings.favorites).length,
-  );
-  refreshAllInjections();
+void getLocalSettings().then(({ guid }) => {
+  currentGuid = guid;
+  if (guid) {
+    void fetchFavorites(guid);
+  }
+  console.log(`${TAG} initialized, guid ${guid ? "present" : "missing"}`);
 });
 
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area !== "local") {
     return;
   }
-  let touched = false;
-  const debugChange = changes[SETTINGS_KEYS.debug];
-  if (debugChange) {
-    debugEnabled = Boolean(debugChange.newValue);
-    touched = true;
-  }
-  const favChange = changes[SETTINGS_KEYS.favorites];
-  if (favChange) {
-    const next = favChange.newValue;
-    favorites = next && typeof next === "object" ? (next as FavoritesMap) : {};
-    touched = true;
-  }
-  if (touched) {
-    refreshAllInjections();
+  const guidChange = changes[SETTINGS_KEYS.guid];
+  if (guidChange) {
+    currentGuid = typeof guidChange.newValue === "string" ? guidChange.newValue : "";
+    if (currentGuid) {
+      void fetchFavorites(currentGuid);
+    }
   }
 });
-
-console.log(`${TAG} initialized`);

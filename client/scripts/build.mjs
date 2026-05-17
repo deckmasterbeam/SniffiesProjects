@@ -20,7 +20,7 @@ const tsEntries = [
   "src/content/sniffies-profile-id.ts",
   "src/popup/popup.ts",
   "src/options/options.ts",
-  "src/favorites/favorites.ts",
+  "src/settings/settings.ts",
 ];
 
 const staticAssets = [
@@ -30,8 +30,8 @@ const staticAssets = [
   "src/options/options.html",
   "src/options/options.css",
   "src/content/content.css",
-  "src/favorites/favorites.html",
-  "src/favorites/favorites.css",
+  "src/settings/settings.html",
+  "src/settings/settings.css",
 ];
 
 const copyAssets = async () => {
@@ -42,7 +42,16 @@ const copyAssets = async () => {
     }
     const to = join(distDir, rel);
     await mkdir(dirname(to), { recursive: true });
-    await cp(from, to);
+
+    // Patch version in manifest.json when EXTENSION_VERSION is set.
+    if (rel === "manifest.json" && process.env.EXTENSION_VERSION) {
+      const raw = await readFile(from, "utf8");
+      const manifest = JSON.parse(raw);
+      manifest.version = process.env.EXTENSION_VERSION;
+      await writeFile(to, JSON.stringify(manifest, null, 2) + "\n");
+    } else {
+      await cp(from, to);
+    }
   }
 
   const iconsDir = join(root, "icons");
@@ -65,8 +74,10 @@ const buildOptions = {
   sourcemap: true,
   logLevel: "info",
   define: {
-    __NOTIFY_ENDPOINT__: JSON.stringify(process.env.NOTIFY_ENDPOINT ?? ""),
-    __NOTIFY_SECRET__: JSON.stringify(process.env.NOTIFY_SECRET ?? ""),
+    __SERVER_BASE__: JSON.stringify(process.env.SERVER_BASE ?? ""),
+    __CLIENT_SECRET__: JSON.stringify(process.env.CLIENT_SECRET ?? ""),
+    __DEBUG__: String(process.env.DEBUG === "true"),
+    __NOTIFICATIONS_ENABLED__: String(process.env.NOTIFICATIONS_ENABLED !== "false"),
   },
 };
 

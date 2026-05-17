@@ -1,75 +1,84 @@
 // Background service worker for the watcher extension.
-// Receives NOTIFY_FAVORITE_AWAKE from content scripts and sends SMS notifications.
+// Fetches watched user IDs from the server, then sends SMS notifications
+// when those users come online.
 
-declare const __NOTIFY_ENDPOINT__: string;
-declare const __NOTIFY_SECRET__: string;
+declare const __SERVER_BASE__: string;
+declare const __WATCHER_SECRET__: string;
 
 import {
-  getFavorites,
-  getNotify,
   getNotifyTimestamp,
   setNotifyTimestamp,
   clearNotifyTimestamp,
 } from "../shared/settings.js";
 
-interface NotifyResult {
-  ok: boolean;
-  sid?: string;
-  error?: string;
-}
-
 const DEBOUNCE_MS = 15 * 60 * 1000;
-const MSG_AWAKE = (userId: string) => `Sniffies: favorited cruiser ${userId} is online.`;
+const WATCHED_USERS_REFRESH_MS = 5 * 60 * 1000;
 
-const sendNotify = async (message: string): Promise<NotifyResult> => {
-  const { phone, endpoint, secret } = await getNotify();
-  const resolvedEndpoint = endpoint || __NOTIFY_ENDPOINT__;
-  const resolvedSecret = secret || __NOTIFY_SECRET__;
-  if (!phone || !resolvedEndpoint || !resolvedSecret) {
+let watchedUserIds = new Set<string>();
+let lastWatchedFetch = 0;
+
+const fetchWatchedUsers = async (): Promise<void> => {
+  if (!__SERVER_BASE__ || !__WATCHER_SECRET__) {
+    return;
+  }
+  try {
+    const res = await fetch(`${__SERVER_BASE__}/api/watched-users`, {
+      headers: { Authorization: `Bearer ${__WATCHER_SECRET__}` },
+    });
+    if (!res.ok) {
+      console.warn("[bg] watched-users returned", res.status);
+      return;
+    }
+    const data = (await res.json()) as { ok: boolean; userIds: string[] };
+    watchedUserIds = new Set(data.userIds ?? []);
+    lastWatchedFetch = Date.now();
+    console.log("[bg] watching", watchedUserIds.size, "users");
+  } catch (err) {
+    console.error("[bg] fetchWatchedUsers failed", err);
+  }
+};
+
+const sendNotify = async (userId: string): Promise<{ ok: boolean; error?: string }> => {
+  if (!__SERVER_BASE__ || !__WATCHER_SECRET__) {
     return { ok: false, error: "notify_not_configured" };
   }
-
-  let response: Response;
   try {
-    response = await fetch(resolvedEndpoint, {
+    const res = await fetch(`${__SERVER_BASE__}/api/notify`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${resolvedSecret}`,
+        Authorization: `Bearer ${__WATCHER_SECRET__}`,
       },
-      body: JSON.stringify({ phone, message }),
+      body: JSON.stringify({ userId }),
     });
+    const body = (await res.json()) as { ok?: boolean; error?: string };
+    if (!res.ok || !body.ok) {
+      return { ok: false, error: body.error ?? `http_${res.status}` };
+    }
+    return { ok: true };
   } catch (err) {
-    const error = err instanceof Error ? err.message : String(err);
-    return { ok: false, error };
+    return { ok: false, error: err instanceof Error ? err.message : String(err) };
   }
-
-  let body: { ok?: boolean; sid?: string; error?: string; detail?: string };
-  try {
-    body = (await response.json()) as typeof body;
-  } catch {
-    return { ok: false, error: `non_json_response_${response.status}` };
-  }
-
-  if (!response.ok || !body.ok) {
-    return { ok: false, error: body.error ?? `http_${response.status}` };
-  }
-  return { ok: true, sid: body.sid };
 };
 
-const handleFavoriteAwake = async (userId: string): Promise<NotifyResult> => {
-  const favorites = await getFavorites();
-  if (!Object.prototype.hasOwnProperty.call(favorites, userId)) {
-    return { ok: false, error: "not_favorited" };
-  }
+const handleFavoriteAwake = async (userId: string): Promise<{ ok: boolean; error?: string }> => {
   const now = Date.now();
+
+  if (now - lastWatchedFetch > WATCHED_USERS_REFRESH_MS) {
+    await fetchWatchedUsers();
+  }
+
+  if (!watchedUserIds.has(userId)) {
+    return { ok: false, error: "not_watched" };
+  }
+
   const last = await getNotifyTimestamp(userId);
   if (now - last < DEBOUNCE_MS) {
     return { ok: false, error: "debounced" };
   }
   await setNotifyTimestamp(userId, now);
 
-  const result = await sendNotify(MSG_AWAKE(userId));
+  const result = await sendNotify(userId);
   if (!result.ok) {
     await clearNotifyTimestamp(userId);
   }
@@ -79,13 +88,14 @@ const handleFavoriteAwake = async (userId: string): Promise<NotifyResult> => {
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message?.type === "NOTIFY_FAVORITE_AWAKE" && typeof message.userId === "string") {
     handleFavoriteAwake(message.userId).then((result) => {
-      if (!result.ok && result.error !== "debounced") {
+      if (!result.ok && result.error !== "debounced" && result.error !== "not_watched") {
         console.warn("[bg] notify failed", result.error, message.userId);
       }
       sendResponse(result);
     });
     return true;
   }
-
   return false;
 });
+
+void fetchWatchedUsers();

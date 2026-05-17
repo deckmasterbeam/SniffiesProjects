@@ -51,7 +51,7 @@ Rebuild (`yarn build` or keep `yarn watch` running), then click the **reload**
 (↻) button on the extension's card in `chrome://extensions`. For content-script
 changes, also reload the affected tabs.
 
-## SMS notifications (Twilio backend)
+## SMS notifications
 
 The extension can text you when a favorited cruiser comes online. SMS goes
 through a tiny Vercel API that plugs into Textbelt (https://docs.textbelt.com/)
@@ -66,3 +66,27 @@ through a tiny Vercel API that plugs into Textbelt (https://docs.textbelt.com/)
    - watch polling and notify on a favorite showing up
 
 5. Create a cache of images for favorited accouts?
+
+6. I want to be able to click on profiles outside the boundary without going to the payment screen
+   - attribute: data-within-radius T/F (prefer to use this)
+   - Inside: marker-level-6, Outside: marker-level-5
+   - Make this toggleable in the control panel
+   - When true, clicking on a profile outside of the radius will open that profile in a new tab
+
+7. Split the code between a consumer client extension that users will actually click on and a watcher extension that will just watch for online activity
+
+8. Safari extension
+   - mostly to plug into ios safari
+
+9. Chrome mobile extension
+
+10. Privacy policy
+
+11. Map based location selection
+
+- review what kind of data is saved on the client, watcher
+- make the tables in the schema, think I need to remake
+- do manual test of favoriting path
+- do manual test of watcher running, getting favorites, triggering a notification
+- can some of the event watchers be unified? Worried if the extension is part of what causes massive chrome consumption
+- look into how I can use bookmarks in safari to load a content script
