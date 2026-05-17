@@ -4,6 +4,10 @@
   "version": "0.1.0",
   "description": "Watches Sniffies WebSocket events and sends SMS notifications for favorited users.",
   "permissions": ["storage"],
+  "action": {
+    "default_popup": "src/popup/popup.html",
+    "default_title": "Sniffies Watcher"
+  },
   "host_permissions": ["*://sniffies.com/*", "*://*.sniffies.com/*"],
   "icons": {
     "16": "icons/icon16.png",
@@ -18,7 +22,7 @@
   "content_scripts": [
     {
       "matches": ["*://sniffies.com/*", "*://*.sniffies.com/*"],
-      "js": ["src/content/sniffies-ws-hook.js"],
+      "js": ["src/content/sniffies-ws-hook.js", "src/content/sniffies-captcha-hook.js", "src/content/sniffies-auth-hook.js"],
       "run_at": "document_start",
       "world": "MAIN",
       "all_frames": true

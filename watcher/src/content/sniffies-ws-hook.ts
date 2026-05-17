@@ -10,6 +10,22 @@ const DEBUG = true; // Set to false to disable logging in this script.
     console.log(`${TAG} Initializing WebSocket hook for`, TARGET_HOST);
   }
 
+  interface HookSettings {
+    wsUserIdOverride: string;
+    wsLatOverride: string;
+    wsLngOverride: string;
+  }
+
+  let settings: HookSettings = { wsUserIdOverride: "", wsLatOverride: "", wsLngOverride: "" };
+
+  window.addEventListener("message", (event: MessageEvent) => {
+    if (event.source !== window) return;
+    const msg = event.data as Record<string, unknown> | null;
+    if (msg?.source === "sniffies-hook-settings") {
+      settings = msg.settings as HookSettings;
+    }
+  });
+
   type PatchedCtor = typeof WebSocket & { __sniffiesPatched?: boolean };
 
   const NativeWebSocket = window.WebSocket as PatchedCtor;
@@ -26,16 +42,30 @@ const DEBUG = true; // Set to false to disable logging in this script.
     }
   };
 
+  const rewriteUrl = (url: string | URL): string | URL => {
+    try {
+      const parsed = new URL(url instanceof URL ? url.href : url);
+      if (parsed.host !== TARGET_HOST) return url;
+      if (settings.wsUserIdOverride) parsed.searchParams.set("userId", settings.wsUserIdOverride);
+      if (settings.wsLatOverride) parsed.searchParams.set("lat", settings.wsLatOverride);
+      if (settings.wsLngOverride) parsed.searchParams.set("lng", settings.wsLngOverride);
+      return parsed.toString();
+    } catch {
+      return url;
+    }
+  };
+
   const PatchedWebSocket = function (
     this: WebSocket,
     url: string | URL,
     protocols?: string | string[],
   ): WebSocket {
+    const rewritten = rewriteUrl(url);
     const socket =
-      protocols === undefined ? new NativeWebSocket(url) : new NativeWebSocket(url, protocols);
+      protocols === undefined ? new NativeWebSocket(rewritten) : new NativeWebSocket(rewritten, protocols);
 
     if (isTargetUrl(url)) {
-      console.log(`${TAG} open`, url);
+      console.log(`${TAG} open`, rewritten);
 
       socket.addEventListener("message", (event: MessageEvent) => {
         if (DEBUG) {

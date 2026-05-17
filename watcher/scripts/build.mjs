@@ -15,9 +15,12 @@ const tsEntries = [
   "src/background/background.ts",
   "src/content/sniffies-ws-hook.ts",
   "src/content/sniffies-events.ts",
+  "src/content/sniffies-captcha-hook.ts",
+  "src/content/sniffies-auth-hook.ts",
+  "src/popup/popup.ts",
 ];
 
-const staticAssets = ["manifest.json"];
+const staticAssets = ["manifest.json", "src/popup/popup.html"];
 
 const copyAssets = async () => {
   for (const rel of staticAssets) {

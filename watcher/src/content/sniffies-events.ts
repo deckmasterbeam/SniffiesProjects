@@ -1,4 +1,19 @@
+import { getHookSettings, DEFAULT_HOOK_SETTINGS, type HookSettings } from "../shared/settings.js";
+
 const TAG = "[sniffies-events]";
+
+const broadcastHookSettings = async (): Promise<void> => {
+  let settings: HookSettings;
+  try {
+    settings = await getHookSettings();
+  } catch {
+    settings = DEFAULT_HOOK_SETTINGS;
+  }
+  window.postMessage({ source: "sniffies-hook-settings", settings }, "*");
+  console.log(TAG, "hook settings broadcast", settings);
+};
+
+void broadcastHookSettings();
 
 interface ForwardedMessage {
   source: "sniffies-ws-hook";

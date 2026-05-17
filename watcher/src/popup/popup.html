@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Sniffies Watcher</title>
+    <style>
+      body { font-family: sans-serif; width: 280px; padding: 12px; margin: 0; font-size: 13px; }
+      h2 { margin: 0 0 12px; font-size: 14px; }
+      .section { margin-bottom: 12px; }
+      .section-title { font-weight: bold; margin-bottom: 6px; color: #555; text-transform: uppercase; font-size: 11px; }
+      .row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+      .row label { flex: 1; }
+      input[type="text"] { width: 100%; box-sizing: border-box; padding: 4px 6px; font-size: 12px; margin-top: 2px; border: 1px solid #ccc; border-radius: 3px; }
+      .field { margin-bottom: 6px; }
+      .field label { display: block; color: #555; margin-bottom: 2px; }
+      button { margin-top: 10px; width: 100%; padding: 6px; font-size: 13px; cursor: pointer; }
+      .status { margin-top: 6px; font-size: 11px; color: green; text-align: center; display: none; }
+      hr { border: none; border-top: 1px solid #eee; margin: 10px 0; }
+    </style>
+  </head>
+  <body>
+    <h2>Sniffies Watcher</h2>
+
+    <div class="section">
+      <div class="section-title">Hooks</div>
+      <div class="row">
+        <label for="captchaHook">Captcha hook</label>
+        <input type="checkbox" id="captchaHook" />
+      </div>
+      <div class="row">
+        <label for="authHook">Auth hook (post-auth + isHuman)</label>
+        <input type="checkbox" id="authHook" />
+      </div>
+    </div>
+
+    <hr />
+
+    <div class="section">
+      <div class="section-title">WebSocket overrides</div>
+      <div class="field">
+        <label for="wsUserIdOverride">User ID (blank = no override)</label>
+        <input type="text" id="wsUserIdOverride" placeholder="e.g. 6844d7a9257877cf9eaf821f" />
+      </div>
+      <div class="field">
+        <label for="wsLatOverride">Latitude (blank = no override)</label>
+        <input type="text" id="wsLatOverride" placeholder="e.g. 47.6062" />
+      </div>
+      <div class="field">
+        <label for="wsLngOverride">Longitude (blank = no override)</label>
+        <input type="text" id="wsLngOverride" placeholder="e.g. -122.3321" />
+      </div>
+    </div>
+
+    <button id="save">Save</button>
+    <div class="status" id="status">Saved — reload the page to apply</div>
+
+    <script src="popup.js" type="module"></script>
+  </body>
+</html>
