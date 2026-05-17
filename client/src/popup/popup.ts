@@ -6,25 +6,29 @@ import {
   type GeoOverride,
 } from "../shared/settings.js";
 
+const randomAccuracy = (): number => Math.round((5 + Math.random() * 20) * 10) / 10;
+
 const openSettingsBtn = document.getElementById("open-settings");
 const geoDetails = document.querySelector<HTMLDetailsElement>("details.collapsible");
 
-const geoEnabled = document.getElementById("geo-enabled");
-const geoLat = document.getElementById("geo-lat");
-const geoLng = document.getElementById("geo-lng");
-const geoAccuracy = document.getElementById("geo-accuracy");
+const geoEnabled = document.getElementById("geo-enabled") as HTMLInputElement;
+const geoLat = document.getElementById("geo-lat") as HTMLInputElement;
+const geoLng = document.getElementById("geo-lng") as HTMLInputElement;
+const geoAccuracy = document.getElementById("geo-accuracy") as HTMLInputElement;
 const geoFillCurrent = document.getElementById("geo-fill-current");
 const geoSave = document.getElementById("geo-save");
 const geoStatus = document.getElementById("geo-status");
 
 const init = async (): Promise<void> => {
   const settings = await getLocalSettings();
-  if (geoDetails) geoDetails.open = settings.geoSectionOpen;
+  if (geoDetails) {
+    geoDetails.open = settings.geoSectionOpen;
+  }
   const geo = { ...DEFAULT_GEO_OVERRIDE, ...settings.geoOverride };
-  if (geoEnabled instanceof HTMLInputElement) geoEnabled.checked = geo.enabled;
-  if (geoLat instanceof HTMLInputElement) geoLat.value = String(geo.latitude);
-  if (geoLng instanceof HTMLInputElement) geoLng.value = String(geo.longitude);
-  if (geoAccuracy instanceof HTMLInputElement) geoAccuracy.value = String(geo.accuracy);
+  geoEnabled.checked = geo.enabled;
+  geoLat.value = String(geo.latitude);
+  geoLng.value = String(geo.longitude);
+  geoAccuracy.value = String(geo.accuracy);
 };
 
 geoDetails?.addEventListener("toggle", () => {
@@ -39,30 +43,49 @@ openSettingsBtn?.addEventListener("click", () => {
 });
 
 const readGeoForm = (): GeoOverride => ({
-  enabled: geoEnabled instanceof HTMLInputElement ? geoEnabled.checked : false,
-  latitude: geoLat instanceof HTMLInputElement ? parseFloat(geoLat.value) || 0 : 0,
-  longitude: geoLng instanceof HTMLInputElement ? parseFloat(geoLng.value) || 0 : 0,
-  accuracy: geoAccuracy instanceof HTMLInputElement ? parseFloat(geoAccuracy.value) || 10 : 10,
+  enabled: geoEnabled.checked,
+  latitude: parseFloat(geoLat.value) || 0,
+  longitude: parseFloat(geoLng.value) || 0,
+  accuracy: parseFloat(geoAccuracy.value) || 10,
 });
 
+const reRandomizeAccuracy = (): void => {
+  geoAccuracy.value = String(randomAccuracy());
+};
+
+geoEnabled.addEventListener("change", reRandomizeAccuracy);
+
+for (const field of [geoLat, geoLng]) {
+  field.addEventListener("blur", reRandomizeAccuracy);
+}
+
 geoFillCurrent?.addEventListener("click", () => {
-  if (geoStatus) geoStatus.textContent = "Getting location...";
+  if (geoStatus) {
+    geoStatus.textContent = "Getting location...";
+  }
   navigator.geolocation.getCurrentPosition(
     (pos) => {
-      if (geoLat instanceof HTMLInputElement) geoLat.value = String(pos.coords.latitude);
-      if (geoLng instanceof HTMLInputElement) geoLng.value = String(pos.coords.longitude);
-      if (geoStatus) geoStatus.textContent = "";
+      geoLat.value = String(pos.coords.latitude);
+      geoLng.value = String(pos.coords.longitude);
+      reRandomizeAccuracy();
+      if (geoStatus) {
+        geoStatus.textContent = "";
+      }
     },
     (error) => {
       console.log("Failed to get current position", error);
-      if (geoStatus) geoStatus.textContent = "Could not get location.";
+      if (geoStatus) {
+        geoStatus.textContent = "Could not get location.";
+      }
     },
   );
 });
 
 geoSave?.addEventListener("click", async () => {
   await setGeoOverride(readGeoForm());
-  if (geoStatus) geoStatus.textContent = "Saved. Reload sniffies.com to apply.";
+  if (geoStatus) {
+    geoStatus.textContent = "Saved. Reload sniffies.com to apply.";
+  }
 });
 
 void init();

@@ -42,7 +42,16 @@ const copyAssets = async () => {
     }
     const to = join(distDir, rel);
     await mkdir(dirname(to), { recursive: true });
-    await cp(from, to);
+
+    // Patch version in manifest.json when EXTENSION_VERSION is set.
+    if (rel === "manifest.json" && process.env.EXTENSION_VERSION) {
+      const raw = await readFile(from, "utf8");
+      const manifest = JSON.parse(raw);
+      manifest.version = process.env.EXTENSION_VERSION;
+      await writeFile(to, JSON.stringify(manifest, null, 2) + "\n");
+    } else {
+      await cp(from, to);
+    }
   }
 
   const iconsDir = join(root, "icons");
@@ -67,11 +76,8 @@ const buildOptions = {
   define: {
     __SERVER_BASE__: JSON.stringify(process.env.SERVER_BASE ?? ""),
     __CLIENT_SECRET__: JSON.stringify(process.env.CLIENT_SECRET ?? ""),
-    __SAVE_NUMBER_ENDPOINT__: JSON.stringify(
-      process.env.SAVE_NUMBER_ENDPOINT ??
-        (process.env.SERVER_BASE ? `${process.env.SERVER_BASE}/api/save-number` : ""),
-    ),
     __DEBUG__: String(process.env.DEBUG === "true"),
+    __NOTIFICATIONS_ENABLED__: String(process.env.NOTIFICATIONS_ENABLED !== "false"),
   },
 };
 

@@ -22,10 +22,14 @@ const handler = async (req: VercelRequest, res: VercelResponse): Promise<void> =
     return;
   }
 
-  if (!requireClientAuth(req, res)) return;
+  if (!requireClientAuth(req, res)) {
+    return;
+  }
 
   const sql = requireDb(res);
-  if (!sql) return;
+  if (!sql) {
+    return;
+  }
 
   if (req.method === "GET") {
     const guid = typeof req.query.guid === "string" ? req.query.guid.trim() : "";

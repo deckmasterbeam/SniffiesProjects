@@ -20,7 +20,9 @@ const handler = async (req: VercelRequest, res: VercelResponse): Promise<void> =
     return;
   }
 
-  if (!requireClientAuth(req, res)) return;
+  if (!requireClientAuth(req, res)) {
+    return;
+  }
 
   const textbeltKey = process.env.TEXTBELT_KEY;
   if (!textbeltKey) {
@@ -37,7 +39,9 @@ const handler = async (req: VercelRequest, res: VercelResponse): Promise<void> =
   }
 
   const sql = requireDb(res);
-  if (!sql) return;
+  if (!sql) {
+    return;
+  }
 
   try {
     await sql`

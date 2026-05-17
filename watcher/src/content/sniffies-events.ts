@@ -1,7 +1,3 @@
-declare const __SEEN_EVENTS_LOGGING__: boolean;
-
-import { recordSeenEvent } from "../shared/settings.js";
-
 const TAG = "[sniffies-events]";
 
 interface ForwardedMessage {
@@ -23,7 +19,9 @@ interface UserAwakeEvent {
 }
 
 const isUserAwakeEvent = (value: unknown): value is UserAwakeEvent => {
-  if (typeof value !== "object" || value === null) return false;
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
   const v = value as Record<string, unknown>;
   return v.eventName === "UserAwake" && typeof v.data === "string";
 };
@@ -34,9 +32,13 @@ interface UserJoinedEvent {
 }
 
 const isUserJoinedEvent = (value: unknown): value is UserJoinedEvent => {
-  if (typeof value !== "object" || value === null) return false;
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
   const v = value as Record<string, unknown>;
-  if (v.eventName !== "userJoined") return false;
+  if (v.eventName !== "userJoined") {
+    return false;
+  }
   const d = v.data;
   return (
     typeof d === "object" && d !== null && typeof (d as Record<string, unknown>)._id === "string"
@@ -59,18 +61,13 @@ const handleParsed = (parsed: unknown): void => {
 };
 
 window.addEventListener("message", (event: MessageEvent) => {
-  if (event.source !== window) return;
-  if (!isForwardedMessage(event.data)) return;
-
-  const { parsed } = event.data;
-  if (__SEEN_EVENTS_LOGGING__ && typeof parsed === "object" && parsed !== null) {
-    const eventName = (parsed as Record<string, unknown>).eventName;
-    if (typeof eventName === "string") {
-      void recordSeenEvent(eventName, parsed);
-    }
+  if (event.source !== window) {
+    return;
   }
-
-  handleParsed(parsed);
+  if (!isForwardedMessage(event.data)) {
+    return;
+  }
+  handleParsed(event.data.parsed);
 });
 
 console.log(`${TAG} initialized`);

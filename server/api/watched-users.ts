@@ -14,10 +14,14 @@ const handler = async (req: VercelRequest, res: VercelResponse): Promise<void> =
     return;
   }
 
-  if (!requireWatcherAuth(req, res)) return;
+  if (!requireWatcherAuth(req, res)) {
+    return;
+  }
 
   const sql = requireDb(res);
-  if (!sql) return;
+  if (!sql) {
+    return;
+  }
 
   try {
     const rows = await sql`SELECT DISTINCT user_id FROM favorites`;

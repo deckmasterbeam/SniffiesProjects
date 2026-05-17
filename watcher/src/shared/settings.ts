@@ -1,29 +1,19 @@
 export const SETTINGS_KEYS = {
-  seenEvents: "seenEvents",
+  // TODO: works for a single watcher to track notify timestamps, but if we want to support multiple watchers we need to store this info on and retrieve from the server
   notifyTimestamps: "notifyTimestamps",
 } as const;
 
 interface WatcherLocalSettings {
-  seenEvents: Record<string, unknown>;
   notifyTimestamps: Record<string, number>;
 }
 
 const DEFAULT_LOCAL_SETTINGS: WatcherLocalSettings = {
-  seenEvents: {},
   notifyTimestamps: {},
 };
 
 const getLocalSettings = async (): Promise<WatcherLocalSettings> => {
   const stored = await chrome.storage.local.get(DEFAULT_LOCAL_SETTINGS);
   return { ...DEFAULT_LOCAL_SETTINGS, ...stored } as WatcherLocalSettings;
-};
-
-export const recordSeenEvent = async (eventName: string, data: unknown): Promise<void> => {
-  const { seenEvents } = await getLocalSettings();
-  if (Object.prototype.hasOwnProperty.call(seenEvents, eventName)) return;
-  await chrome.storage.local.set({
-    [SETTINGS_KEYS.seenEvents]: { ...seenEvents, [eventName]: data },
-  });
 };
 
 export const getNotifyTimestamp = async (userId: string): Promise<number> => {

@@ -1,8 +1,17 @@
-declare const __SAVE_NUMBER_ENDPOINT__: string;
 declare const __SERVER_BASE__: string;
 declare const __CLIENT_SECRET__: string;
+declare const __NOTIFICATIONS_ENABLED__: boolean;
 
 import { PHONE_E164_REGEX, SETTINGS_KEYS, getLocalSettings } from "../shared/settings.js";
+
+if (!__NOTIFICATIONS_ENABLED__) {
+  for (const sel of [".phone-section", ".recovery-section", ".favorites-section"]) {
+    const el = document.querySelector<HTMLElement>(sel);
+    if (el) {
+      el.style.display = "none";
+    }
+  }
+}
 
 const clientHeaders = (extra?: Record<string, string>): Record<string, string> => ({
   "Content-Type": "application/json",
@@ -12,29 +21,29 @@ const clientHeaders = (extra?: Record<string, string>): Record<string, string> =
 
 // ── Phone ─────────────────────────────────────────────────────────────────────
 
-const phoneInput = document.getElementById("phone-input");
-const phoneSaveBtn = document.getElementById("phone-save");
+const phoneInput = document.getElementById("phone-input") as HTMLInputElement;
+const phoneSaveBtn = document.getElementById("phone-save") as HTMLButtonElement;
 const phoneStatus = document.getElementById("phone-status");
 
 const setPhoneStatus = (text: string): void => {
-  if (phoneStatus) phoneStatus.textContent = text;
+  if (phoneStatus) {
+    phoneStatus.textContent = text;
+  }
 };
 
-phoneSaveBtn?.addEventListener("click", async () => {
-  const phone = phoneInput instanceof HTMLInputElement ? phoneInput.value.trim() : "";
+phoneSaveBtn.addEventListener("click", async () => {
+  const phone = phoneInput.value.trim();
   if (!PHONE_E164_REGEX.test(phone)) {
     setPhoneStatus("Must be E.164 format, e.g. +15551234567");
-    if (phoneInput instanceof HTMLInputElement) {
-      phoneInput.classList.add("invalid");
-      phoneInput.focus();
-    }
+    phoneInput.classList.add("invalid");
+    phoneInput.focus();
     return;
   }
-  if (phoneInput instanceof HTMLInputElement) phoneInput.classList.remove("invalid");
-  if (phoneSaveBtn instanceof HTMLButtonElement) phoneSaveBtn.disabled = true;
+  phoneInput.classList.remove("invalid");
+  phoneSaveBtn.disabled = true;
   setPhoneStatus("Saving…");
   try {
-    const res = await fetch(__SAVE_NUMBER_ENDPOINT__, {
+    const res = await fetch(`${__SERVER_BASE__}/api/save-number`, {
       method: "POST",
       headers: clientHeaders(),
       body: JSON.stringify({ phone }),
@@ -54,32 +63,32 @@ phoneSaveBtn?.addEventListener("click", async () => {
   } catch (err) {
     setPhoneStatus(`Error: ${err instanceof Error ? err.message : String(err)}`);
   } finally {
-    if (phoneSaveBtn instanceof HTMLButtonElement) phoneSaveBtn.disabled = false;
+    phoneSaveBtn.disabled = false;
   }
 });
 
-if (phoneInput instanceof HTMLInputElement) {
-  phoneInput.addEventListener("input", () => phoneInput.classList.remove("invalid"));
-}
+phoneInput.addEventListener("input", () => phoneInput.classList.remove("invalid"));
 
 // ── Recovery ──────────────────────────────────────────────────────────────────
 
-const sendGuidBtn = document.getElementById("send-guid-btn");
+const sendGuidBtn = document.getElementById("send-guid-btn") as HTMLButtonElement;
 const recoveryStatus = document.getElementById("recovery-status");
-const codeInput = document.getElementById("code-input");
-const codeSaveBtn = document.getElementById("code-save");
+const codeInput = document.getElementById("code-input") as HTMLInputElement;
+const codeSaveBtn = document.getElementById("code-save") as HTMLButtonElement;
 
 const setRecoveryStatus = (text: string): void => {
-  if (recoveryStatus) recoveryStatus.textContent = text;
+  if (recoveryStatus) {
+    recoveryStatus.textContent = text;
+  }
 };
 
-sendGuidBtn?.addEventListener("click", async () => {
-  const phone = phoneInput instanceof HTMLInputElement ? phoneInput.value.trim() : "";
+sendGuidBtn.addEventListener("click", async () => {
+  const phone = phoneInput.value.trim();
   if (!PHONE_E164_REGEX.test(phone)) {
     setRecoveryStatus("Enter your phone number above first.");
     return;
   }
-  if (sendGuidBtn instanceof HTMLButtonElement) sendGuidBtn.disabled = true;
+  sendGuidBtn.disabled = true;
   setRecoveryStatus("Sending…");
   try {
     const res = await fetch(`${__SERVER_BASE__}/api/send-guid`, {
@@ -96,12 +105,12 @@ sendGuidBtn?.addEventListener("click", async () => {
   } catch (err) {
     setRecoveryStatus(`Error: ${err instanceof Error ? err.message : String(err)}`);
   } finally {
-    if (sendGuidBtn instanceof HTMLButtonElement) sendGuidBtn.disabled = false;
+    sendGuidBtn.disabled = false;
   }
 });
 
-codeSaveBtn?.addEventListener("click", async () => {
-  const code = codeInput instanceof HTMLInputElement ? codeInput.value.trim() : "";
+codeSaveBtn.addEventListener("click", async () => {
+  const code = codeInput.value.trim();
   if (!code) {
     setRecoveryStatus("Paste your code first.");
     return;
@@ -115,7 +124,7 @@ codeSaveBtn?.addEventListener("click", async () => {
 
 const grid = document.getElementById("grid");
 const summary = document.getElementById("summary");
-const template = document.getElementById("card-template");
+const template = document.getElementById("card-template") as HTMLTemplateElement;
 
 interface ApiFavoriteEntry {
   user_id: string;
@@ -132,9 +141,6 @@ const formatDate = (dateStr: string): string => {
 };
 
 const renderCard = (entry: ApiFavoriteEntry, guid: string): HTMLElement => {
-  if (!(template instanceof HTMLTemplateElement)) {
-    throw new Error("card template missing");
-  }
   const fragment = template.content.cloneNode(true) as DocumentFragment;
   const card = fragment.querySelector(".card") as HTMLElement;
 
@@ -148,10 +154,14 @@ const renderCard = (entry: ApiFavoriteEntry, guid: string): HTMLElement => {
   }
 
   const idEl = card.querySelector<HTMLElement>('[data-role="user-id"]');
-  if (idEl) idEl.textContent = entry.user_id;
+  if (idEl) {
+    idEl.textContent = entry.user_id;
+  }
 
   const dateEl = card.querySelector<HTMLElement>('[data-role="favorited-at"]');
-  if (dateEl) dateEl.textContent = `Favorited ${formatDate(entry.favorited_at)}`;
+  if (dateEl) {
+    dateEl.textContent = `Favorited ${formatDate(entry.favorited_at)}`;
+  }
 
   const unfavoriteBtn = card.querySelector<HTMLButtonElement>('[data-role="unfavorite"]');
   if (unfavoriteBtn) {
@@ -168,7 +178,9 @@ const renderCard = (entry: ApiFavoriteEntry, guid: string): HTMLElement => {
 };
 
 const render = (entries: ApiFavoriteEntry[], guid: string): void => {
-  if (!grid) return;
+  if (!grid) {
+    return;
+  }
   grid.replaceChildren();
 
   if (summary) {
@@ -192,16 +204,22 @@ const render = (entries: ApiFavoriteEntry[], guid: string): void => {
 };
 
 const loadFavorites = async (guid: string): Promise<void> => {
-  if (summary) summary.textContent = "Loading...";
+  if (summary) {
+    summary.textContent = "Loading...";
+  }
   try {
     const res = await fetch(`${__SERVER_BASE__}/api/favorites?guid=${encodeURIComponent(guid)}`, {
       headers: clientHeaders(),
     });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}`);
+    }
     const data = (await res.json()) as { ok: boolean; favorites: ApiFavoriteEntry[] };
     render(data.favorites ?? [], guid);
   } catch (err) {
-    if (summary) summary.textContent = "Couldn't load favorites.";
+    if (summary) {
+      summary.textContent = "Couldn't load favorites.";
+    }
     if (grid) {
       grid.replaceChildren();
       const empty = document.createElement("div");
@@ -213,11 +231,15 @@ const loadFavorites = async (guid: string): Promise<void> => {
 };
 
 void getLocalSettings().then(({ phone, guid }) => {
-  if (phoneInput instanceof HTMLInputElement) phoneInput.value = phone;
+  phoneInput.value = phone;
   if (guid) {
     void loadFavorites(guid);
   } else {
-    if (summary) summary.textContent = "Save your phone number to load favorites.";
-    if (grid) grid.replaceChildren();
+    if (summary) {
+      summary.textContent = "Save your phone number to load favorites.";
+    }
+    if (grid) {
+      grid.replaceChildren();
+    }
   }
 });

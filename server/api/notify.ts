@@ -20,7 +20,9 @@ const handler = async (req: VercelRequest, res: VercelResponse): Promise<void> =
     return;
   }
 
-  if (!requireWatcherAuth(req, res)) return;
+  if (!requireWatcherAuth(req, res)) {
+    return;
+  }
 
   const body = (req.body ?? {}) as NotifyBody;
   const userId = typeof body.userId === "string" ? body.userId.trim() : "";
@@ -36,7 +38,9 @@ const handler = async (req: VercelRequest, res: VercelResponse): Promise<void> =
   }
 
   const sql = requireDb(res);
-  if (!sql) return;
+  if (!sql) {
+    return;
+  }
 
   const dailyLimit = parseInt(process.env.DAILY_SMS_LIMIT ?? String(DAILY_LIMIT_DEFAULT), 10);
   const message = `Sniffies: a favorited cruiser is online.`;

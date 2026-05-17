@@ -5,6 +5,7 @@
   "description": "Chrome extension exploring Sniffies plug-in ideas.",
   "scripts": {
     "build": "node --env-file=.env scripts/build.mjs",
+    "build:prod": "node scripts/build-prod.mjs",
     "watch": "node --env-file=.env scripts/build.mjs --watch",
     "icons": "node scripts/generate-icons.mjs",
     "typecheck": "tsc --noEmit",

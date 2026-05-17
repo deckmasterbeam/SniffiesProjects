@@ -25,10 +25,10 @@ const savedEnv: Record<string, string | undefined> = {};
 function setupSql(subscribers: { phone: string }[], priorityRows: unknown[] = [], count = 0) {
   const sqlFn = vi
     .fn()
-    .mockResolvedValueOnce(subscribers)       // SELECT subscribers JOIN
-    .mockResolvedValueOnce(priorityRows)      // SELECT priority_numbers
-    .mockResolvedValueOnce([{ count }])       // SELECT COUNT notify_log
-    .mockResolvedValue([]);                   // INSERT notify_log (+ any extras)
+    .mockResolvedValueOnce(subscribers) // SELECT subscribers JOIN
+    .mockResolvedValueOnce(priorityRows) // SELECT priority_numbers
+    .mockResolvedValueOnce([{ count }]) // SELECT COUNT notify_log
+    .mockResolvedValue([]); // INSERT notify_log (+ any extras)
   mockNeon.mockReturnValue(sqlFn as unknown as ReturnType<typeof neon>);
   return sqlFn;
 }
@@ -49,8 +49,11 @@ beforeEach(() => {
 afterEach(() => {
   vi.unstubAllGlobals();
   for (const [k, v] of Object.entries(savedEnv)) {
-    if (v === undefined) delete process.env[k];
-    else process.env[k] = v;
+    if (v === undefined) {
+      delete process.env[k];
+    } else {
+      process.env[k] = v;
+    }
   }
 });
 
@@ -59,10 +62,18 @@ async function call(
   envOpts: Record<string, string | undefined> = {},
 ) {
   for (const [k, v] of Object.entries(envOpts)) {
-    if (v === undefined) delete process.env[k];
-    else process.env[k] = v;
+    if (v === undefined) {
+      delete process.env[k];
+    } else {
+      process.env[k] = v;
+    }
   }
-  const req = makeReq({ method: "POST", headers: { authorization: `Bearer ${SECRET}` }, body: { userId: USER_ID }, ...reqOpts });
+  const req = makeReq({
+    method: "POST",
+    headers: { authorization: `Bearer ${SECRET}` },
+    body: { userId: USER_ID },
+    ...reqOpts,
+  });
   const res = makeRes();
   await handler(req, res as unknown as VercelResponse);
   return { status: res._status, body: res._body };
@@ -212,8 +223,12 @@ describe("happy path", () => {
     const sqlFn = vi
       .fn()
       .mockResolvedValueOnce([{ phone: PHONE }, { phone: PHONE_2 }])
-      .mockResolvedValueOnce([]).mockResolvedValueOnce([{ count: 0 }]).mockResolvedValueOnce([])
-      .mockResolvedValueOnce([]).mockResolvedValueOnce([{ count: 0 }]).mockResolvedValue([]);
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([{ count: 0 }])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([{ count: 0 }])
+      .mockResolvedValue([]);
     mockNeon.mockReturnValue(sqlFn as unknown as ReturnType<typeof neon>);
 
     const { status, body } = await call();

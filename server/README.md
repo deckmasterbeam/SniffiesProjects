@@ -35,12 +35,12 @@ Set `SERVER_BASE` in the client and watcher builds to point at the deployed URL 
 
 Run [`schema.sql`](./schema.sql) against your Neon database to create all tables.
 
-| Table                 | Purpose                                               |
-| --------------------- | ----------------------------------------------------- |
-| `phone_registrations` | One row per phone; holds the GUID used as auth token  |
-| `favorites`           | `(guid, user_id)` pairs; one row per favorited user   |
-| `notify_log`          | Record of every SMS sent, used for rate-limiting      |
-| `priority_numbers`    | Phones exempt from the daily SMS limit                |
+| Table                 | Purpose                                              |
+| --------------------- | ---------------------------------------------------- |
+| `phone_registrations` | One row per phone; holds the GUID used as auth token |
+| `favorites`           | `(guid, user_id)` pairs; one row per favorited user  |
+| `notify_log`          | Record of every SMS sent, used for rate-limiting     |
+| `priority_numbers`    | Phones exempt from the daily SMS limit               |
 
 ---
 
@@ -53,21 +53,23 @@ Registers a phone number and returns its GUID. If the phone is already registere
 **Auth:** `Authorization: Bearer <CLIENT_SECRET>`
 
 **Request**
+
 ```json
 { "phone": "+15551234567" }
 ```
 
 **Response**
+
 ```json
 { "ok": true, "guid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" }
 ```
 
 **Errors**
 
-| Status | `error`         | Meaning                      |
-| ------ | --------------- | ---------------------------- |
-| 400    | `invalid_phone` | Not a valid E.164 number     |
-| 500    | `db_error`      | Database failure             |
+| Status | `error`         | Meaning                  |
+| ------ | --------------- | ------------------------ |
+| 400    | `invalid_phone` | Not a valid E.164 number |
+| 500    | `db_error`      | Database failure         |
 
 ---
 
@@ -78,6 +80,7 @@ Returns the favorites list for the given GUID.
 **Auth:** `Authorization: Bearer <CLIENT_SECRET>` (GUID in query param is the ownership credential)
 
 **Response**
+
 ```json
 {
   "ok": true,
@@ -93,10 +96,10 @@ Returns the favorites list for the given GUID.
 
 **Errors**
 
-| Status | `error`         | Meaning                      |
-| ------ | --------------- | ---------------------------- |
-| 400    | `guid_required` | `guid` query param missing   |
-| 500    | `db_error`      | Database failure             |
+| Status | `error`         | Meaning                    |
+| ------ | --------------- | -------------------------- |
+| 400    | `guid_required` | `guid` query param missing |
+| 500    | `db_error`      | Database failure           |
 
 ---
 
@@ -107,6 +110,7 @@ Adds or removes a favorite. Called when the user taps the star on a cruiser's pr
 **Auth:** `Authorization: Bearer <CLIENT_SECRET>` (GUID in body is the ownership credential)
 
 **Request**
+
 ```json
 {
   "guid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
@@ -119,16 +123,17 @@ Adds or removes a favorite. Called when the user taps the star on a cruiser's pr
 Set `"favorite": false` to remove. `profilePicUrl` is optional and only used when adding.
 
 **Response**
+
 ```json
 { "ok": true }
 ```
 
 **Errors**
 
-| Status | `error`                    | Meaning                       |
-| ------ | -------------------------- | ----------------------------- |
-| 400    | `guid_and_userId_required` | Missing required fields       |
-| 500    | `db_error`                 | Database failure              |
+| Status | `error`                    | Meaning                 |
+| ------ | -------------------------- | ----------------------- |
+| 400    | `guid_and_userId_required` | Missing required fields |
+| 500    | `db_error`                 | Database failure        |
 
 ---
 
@@ -139,22 +144,24 @@ Texts the GUID to the registered phone number. Used for the recovery flow when t
 **Auth:** `Authorization: Bearer <CLIENT_SECRET>` (phone ownership is verified by SMS delivery)
 
 **Request**
+
 ```json
 { "phone": "+15551234567" }
 ```
 
 **Response**
+
 ```json
 { "ok": true }
 ```
 
 **Errors**
 
-| Status | `error`                 | Meaning                              |
-| ------ | ----------------------- | ------------------------------------ |
-| 400    | `invalid_phone`         | Not a valid E.164 number             |
-| 404    | `phone_not_registered`  | Phone has no registration record     |
-| 502    | `textbelt_failed`       | Textbelt rejected the send           |
+| Status | `error`                | Meaning                          |
+| ------ | ---------------------- | -------------------------------- |
+| 400    | `invalid_phone`        | Not a valid E.164 number         |
+| 404    | `phone_not_registered` | Phone has no registration record |
+| 502    | `textbelt_failed`      | Textbelt rejected the send       |
 
 ---
 
@@ -165,16 +172,17 @@ Returns the distinct set of all user IDs that at least one registered phone has 
 **Auth:** `Authorization: Bearer <WATCHER_SECRET>`
 
 **Response**
+
 ```json
 { "ok": true, "userIds": ["abc123", "def456"] }
 ```
 
 **Errors**
 
-| Status | `error`        | Meaning                          |
-| ------ | -------------- | -------------------------------- |
-| 401    | `unauthorized` | Missing or wrong bearer token    |
-| 500    | `db_error`     | Database failure                 |
+| Status | `error`        | Meaning                       |
+| ------ | -------------- | ----------------------------- |
+| 401    | `unauthorized` | Missing or wrong bearer token |
+| 500    | `db_error`     | Database failure              |
 
 ---
 
@@ -185,11 +193,13 @@ Fans out an SMS to every phone subscribed to a given user ID. Called by the watc
 **Auth:** `Authorization: Bearer <WATCHER_SECRET>`
 
 **Request**
+
 ```json
 { "userId": "abc123" }
 ```
 
 **Response**
+
 ```json
 { "ok": true, "sent": 2, "total": 2 }
 ```
@@ -200,9 +210,9 @@ A 200 with `"sent": 0, "detail": "no_subscribers"` means no one has favorited th
 
 **Errors**
 
-| Status | `error`               | Meaning                          |
-| ------ | --------------------- | -------------------------------- |
-| 400    | `userId_required`     | Missing `userId` field           |
-| 401    | `unauthorized`        | Missing or wrong bearer token    |
-| 500    | `server_misconfigured`| `TEXTBELT_KEY` not set           |
-| 500    | `db_error`            | Database failure                 |
+| Status | `error`                | Meaning                       |
+| ------ | ---------------------- | ----------------------------- |
+| 400    | `userId_required`      | Missing `userId` field        |
+| 401    | `unauthorized`         | Missing or wrong bearer token |
+| 500    | `server_misconfigured` | `TEXTBELT_KEY` not set        |
+| 500    | `db_error`             | Database failure              |

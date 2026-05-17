@@ -34,20 +34,34 @@ beforeEach(() => {
 
 afterEach(() => {
   for (const [k, v] of Object.entries(savedEnv)) {
-    if (v === undefined) delete process.env[k];
-    else process.env[k] = v;
+    if (v === undefined) {
+      delete process.env[k];
+    } else {
+      process.env[k] = v;
+    }
   }
 });
 
-async function callGet(query: Record<string, string> = {}, headers: Record<string, string | undefined> = {}) {
-  const req = makeReq({ method: "GET", headers: { authorization: `Bearer ${SECRET}`, ...headers }, query });
+async function callGet(
+  query: Record<string, string> = {},
+  headers: Record<string, string | undefined> = {},
+) {
+  const req = makeReq({
+    method: "GET",
+    headers: { authorization: `Bearer ${SECRET}`, ...headers },
+    query,
+  });
   const res = makeRes();
   await handler(req, res as unknown as VercelResponse);
   return { status: res._status, body: res._body };
 }
 
 async function callPost(body: unknown = {}, headers: Record<string, string | undefined> = {}) {
-  const req = makeReq({ method: "POST", headers: { authorization: `Bearer ${SECRET}`, ...headers }, body });
+  const req = makeReq({
+    method: "POST",
+    headers: { authorization: `Bearer ${SECRET}`, ...headers },
+    body,
+  });
   const res = makeRes();
   await handler(req, res as unknown as VercelResponse);
   return { status: res._status, body: res._body };
@@ -79,7 +93,10 @@ describe("authorization", () => {
   });
 
   it("returns 401 for wrong secret (POST)", async () => {
-    const { status, body } = await callPost({ guid: GUID, userId: USER_ID, favorite: true }, { authorization: "Bearer wrong" });
+    const { status, body } = await callPost(
+      { guid: GUID, userId: USER_ID, favorite: true },
+      { authorization: "Bearer wrong" },
+    );
     expect(status).toBe(401);
     expect(body.error).toBe("unauthorized");
   });
@@ -106,7 +123,7 @@ describe("GET /api/favorites", () => {
     const { status, body } = await callGet({ guid: GUID });
     expect(status).toBe(200);
     expect((body.favorites as unknown[]).length).toBe(1);
-    expect((body.favorites as typeof row[])[0].user_id).toBe(USER_ID);
+    expect((body.favorites as (typeof row)[])[0].user_id).toBe(USER_ID);
   });
 });
 

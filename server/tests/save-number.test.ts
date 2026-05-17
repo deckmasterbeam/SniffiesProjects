@@ -24,14 +24,20 @@ beforeEach(() => {
   for (const [k, v] of Object.entries(ENV)) process.env[k] = v;
   delete process.env.ALLOWED_ORIGINS;
 
-  const sqlFn = vi.fn().mockResolvedValueOnce([]).mockResolvedValueOnce([{ guid: GUID }]);
+  const sqlFn = vi
+    .fn()
+    .mockResolvedValueOnce([])
+    .mockResolvedValueOnce([{ guid: GUID }]);
   mockNeon.mockReturnValue(sqlFn as unknown as ReturnType<typeof neon>);
 });
 
 afterEach(() => {
   for (const [k, v] of Object.entries(savedEnv)) {
-    if (v === undefined) delete process.env[k];
-    else process.env[k] = v;
+    if (v === undefined) {
+      delete process.env[k];
+    } else {
+      process.env[k] = v;
+    }
   }
 });
 
@@ -40,10 +46,18 @@ async function call(
   envOpts: Record<string, string | undefined> = {},
 ) {
   for (const [k, v] of Object.entries(envOpts)) {
-    if (v === undefined) delete process.env[k];
-    else process.env[k] = v;
+    if (v === undefined) {
+      delete process.env[k];
+    } else {
+      process.env[k] = v;
+    }
   }
-  const req = makeReq({ method: "POST", headers: { authorization: `Bearer ${SECRET}` }, body: { phone: PHONE }, ...reqOpts });
+  const req = makeReq({
+    method: "POST",
+    headers: { authorization: `Bearer ${SECRET}` },
+    body: { phone: PHONE },
+    ...reqOpts,
+  });
   const res = makeRes();
   await handler(req, res as unknown as VercelResponse);
   return { status: res._status, body: res._body };

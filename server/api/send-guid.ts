@@ -18,7 +18,9 @@ const handler = async (req: VercelRequest, res: VercelResponse): Promise<void> =
     return;
   }
 
-  if (!requireClientAuth(req, res)) return;
+  if (!requireClientAuth(req, res)) {
+    return;
+  }
 
   const body = (req.body ?? {}) as SendGuidBody;
   const phone = typeof body.phone === "string" ? body.phone.trim() : "";
@@ -35,7 +37,9 @@ const handler = async (req: VercelRequest, res: VercelResponse): Promise<void> =
   }
 
   const sql = requireDb(res);
-  if (!sql) return;
+  if (!sql) {
+    return;
+  }
 
   try {
     const rows = await sql`SELECT guid FROM phone_registrations WHERE phone = ${phone}`;

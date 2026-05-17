@@ -7,8 +7,12 @@ export const json = (res: VercelResponse, status: number, body: Record<string, u
 
 const isAllowedOrigin = (origin: string | undefined): boolean => {
   const allow = process.env.ALLOWED_ORIGINS?.trim();
-  if (!allow) return true;
-  if (!origin) return false;
+  if (!allow) {
+    return true;
+  }
+  if (!origin) {
+    return false;
+  }
   return allow
     .split(",")
     .map((s) => s.trim())

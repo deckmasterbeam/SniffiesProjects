@@ -51,10 +51,6 @@ const buildOptions = {
   define: {
     __SERVER_BASE__: JSON.stringify(process.env.SERVER_BASE ?? ""),
     __WATCHER_SECRET__: JSON.stringify(process.env.WATCHER_SECRET ?? ""),
-    // Legacy fallbacks — prefer SERVER_BASE + WATCHER_SECRET.
-    __NOTIFY_ENDPOINT__: JSON.stringify(process.env.NOTIFY_ENDPOINT ?? ""),
-    __NOTIFY_SECRET__: JSON.stringify(process.env.NOTIFY_SECRET ?? ""),
-    __SEEN_EVENTS_LOGGING__: String(process.env.enableSeenEventsLogging === "true"),
   },
 };
 

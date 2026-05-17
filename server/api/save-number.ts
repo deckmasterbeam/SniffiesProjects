@@ -18,7 +18,9 @@ const handler = async (req: VercelRequest, res: VercelResponse): Promise<void> =
     return;
   }
 
-  if (!requireClientAuth(req, res)) return;
+  if (!requireClientAuth(req, res)) {
+    return;
+  }
 
   const body = (req.body ?? {}) as SaveNumberBody;
   const phone = typeof body.phone === "string" ? body.phone.trim() : "";
@@ -29,7 +31,9 @@ const handler = async (req: VercelRequest, res: VercelResponse): Promise<void> =
   }
 
   const sql = requireDb(res);
-  if (!sql) return;
+  if (!sql) {
+    return;
+  }
 
   try {
     await sql`

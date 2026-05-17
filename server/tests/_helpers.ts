@@ -1,11 +1,13 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 
-export function makeReq(opts: {
-  method?: string;
-  headers?: Record<string, string | undefined>;
-  body?: unknown;
-  query?: Record<string, string | string[]>;
-} = {}): VercelRequest {
+export function makeReq(
+  opts: {
+    method?: string;
+    headers?: Record<string, string | undefined>;
+    body?: unknown;
+    query?: Record<string, string | string[]>;
+  } = {},
+): VercelRequest {
   return {
     method: opts.method ?? "POST",
     headers: { ...opts.headers },

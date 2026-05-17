@@ -27,7 +27,9 @@
 
       <section class="recovery-section">
         <h2>Recover access</h2>
-        <p class="hint">Already registered? Text your code to this device, or paste it in directly.</p>
+        <p class="hint">
+          Already registered? Text your code to this device, or paste it in directly.
+        </p>
         <div class="row">
           <button id="send-guid-btn" class="save-btn" type="button">Text me my code</button>
           <p id="recovery-status" class="hint" aria-live="polite"></p>
@@ -35,7 +37,12 @@
         <label class="field" style="margin-top: 8px">
           <span>Paste code</span>
           <div class="row">
-            <input id="code-input" type="text" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" autocomplete="off" />
+            <input
+              id="code-input"
+              type="text"
+              placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+              autocomplete="off"
+            />
             <button id="code-save" class="save-btn" type="button">Apply</button>
           </div>
         </label>

@@ -7,6 +7,7 @@
 declare const __DEBUG__: boolean;
 declare const __SERVER_BASE__: string;
 declare const __CLIENT_SECRET__: string;
+declare const __NOTIFICATIONS_ENABLED__: boolean;
 
 import { SETTINGS_KEYS, getLocalSettings } from "../shared/settings.js";
 
@@ -41,12 +42,16 @@ let currentGuid = "";
 const isFavorite = (userId: string): boolean => favoritedIds.has(userId);
 
 const fetchFavorites = async (guid: string): Promise<void> => {
-  if (!guid || !__SERVER_BASE__) return;
+  if (!guid || !__SERVER_BASE__) {
+    return;
+  }
   try {
     const res = await fetch(`${__SERVER_BASE__}/api/favorites?guid=${encodeURIComponent(guid)}`, {
       headers: clientHeaders(),
     });
-    if (!res.ok) return;
+    if (!res.ok) {
+      return;
+    }
     const data = (await res.json()) as { ok: boolean; favorites: ApiFavoriteEntry[] };
     favoritedIds = new Set((data.favorites ?? []).map((f) => f.user_id));
     refreshAllInjections();
@@ -67,12 +72,18 @@ const extractUserIdFromUrl = (url: string): string | null => {
 
 const extractFromMarker = (el: HTMLElement): ProfileSelection | null => {
   const bg = el.style.backgroundImage || getComputedStyle(el).backgroundImage;
-  if (!bg || bg === "none") return null;
+  if (!bg || bg === "none") {
+    return null;
+  }
   const match = bg.match(/url\((['"]?)(.*?)\1\)/);
   const rawUrl = match?.[2];
-  if (!rawUrl) return null;
+  if (!rawUrl) {
+    return null;
+  }
   const userId = extractUserIdFromUrl(rawUrl);
-  if (!userId) return null;
+  if (!userId) {
+    return null;
+  }
   return { userId, profilePicUrl: rawUrl };
 };
 
@@ -168,20 +179,31 @@ const buildInjection = (selection: ProfileSelection): HTMLElement => {
 const refreshInjection = (wrap: HTMLElement, userId: string): void => {
   const star = wrap.querySelector<HTMLElement>('[data-role="favorite-toggle"]');
   const idText = wrap.querySelector<HTMLElement>('[data-role="user-id"]');
-  if (star) renderStar(star, userId);
-  if (idText) renderIdText(idText);
+  if (star) {
+    renderStar(star, userId);
+  }
+  if (idText) {
+    renderIdText(idText);
+  }
 };
 
 const refreshAllInjections = (): void => {
   for (const wrap of document.querySelectorAll<HTMLElement>(`[${INJECTED_ATTR}]`)) {
     const userId = wrap.getAttribute(INJECTED_ATTR);
-    if (userId) refreshInjection(wrap, userId);
+    if (userId) {
+      refreshInjection(wrap, userId);
+    }
   }
 };
 
 const injectIntoNameLabel = (nameLabel: HTMLElement, selection: ProfileSelection): void => {
+  if (!__NOTIFICATIONS_ENABLED__) {
+    return;
+  }
   const screen = nameLabel.closest(APP_SCREEN_SELECTOR);
-  if (!screen) return;
+  if (!screen) {
+    return;
+  }
   const existing = screen.querySelector<HTMLElement>(`[${INJECTED_ATTR}]`);
   if (existing) {
     if (existing.getAttribute(INJECTED_ATTR) === selection.userId) {
@@ -196,22 +218,32 @@ const injectIntoNameLabel = (nameLabel: HTMLElement, selection: ProfileSelection
 };
 
 const tryInjectIntoScreen = (screen: Element): void => {
-  if (!lastSelection) return;
+  if (!lastSelection) {
+    return;
+  }
   const nameLabel = screen.querySelector<HTMLElement>(NAME_LABEL_SELECTOR);
-  if (nameLabel) injectIntoNameLabel(nameLabel, lastSelection);
+  if (nameLabel) {
+    injectIntoNameLabel(nameLabel, lastSelection);
+  }
 };
 
 const observer = new MutationObserver((mutations) => {
-  if (!lastSelection) return;
+  if (!lastSelection) {
+    return;
+  }
   for (const m of mutations) {
     for (const node of m.addedNodes) {
-      if (!(node instanceof HTMLElement)) continue;
+      if (!(node instanceof HTMLElement)) {
+        continue;
+      }
       if (node.matches?.(NAME_LABEL_SELECTOR)) {
         injectIntoNameLabel(node, lastSelection);
         continue;
       }
       const nested = node.querySelector?.<HTMLElement>(NAME_LABEL_SELECTOR);
-      if (nested) injectIntoNameLabel(nested, lastSelection);
+      if (nested) {
+        injectIntoNameLabel(nested, lastSelection);
+      }
     }
   }
 });
@@ -224,9 +256,13 @@ document.addEventListener(
   "click",
   (event) => {
     const target = event.target;
-    if (!(target instanceof Element)) return;
+    if (!(target instanceof Element)) {
+      return;
+    }
     const marker = target.closest<HTMLElement>(MARKER_SELECTOR);
-    if (!marker) return;
+    if (!marker) {
+      return;
+    }
     const selection = extractFromMarker(marker);
     if (!selection) {
       console.log(`${TAG} click on marker but no user id found`, marker);
@@ -235,7 +271,9 @@ document.addEventListener(
     lastSelection = selection;
     console.log(`${TAG} marker clicked`, selection);
     const screen = document.querySelector(APP_SCREEN_SELECTOR);
-    if (screen) tryInjectIntoScreen(screen);
+    if (screen) {
+      tryInjectIntoScreen(screen);
+    }
   },
   true,
 );
@@ -255,10 +293,14 @@ void getLocalSettings().then(({ guid }) => {
 });
 
 chrome.storage.onChanged.addListener((changes, area) => {
-  if (area !== "local") return;
+  if (area !== "local") {
+    return;
+  }
   const guidChange = changes[SETTINGS_KEYS.guid];
   if (guidChange) {
     currentGuid = typeof guidChange.newValue === "string" ? guidChange.newValue : "";
-    if (currentGuid) void fetchFavorites(currentGuid);
+    if (currentGuid) {
+      void fetchFavorites(currentGuid);
+    }
   }
 });

@@ -8,8 +8,18 @@
   </head>
   <body>
     <main class="popup">
-      <h1>Sniffies Plug-ins</h1>
-      <button id="open-settings" class="primary" type="button">Open settings</button>
+      <header class="popup-header">
+        <h1>Sniffies Plug-ins</h1>
+        <button
+          id="open-settings"
+          class="primary"
+          type="button"
+          title="Settings"
+          aria-label="Open settings"
+        >
+          ⚙
+        </button>
+      </header>
 
       <details class="section collapsible">
         <summary><h2>Location Override</h2></summary>
@@ -25,11 +35,17 @@
           </label>
           <label class="field">
             <span>Longitude</span>
-            <input id="geo-lng" type="number" step="any" placeholder="-74.0060" autocomplete="off" />
+            <input
+              id="geo-lng"
+              type="number"
+              step="any"
+              placeholder="-74.0060"
+              autocomplete="off"
+            />
           </label>
           <button id="geo-fill-current" class="secondary" type="button">Fill with current</button>
           <label class="field">
-            <span>Accuracy (m)</span>
+            <span>Accuracy (m) (randomized)</span>
             <input id="geo-accuracy" type="number" step="any" placeholder="10" autocomplete="off" />
           </label>
           <div class="actions">
