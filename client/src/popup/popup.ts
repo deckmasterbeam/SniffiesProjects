@@ -21,12 +21,18 @@ const randomAccuracy = (): number => Math.round((5 + Math.random() * 20) * 10) /
 const openSettingsBtn = document.getElementById("open-settings");
 const geoDetails = document.querySelector<HTMLDetailsElement>("details.collapsible");
 
-const profileBorderDetails = document.getElementById("profile-border-details") as HTMLDetailsElement | null;
+const profileBorderDetails = document.getElementById(
+  "profile-border-details",
+) as HTMLDetailsElement | null;
 const profileBorderEnabled = document.getElementById("profile-border-enabled") as HTMLInputElement;
 const profileBorderTabField = document.getElementById("profile-border-tab-field") as HTMLElement;
 const profileBorderTab = document.getElementById("profile-border-tab") as HTMLSelectElement;
-const profileBorderOptionCurrent = document.querySelector<HTMLOptionElement>('#profile-border-tab option[value="current-tab"]')!;
-const profileBorderOptionNew = document.querySelector<HTMLOptionElement>('#profile-border-tab option[value="new-tab"]')!;
+const profileBorderOptionCurrent = document.querySelector<HTMLOptionElement>(
+  '#profile-border-tab option[value="current-tab"]',
+)!;
+const profileBorderOptionNew = document.querySelector<HTMLOptionElement>(
+  '#profile-border-tab option[value="new-tab"]',
+)!;
 const profileBorderSave = document.getElementById("profile-border-save");
 
 const geoEnabled = document.getElementById("geo-enabled") as HTMLInputElement;
@@ -94,7 +100,9 @@ favoritesEnabledCheckbox.addEventListener("change", () => {
 });
 
 profileBorderDetails?.addEventListener("toggle", () => {
-  void chrome.storage.local.set({ [SETTINGS_KEYS.profileBorderSectionOpen]: profileBorderDetails.open });
+  void chrome.storage.local.set({
+    [SETTINGS_KEYS.profileBorderSectionOpen]: profileBorderDetails.open,
+  });
 });
 
 openSettingsBtn?.addEventListener("click", () => {
@@ -163,8 +171,12 @@ const PROFILE_BORDER_LABELS = {
 } as const;
 
 const applyProfileBorderLabels = (openInNewTab: boolean): void => {
-  profileBorderOptionCurrent.text = openInNewTab ? PROFILE_BORDER_LABELS.current : PROFILE_BORDER_LABELS.currentSaved;
-  profileBorderOptionNew.text = openInNewTab ? PROFILE_BORDER_LABELS.newSaved : PROFILE_BORDER_LABELS.new;
+  profileBorderOptionCurrent.text = openInNewTab
+    ? PROFILE_BORDER_LABELS.current
+    : PROFILE_BORDER_LABELS.currentSaved;
+  profileBorderOptionNew.text = openInNewTab
+    ? PROFILE_BORDER_LABELS.newSaved
+    : PROFILE_BORDER_LABELS.new;
 };
 
 const readProfileBorderForm = (): ProfileBorderOpen => ({

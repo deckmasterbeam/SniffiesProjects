@@ -77,7 +77,9 @@ const buildOptions = {
     __SERVER_BASE__: JSON.stringify(process.env.SERVER_BASE ?? ""),
     __CLIENT_SECRET__: JSON.stringify(process.env.CLIENT_SECRET ?? ""),
     __DEBUG__: String(process.env.DEBUG === "true"),
-    __FAVORITES_NOTIFICATIONS_ENABLED__: String(process.env.FAVORITES_NOTIFICATIONS_ENABLED !== "false"),
+    __FAVORITES_NOTIFICATIONS_ENABLED__: String(
+      process.env.FAVORITES_NOTIFICATIONS_ENABLED !== "false",
+    ),
   },
 };
 

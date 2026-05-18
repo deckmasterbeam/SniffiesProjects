@@ -1,9 +1,10 @@
+import { CLIENT_SECRET, FAVORITES_NOTIFICATIONS_ENABLED, SERVER_BASE } from "../shared/env.js";
 import {
-  CLIENT_SECRET,
-  FAVORITES_NOTIFICATIONS_ENABLED,
-  SERVER_BASE,
-} from "../shared/env.js";
-import { DEFAULT_LOCAL_SETTINGS, PHONE_E164_REGEX, SETTINGS_KEYS, getLocalSettings } from "../shared/settings.js";
+  DEFAULT_LOCAL_SETTINGS,
+  PHONE_E164_REGEX,
+  SETTINGS_KEYS,
+  getLocalSettings,
+} from "../shared/settings.js";
 
 if (!FAVORITES_NOTIFICATIONS_ENABLED) {
   for (const sel of [".phone-section", ".recovery-section", ".favorites-section"]) {
