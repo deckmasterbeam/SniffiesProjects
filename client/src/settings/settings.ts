@@ -1,10 +1,11 @@
-declare const __SERVER_BASE__: string;
-declare const __CLIENT_SECRET__: string;
-declare const __NOTIFICATIONS_ENABLED__: boolean;
+import {
+  CLIENT_SECRET,
+  FAVORITES_NOTIFICATIONS_ENABLED,
+  SERVER_BASE,
+} from "../shared/env.js";
+import { DEFAULT_LOCAL_SETTINGS, PHONE_E164_REGEX, SETTINGS_KEYS, getLocalSettings } from "../shared/settings.js";
 
-import { PHONE_E164_REGEX, SETTINGS_KEYS, getLocalSettings } from "../shared/settings.js";
-
-if (!__NOTIFICATIONS_ENABLED__) {
+if (!FAVORITES_NOTIFICATIONS_ENABLED) {
   for (const sel of [".phone-section", ".recovery-section", ".favorites-section"]) {
     const el = document.querySelector<HTMLElement>(sel);
     if (el) {
@@ -15,7 +16,7 @@ if (!__NOTIFICATIONS_ENABLED__) {
 
 const clientHeaders = (extra?: Record<string, string>): Record<string, string> => ({
   "Content-Type": "application/json",
-  Authorization: `Bearer ${__CLIENT_SECRET__}`,
+  Authorization: `Bearer ${CLIENT_SECRET}`,
   ...extra,
 });
 
@@ -43,7 +44,7 @@ phoneSaveBtn.addEventListener("click", async () => {
   phoneSaveBtn.disabled = true;
   setPhoneStatus("Saving…");
   try {
-    const res = await fetch(`${__SERVER_BASE__}/api/save-number`, {
+    const res = await fetch(`${SERVER_BASE}/api/save-number`, {
       method: "POST",
       headers: clientHeaders(),
       body: JSON.stringify({ phone }),
@@ -91,7 +92,7 @@ sendGuidBtn.addEventListener("click", async () => {
   sendGuidBtn.disabled = true;
   setRecoveryStatus("Sending…");
   try {
-    const res = await fetch(`${__SERVER_BASE__}/api/send-guid`, {
+    const res = await fetch(`${SERVER_BASE}/api/send-guid`, {
       method: "POST",
       headers: clientHeaders(),
       body: JSON.stringify({ phone }),
@@ -166,7 +167,7 @@ const renderCard = (entry: ApiFavoriteEntry, guid: string): HTMLElement => {
   const unfavoriteBtn = card.querySelector<HTMLButtonElement>('[data-role="unfavorite"]');
   if (unfavoriteBtn) {
     unfavoriteBtn.addEventListener("click", () => {
-      void fetch(`${__SERVER_BASE__}/api/favorites`, {
+      void fetch(`${SERVER_BASE}/api/favorites`, {
         method: "POST",
         headers: clientHeaders(),
         body: JSON.stringify({ guid, userId: entry.user_id, favorite: false }),
@@ -208,7 +209,7 @@ const loadFavorites = async (guid: string): Promise<void> => {
     summary.textContent = "Loading...";
   }
   try {
-    const res = await fetch(`${__SERVER_BASE__}/api/favorites?guid=${encodeURIComponent(guid)}`, {
+    const res = await fetch(`${SERVER_BASE}/api/favorites?guid=${encodeURIComponent(guid)}`, {
       headers: clientHeaders(),
     });
     if (!res.ok) {
@@ -229,6 +230,68 @@ const loadFavorites = async (guid: string): Promise<void> => {
     }
   }
 };
+
+// ── Storage view ──────────────────────────────────────────────────────────────
+
+const storageViewBtn = document.getElementById("storage-view-btn") as HTMLButtonElement;
+const storageTable = document.getElementById("storage-table") as HTMLTableElement;
+const storageTableBody = document.getElementById("storage-table-body") as HTMLTableSectionElement;
+
+const renderStorageTable = async (): Promise<void> => {
+  const data = await getLocalSettings();
+  storageTableBody.replaceChildren();
+  for (const [key, value] of Object.entries(data)) {
+    const row = document.createElement("tr");
+    const keyCell = document.createElement("td");
+    keyCell.textContent = key;
+    const valueCell = document.createElement("td");
+    valueCell.textContent = JSON.stringify(value, null, 2);
+    row.append(keyCell, valueCell);
+    storageTableBody.append(row);
+  }
+};
+
+storageViewBtn.addEventListener("click", async () => {
+  const isVisible = storageTable.style.display !== "none";
+  if (isVisible) {
+    storageTable.style.display = "none";
+    storageViewBtn.textContent = "Show data";
+    return;
+  }
+  await renderStorageTable();
+  storageTable.style.display = "";
+  storageViewBtn.textContent = "Hide data";
+});
+
+// ── Reset ─────────────────────────────────────────────────────────────────────
+
+const resetBtn = document.getElementById("reset-btn") as HTMLButtonElement;
+const resetStatus = document.getElementById("reset-status");
+
+resetBtn.addEventListener("click", async () => {
+  resetBtn.disabled = true;
+  try {
+    await chrome.storage.local.clear();
+    await chrome.storage.local.set(DEFAULT_LOCAL_SETTINGS);
+    if (resetStatus) {
+      resetStatus.textContent = "Reset. Reload sniffies.com to apply.";
+      setTimeout(() => {
+        if (resetStatus) {
+          resetStatus.textContent = "";
+        }
+      }, 10_000);
+    }
+    if (storageTable.style.display !== "none") {
+      await renderStorageTable();
+    }
+  } catch (err) {
+    if (resetStatus) {
+      resetStatus.textContent = `Error: ${err instanceof Error ? err.message : String(err)}`;
+    }
+  } finally {
+    resetBtn.disabled = false;
+  }
+});
 
 void getLocalSettings().then(({ phone, guid }) => {
   phoneInput.value = phone;
