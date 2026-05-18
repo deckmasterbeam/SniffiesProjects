@@ -1,0 +1,13 @@
+services:
+  watcher:
+    build: .
+    ports:
+      - "6080:6080"
+    volumes:
+      - ../dist:/extension:ro
+      - chrome-profile:/chrome-profile
+    shm_size: "2gb"
+    restart: unless-stopped
+
+volumes:
+  chrome-profile:

@@ -10,7 +10,11 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
-    "icons": "node scripts/generate-icons.mjs"
+    "icons": "node scripts/generate-icons.mjs",
+    "vm": "npm run build && docker compose -f docker/docker-compose.yml up --build",
+    "vm:detach": "npm run build && docker compose -f docker/docker-compose.yml up --build -d",
+    "vm:stop": "docker compose -f docker/docker-compose.yml down",
+    "vm:reset-profile": "docker compose -f docker/docker-compose.yml down -v"
   },
   "devDependencies": {
     "@types/chrome": "^0.0.270",
