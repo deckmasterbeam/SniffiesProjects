@@ -35,6 +35,12 @@ const staticAssets = [
 ];
 
 const copyAssets = async () => {
+  // Copy maplibre-gl CSS from node_modules into the popup output folder.
+  const mglCssSrc = resolve(root, "node_modules/maplibre-gl/dist/maplibre-gl.css");
+  const mglCssDest = join(distDir, "src/popup/maplibre-gl.css");
+  await mkdir(dirname(mglCssDest), { recursive: true });
+  await cp(mglCssSrc, mglCssDest);
+
   for (const rel of staticAssets) {
     const from = join(root, rel);
     if (!existsSync(from)) {

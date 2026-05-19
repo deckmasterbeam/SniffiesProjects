@@ -3,6 +3,9 @@
   "name": "Chrome Extension Template",
   "version": "0.1.0",
   "description": "A starter template for a Chrome extension (Manifest V3).",
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' blob: 'wasm-unsafe-eval'; worker-src 'self' blob:; object-src 'self'"
+  },
   "permissions": ["storage", "activeTab", "scripting", "geolocation"],
   "host_permissions": ["<all_urls>"],
   "action": {
