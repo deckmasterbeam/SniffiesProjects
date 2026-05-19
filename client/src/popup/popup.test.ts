@@ -4,7 +4,13 @@ const POPUP_HTML = `
   <button id="open-settings"></button>
   <details id="favorites-details" class="section collapsible">
     <summary><h2>Favorites</h2></summary>
-    <input id="favorites-enabled" type="checkbox" />
+    <div class="collapsible-body">
+      <p id="favorites-hint" class="hint"></p>
+      <label class="row">
+        <input id="favorites-enabled" type="checkbox" />
+        <span id="favorites-enable-label">Enable</span>
+      </label>
+    </div>
   </details>
   <details class="collapsible">
     <summary><h2>Location Override</h2></summary>
@@ -36,6 +42,8 @@ const flushPromises = () => new Promise<void>((r) => setTimeout(r, 0));
 const getElements = () => ({
   favoritesEnabled: document.getElementById("favorites-enabled") as HTMLInputElement,
   favoritesDetails: document.getElementById("favorites-details") as HTMLDetailsElement,
+  favoritesHint: document.getElementById("favorites-hint") as HTMLElement,
+  favoritesEnableLabel: document.getElementById("favorites-enable-label") as HTMLElement,
   geoFields: document.getElementById("geo-fields") as HTMLElement,
   geoEnabled: document.getElementById("geo-enabled") as HTMLInputElement,
   geoLat: document.getElementById("geo-lat") as HTMLInputElement,
@@ -175,6 +183,16 @@ describe("popup — favorites", () => {
     const { favoritesEnabled } = getElements();
     expect(favoritesEnabled.checked).toBe(false);
     expect(favoritesEnabled.disabled).toBe(true);
+  });
+
+  it("shows coming soon hint when FAVORITES_NOTIFICATIONS_ENABLED is false", () => {
+    const { favoritesHint } = getElements();
+    expect(favoritesHint.textContent).toBe("Coming soon!");
+  });
+
+  it("strikes through enable label when FAVORITES_NOTIFICATIONS_ENABLED is false", () => {
+    const { favoritesEnableLabel } = getElements();
+    expect(favoritesEnableLabel.style.textDecoration).toBe("line-through");
   });
 
   it("saves favoritesEnabled when checkbox is toggled (when enabled)", async () => {

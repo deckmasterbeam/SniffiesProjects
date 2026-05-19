@@ -188,6 +188,7 @@ button.secondary:disabled {
 
 details.collapsible {
   padding: 0;
+  display: block;
 }
 
 details.collapsible summary {
@@ -224,6 +225,12 @@ details.collapsible summary h2 {
 
 .collapsible-body {
   padding: 0 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+#geo-fields {
   display: flex;
   flex-direction: column;
   gap: 10px;

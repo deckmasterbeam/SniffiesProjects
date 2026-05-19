@@ -10,6 +10,7 @@ import {
   FAVORITES_NOTIFICATIONS_ENABLED,
   SERVER_BASE,
 } from "../shared/env.js";
+import { createLogger } from "../shared/log.js";
 import {
   DEFAULT_PROFILE_BORDER_OPEN,
   SETTINGS_KEYS,
@@ -22,7 +23,7 @@ const clientHeaders = (): Record<string, string> => ({
   Authorization: `Bearer ${CLIENT_SECRET}`,
 });
 
-const TAG = "[sniffies-profile-id]";
+const log = createLogger("profile-id");
 const MARKER_SELECTOR = '[data-testid="cv-marker-avatar-image"]';
 const MARKER_CONTAINER_SELECTOR = '[data-testid="markerUserContainer"]';
 const APP_SCREEN_SELECTOR = "#app-screen";
@@ -64,7 +65,7 @@ const fetchFavorites = async (guid: string): Promise<void> => {
     favoritedIds = new Set((data.favorites ?? []).map((f) => f.user_id));
     refreshAllInjections();
   } catch (err) {
-    console.error(`${TAG} fetchFavorites failed`, err);
+    log.error("fetchFavorites failed", err);
   }
 };
 
@@ -134,7 +135,7 @@ const buildInjection = (selection: ProfileSelection): HTMLElement => {
   star.addEventListener("click", async (event) => {
     event.stopPropagation();
     if (!currentGuid) {
-      console.warn(`${TAG} no guid — open settings to register your phone`);
+      log.warn("no guid — open settings to register your phone");
       return;
     }
     const next = !isFavorite(userId);
@@ -157,7 +158,7 @@ const buildInjection = (selection: ProfileSelection): HTMLElement => {
         }),
       });
     } catch (err) {
-      console.error(`${TAG} failed to persist favorite`, err);
+      log.error("failed to persist favorite", err);
       // Roll back optimistic update.
       if (next) {
         favoritedIds.delete(userId);
@@ -222,7 +223,7 @@ const injectIntoNameLabel = (nameLabel: HTMLElement, selection: ProfileSelection
   }
   const node = buildInjection(selection);
   nameLabel.insertAdjacentElement("afterend", node);
-  console.log(`${TAG} injected for user`, selection.userId);
+  log("injected for user", selection.userId);
 };
 
 const tryInjectIntoScreen = (screen: Element): void => {
@@ -289,11 +290,11 @@ document.addEventListener(
     }
     const selection = extractFromMarker(marker);
     if (!selection) {
-      console.log(`${TAG} click on marker but no user id found`, marker);
+      log("click on marker but no user id found", marker);
       return;
     }
     lastSelection = selection;
-    console.log(`${TAG} marker clicked`, selection);
+    log("marker clicked", selection);
     const screen = document.querySelector(APP_SCREEN_SELECTOR);
     if (screen) {
       tryInjectIntoScreen(screen);
@@ -314,7 +315,7 @@ void getLocalSettings().then(({ guid, profileBorderOpen }) => {
   if (guid) {
     void fetchFavorites(guid);
   }
-  console.log(`${TAG} initialized, guid ${guid ? "present" : "missing"}`);
+  log(`initialized, guid ${guid ? "present" : "missing"}`);
 });
 
 chrome.storage.onChanged.addListener((changes, area) => {

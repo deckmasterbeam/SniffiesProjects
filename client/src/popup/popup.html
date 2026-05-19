@@ -69,16 +69,6 @@
         </div>
       </details>
 
-      <details id="favorites-details" class="section collapsible">
-        <summary><h2>Favorites</h2></summary>
-        <div class="collapsible-body">
-          <label class="row">
-            <input id="favorites-enabled" type="checkbox" />
-            <span>Enable</span>
-          </label>
-        </div>
-      </details>
-
       <details id="profile-border-details" class="section collapsible">
         <summary><h2>Open Profiles Outside Boundary</h2></summary>
         <div class="collapsible-body">
@@ -102,6 +92,17 @@
               Save
             </button>
           </div>
+        </div>
+      </details>
+
+      <details id="favorites-details" class="section collapsible">
+        <summary><h2>Favorites</h2></summary>
+        <div class="collapsible-body">
+          <p id="favorites-hint" class="hint"></p>
+          <label class="row">
+            <input id="favorites-enabled" type="checkbox" />
+            <span id="favorites-enable-label">Enable</span>
+          </label>
         </div>
       </details>
     </main>

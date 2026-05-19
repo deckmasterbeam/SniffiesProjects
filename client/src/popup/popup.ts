@@ -1,4 +1,7 @@
 import { FAVORITES_NOTIFICATIONS_ENABLED } from "../shared/env.js";
+import { createLogger } from "../shared/log.js";
+
+const log = createLogger("popup");
 import {
   DEFAULT_GEO_OVERRIDE,
   DEFAULT_PROFILE_BORDER_OPEN,
@@ -15,6 +18,8 @@ let savedProfileBorderOpenInNewTab = DEFAULT_PROFILE_BORDER_OPEN.openInNewTab;
 
 const favoritesDetails = document.getElementById("favorites-details") as HTMLDetailsElement | null;
 const favoritesEnabledCheckbox = document.getElementById("favorites-enabled") as HTMLInputElement;
+const favoritesHint = document.getElementById("favorites-hint");
+const favoritesEnableLabel = document.getElementById("favorites-enable-label");
 
 const randomAccuracy = (): number => Math.round((5 + Math.random() * 20) * 10) / 10;
 
@@ -69,6 +74,12 @@ const init = async (): Promise<void> => {
   if (!FAVORITES_NOTIFICATIONS_ENABLED) {
     favoritesEnabledCheckbox.checked = false;
     favoritesEnabledCheckbox.disabled = true;
+    if (favoritesHint) {
+      favoritesHint.textContent = "Coming soon!";
+    }
+    if (favoritesEnableLabel) {
+      favoritesEnableLabel.style.textDecoration = "line-through";
+    }
   } else {
     favoritesEnabledCheckbox.checked = settings.favoritesEnabled;
   }
@@ -148,7 +159,7 @@ geoFillCurrent?.addEventListener("click", () => {
       }
     },
     (error) => {
-      console.log("Failed to get current position", error);
+      log("Failed to get current position", error);
       if (geoStatus) {
         geoStatus.textContent = "Could not get location.";
       }

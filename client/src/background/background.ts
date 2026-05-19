@@ -1,13 +1,17 @@
 // Background service worker (Manifest V3).
 // Runs on demand; do not rely on long-lived global state.
 
+import { createLogger } from "../shared/log.js";
+
+const log = createLogger("bg");
+
 interface ExtensionSyncSettings {
   enabled: boolean;
   installedAt: number;
 }
 
 chrome.runtime.onInstalled.addListener(async (details) => {
-  console.log("[bg] onInstalled", details.reason);
+  log("onInstalled", details.reason);
   const defaults: ExtensionSyncSettings = {
     enabled: true,
     installedAt: Date.now(),

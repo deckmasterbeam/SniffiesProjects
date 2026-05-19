@@ -1,7 +1,10 @@
 // Isolated world. Reads geo override from extension storage and forwards it
 // to the MAIN world geo hook via window.postMessage.
 
+import { createLogger } from "../shared/log.js";
 import { SETTINGS_KEYS, getLocalSettings, type GeoOverride } from "../shared/settings.js";
+
+const log = createLogger("geo-relay");
 
 const postOverride = (override: GeoOverride): void => {
   window.postMessage(
@@ -41,5 +44,5 @@ window.addEventListener("message", (event) => {
   if (!msg || msg.source !== "sniffies-geo-hook" || msg.kind !== "position") {
     return;
   }
-  console.log("[sniffies-geo-relay] position observed by Sniffies", msg.coords);
+  log("position observed by Sniffies", msg.coords);
 });
