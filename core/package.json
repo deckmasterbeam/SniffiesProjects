@@ -1,5 +1,13 @@
 {
   "name": "@sniffies-projects/core",
   "private": true,
-  "version": "0.1.0"
+  "version": "0.1.0",
+  "description": "Core UI components and logic for user facing features.",
+  "scripts": {
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "prettier": "^3.8.3"
+  }
 }

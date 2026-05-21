@@ -51,6 +51,10 @@ const saveGeoOverride = (override: GeoOverride): void => {
 // ── Main ─────────────────────────────────────────────────────────────────────
 
 function main(): void {
+  if (!location.hostname.endsWith("sniffies.com")) {
+    return;
+  }
+
   let currentOverride: GeoOverride = loadGeoOverride();
   const hook = installGeoHook(() => currentOverride);
   const nativeGetCurrentPosition =
