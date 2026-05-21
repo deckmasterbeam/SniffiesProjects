@@ -1,0 +1,174 @@
+/* Section shell — lifted from popup.css .section, details.collapsible, .collapsible-body */
+
+#snp-geo-root .section {
+  background: #0e1825;
+  border: 1px solid #1c2b3a;
+  border-radius: 8px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+#snp-geo-root .section h2 {
+  margin: 0;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #7a90a4;
+}
+
+#snp-geo-root details.collapsible {
+  padding: 0;
+  display: block;
+}
+
+#snp-geo-root details.collapsible summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  user-select: none;
+}
+
+#snp-geo-root details.collapsible summary::-webkit-details-marker {
+  display: none;
+}
+
+#snp-geo-root details.collapsible summary::after {
+  content: "›";
+  margin-left: auto;
+  font-size: 16px;
+  line-height: 1;
+  color: #7a90a4;
+  transform: rotate(90deg);
+  transition: transform 0.15s;
+}
+
+#snp-geo-root details.collapsible[open] summary::after {
+  transform: rotate(270deg);
+}
+
+#snp-geo-root details.collapsible summary h2 {
+  margin: 0;
+}
+
+#snp-geo-root .collapsible-body {
+  padding: 0 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Form fields — lifted from popup.css .row, .hint, .field, button.primary/secondary, .actions */
+
+#snp-geo-root .row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  color: #ffffff;
+}
+
+#snp-geo-root .row input[type="checkbox"] {
+  accent-color: #ff5500;
+  width: 14px;
+  height: 14px;
+}
+
+#snp-geo-root .hint {
+  font-size: 11px;
+  color: #7a90a4;
+  margin: 0;
+}
+
+#snp-geo-root button.primary {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 7px 16px;
+  border-radius: 20px;
+  border: none;
+  background: #ff5500;
+  color: #fff;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  transition: background 0.15s;
+}
+
+#snp-geo-root button.primary:hover:not(:disabled) {
+  background: #e04a00;
+}
+
+#snp-geo-root button.primary:disabled {
+  background: #1c2b3a;
+  color: #7a90a4;
+  cursor: not-allowed;
+}
+
+#snp-geo-root button.secondary {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 7px 16px;
+  border-radius: 20px;
+  border: 1px solid #1c2b3a;
+  background: transparent;
+  color: #7a90a4;
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    color 0.15s;
+}
+
+#snp-geo-root button.secondary:hover:not(:disabled) {
+  border-color: #7a90a4;
+  color: #ffffff;
+}
+
+#snp-geo-root button.secondary:disabled {
+  color: #1c2b3a;
+  border-color: #1c2b3a;
+  cursor: not-allowed;
+}
+
+#snp-geo-root .field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11px;
+  color: #7a90a4;
+}
+
+#snp-geo-root .field input {
+  font-size: 13px;
+  padding: 7px 10px;
+  border-radius: 6px;
+  border: 1px solid #1c2b3a;
+  background: #080e18;
+  color: #ffffff;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+#snp-geo-root .field input::placeholder {
+  color: #3a4f62;
+}
+
+#snp-geo-root .field input:focus {
+  border-color: #ff5500;
+}
+
+#snp-geo-root .actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+#snp-geo-root #geo-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}

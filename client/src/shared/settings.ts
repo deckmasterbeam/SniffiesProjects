@@ -11,20 +11,6 @@ export const SETTINGS_KEYS = {
 
 export const PHONE_E164_REGEX = /^\+[1-9]\d{6,14}$/;
 
-export interface GeoOverride {
-  enabled: boolean;
-  latitude: number;
-  longitude: number;
-  accuracy: number;
-}
-
-export const DEFAULT_GEO_OVERRIDE: GeoOverride = {
-  enabled: false,
-  latitude: 0,
-  longitude: 0,
-  accuracy: 10,
-};
-
 export interface ProfileBorderOpen {
   enabled: boolean;
   openInNewTab: boolean;
