@@ -36,9 +36,10 @@ export const installGeoHook = (
   const applyOverride = (position: GeolocationPosition): GeolocationPosition => {
     const ov = getOverride();
     if (!ov?.enabled) {
+      console.log("[sniffies-geo] override disabled, passing real coords", position.coords);
       return position;
     }
-    return {
+    const spoofed = {
       coords: {
         latitude: ov.latitude,
         longitude: ov.longitude,
@@ -50,6 +51,8 @@ export const installGeoHook = (
       },
       timestamp: Date.now(),
     } as GeolocationPosition;
+    console.log("[sniffies-geo] applying override", spoofed.coords);
+    return spoofed;
   };
 
   const wrapSuccess =
@@ -63,10 +66,13 @@ export const installGeoHook = (
       callback(applyOverride(position));
     };
 
-  geo.getCurrentPosition = (success, error, options) =>
+  geo.getCurrentPosition = (success, error, options) => {
+    console.log("[sniffies-geo] getCurrentPosition intercepted");
     nativeGetCurrentPosition(wrapSuccess(success), error, options);
+  };
 
   geo.watchPosition = (success, error, options) => {
+    console.log("[sniffies-geo] watchPosition intercepted");
     const wrapped = wrapSuccess(success);
     const id = nativeWatchPosition(wrapped, error, options);
     activeWatchers.set(id, wrapped);

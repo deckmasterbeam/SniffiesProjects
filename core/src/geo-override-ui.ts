@@ -78,7 +78,8 @@ export const wireGeoOverrideForm = (container: Element, options: GeoOverrideForm
         updateSaveVisibility();
         setStatus("");
       },
-      () => setStatus("Could not get location."),
+      (err) => setStatus(`Could not get location: ${err.message} (code ${err.code})`),
+      { timeout: 10000 },
     );
   });
 

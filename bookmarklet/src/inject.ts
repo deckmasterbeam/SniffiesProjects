@@ -54,12 +54,35 @@ function main(): void {
   if (!location.hostname.endsWith("sniffies.com")) {
     return;
   }
+  alert("sniffies inject loaded");
 
   let currentOverride: GeoOverride = loadGeoOverride();
+  console.log("[sniffies-geo] initial override", currentOverride);
   const hook = installGeoHook(() => currentOverride);
+  console.log("[sniffies-geo] hook installed", hook ? "yes" : "already patched");
   const nativeGetCurrentPosition =
     hook?.nativeGetCurrentPosition ??
     navigator.geolocation.getCurrentPosition.bind(navigator.geolocation);
+
+  // Intercept fetch so pre-existing watchPosition watchers (registered before this
+  // bookmarklet loaded) also send spoofed coords to the Sniffies location API.
+  const nativeFetch = window.fetch.bind(window);
+  window.fetch = async (input, init) => {
+    const url = typeof input === "string" ? input : input instanceof URL ? input.href : (input as Request).url;
+    if (currentOverride.enabled && url.includes("/api/visitor/current/location")) {
+      try {
+        const body = JSON.parse((init?.body as string) ?? "{}") as Record<string, unknown>;
+        const spoofed = { lat: currentOverride.latitude, lng: currentOverride.longitude };
+        body.virtualLocation = spoofed;
+        body.physicalLocation = spoofed;
+        console.log("[sniffies-geo] intercepting location request", spoofed);
+        init = { ...init, body: JSON.stringify(body) };
+      } catch {
+        // leave the request unmodified if parsing fails
+      }
+    }
+    return nativeFetch(input, init);
+  };
 
   // Inject shell styles (FAB + panel chrome)
   const shellStyle = document.createElement("style");
@@ -92,6 +115,7 @@ function main(): void {
   wireGeoOverrideForm(geoRoot, {
     initial: currentOverride,
     onSave: (next) => {
+      console.log("[sniffies-geo] override saved", next);
       saveGeoOverride(next);
       currentOverride = next;
       hook?.refreshWatches();
