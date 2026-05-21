@@ -21,16 +21,6 @@ declare global {
   }
 }
 
-if (window.__sniffiesInjected) {
-  const panel = document.getElementById("snp-panel");
-  if (panel) {
-    panel.style.display = panel.style.display === "none" ? "block" : "none";
-  }
-} else {
-  window.__sniffiesInjected = true;
-  main();
-}
-
 // ── Storage — localStorage adapter ───────────────────────────────────────────
 
 const STORAGE_KEY = "sniffies-geo";
@@ -47,6 +37,16 @@ const loadGeoOverride = (): GeoOverride => {
 const saveGeoOverride = (override: GeoOverride): void => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(override));
 };
+
+if (window.__sniffiesInjected) {
+  const panel = document.getElementById("snp-panel");
+  if (panel) {
+    panel.style.display = panel.style.display === "none" ? "block" : "none";
+  }
+} else {
+  window.__sniffiesInjected = true;
+  main();
+}
 
 // ── Main ─────────────────────────────────────────────────────────────────────
 
