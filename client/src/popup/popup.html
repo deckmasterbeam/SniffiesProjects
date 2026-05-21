@@ -21,53 +21,7 @@
         </button>
       </header>
 
-      <details class="section collapsible">
-        <summary><h2>Location Spoofing</h2></summary>
-        <div class="collapsible-body">
-          <p class="hint">Spoof the coordinates Sniffies sees.</p>
-          <label class="row">
-            <input id="geo-enabled" type="checkbox" />
-            <span>Enable</span>
-          </label>
-          <div id="geo-fields">
-            <label class="field">
-              <span>Latitude</span>
-              <input
-                id="geo-lat"
-                type="number"
-                step="any"
-                placeholder="47.61477"
-                autocomplete="off"
-              />
-            </label>
-            <label class="field">
-              <span>Longitude</span>
-              <input
-                id="geo-lng"
-                type="number"
-                step="any"
-                placeholder="-122.32525"
-                autocomplete="off"
-              />
-            </label>
-            <button id="geo-fill-current" class="secondary" type="button">Fill with current</button>
-            <label class="field">
-              <span>Accuracy (m) (randomized)</span>
-              <input
-                id="geo-accuracy"
-                type="number"
-                step="any"
-                placeholder="10"
-                autocomplete="off"
-              />
-            </label>
-            <div class="actions">
-              <button id="geo-save" class="primary" type="button">Save</button>
-            </div>
-            <p id="geo-status" class="hint" aria-live="polite"></p>
-          </div>
-        </div>
-      </details>
+      <div id="snp-geo-root"></div>
 
       <details id="profile-border-details" class="section collapsible">
         <summary><h2>Open Profiles Outside Boundary</h2></summary>

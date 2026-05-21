@@ -2,7 +2,8 @@
 // to the MAIN world geo hook via window.postMessage.
 
 import { createLogger } from "../shared/log.js";
-import { SETTINGS_KEYS, getLocalSettings, type GeoOverride } from "../shared/settings.js";
+import type { GeoOverride } from "@sniffies-projects/core";
+import { SETTINGS_KEYS, getLocalSettings } from "../shared/settings.js";
 
 const log = createLogger("geo-relay");
 

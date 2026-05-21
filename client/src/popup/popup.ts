@@ -1,18 +1,29 @@
-import { FAVORITES_NOTIFICATIONS_ENABLED } from "../shared/env.js";
-import { createLogger } from "../shared/log.js";
-
-const log = createLogger("popup");
 import {
   DEFAULT_GEO_OVERRIDE,
+  GEO_OVERRIDE_CSS,
+  GEO_OVERRIDE_HTML,
+  wireGeoOverrideForm,
+} from "@sniffies-projects/core";
+import { FAVORITES_NOTIFICATIONS_ENABLED } from "../shared/env.js";
+import { createLogger } from "../shared/log.js";
+import {
   DEFAULT_PROFILE_BORDER_OPEN,
   SETTINGS_KEYS,
   getLocalSettings,
   setFavoritesEnabled,
   setGeoOverride,
   setProfileBorderOpen,
-  type GeoOverride,
   type ProfileBorderOpen,
 } from "../shared/settings.js";
+
+const log = createLogger("popup");
+
+// Inject geo form styles from core
+const geoStyle = document.createElement("style");
+geoStyle.textContent = GEO_OVERRIDE_CSS;
+document.head.appendChild(geoStyle);
+
+// ── Element references ────────────────────────────────────────────────────────
 
 let savedProfileBorderOpenInNewTab = DEFAULT_PROFILE_BORDER_OPEN.openInNewTab;
 
@@ -21,10 +32,7 @@ const favoritesEnabledCheckbox = document.getElementById("favorites-enabled") as
 const favoritesHint = document.getElementById("favorites-hint");
 const favoritesEnableLabel = document.getElementById("favorites-enable-label");
 
-const randomAccuracy = (): number => Math.round((5 + Math.random() * 20) * 10) / 10;
-
 const openSettingsBtn = document.getElementById("open-settings");
-const geoDetails = document.querySelector<HTMLDetailsElement>("details.collapsible");
 
 const profileBorderDetails = document.getElementById(
   "profile-border-details",
@@ -40,34 +48,25 @@ const profileBorderOptionNew = document.querySelector<HTMLOptionElement>(
 )!;
 const profileBorderSave = document.getElementById("profile-border-save");
 
-const geoEnabled = document.getElementById("geo-enabled") as HTMLInputElement;
-const geoFields = document.getElementById("geo-fields") as HTMLElement;
-const geoLat = document.getElementById("geo-lat") as HTMLInputElement;
-const geoLng = document.getElementById("geo-lng") as HTMLInputElement;
-const geoAccuracy = document.getElementById("geo-accuracy") as HTMLInputElement;
-const geoFillCurrent = document.getElementById("geo-fill-current");
-const geoSave = document.getElementById("geo-save");
-const geoStatus = document.getElementById("geo-status");
-
-const updateGeoSave = (): void => {
-  if (geoSave) {
-    geoSave.style.display = geoLat.value.trim() !== "" && geoLng.value.trim() !== "" ? "" : "none";
-  }
-};
+// ── Init ─────────────────────────────────────────────────────────────────────
 
 const init = async (): Promise<void> => {
   const settings = await getLocalSettings();
-  if (geoDetails) {
-    geoDetails.open = settings.geoSectionOpen;
-  }
-  const geo = { ...DEFAULT_GEO_OVERRIDE, ...settings.geoOverride };
-  geoEnabled.checked = geo.enabled;
-  geoFields.style.display = geo.enabled ? "" : "none";
-  geoLat.value = geo.latitude !== 0 ? String(geo.latitude) : "";
-  geoLng.value = geo.longitude !== 0 ? String(geo.longitude) : "";
-  geoAccuracy.value = String(geo.accuracy);
-  updateGeoSave();
 
+  // Geo form — inject HTML from core and wire up logic
+  const geoRoot = document.getElementById("snp-geo-root")!;
+  geoRoot.innerHTML = GEO_OVERRIDE_HTML;
+  wireGeoOverrideForm(geoRoot, {
+    initial: { ...DEFAULT_GEO_OVERRIDE, ...settings.geoOverride },
+    onSave: setGeoOverride,
+    getNativePosition: navigator.geolocation.getCurrentPosition.bind(navigator.geolocation),
+    initialOpen: settings.geoSectionOpen,
+    onToggle: (open) => {
+      void chrome.storage.local.set({ [SETTINGS_KEYS.geoSectionOpen]: open });
+    },
+  });
+
+  // Favorites
   if (favoritesDetails) {
     favoritesDetails.open = settings.favoritesSectionOpen;
   }
@@ -84,6 +83,7 @@ const init = async (): Promise<void> => {
     favoritesEnabledCheckbox.checked = settings.favoritesEnabled;
   }
 
+  // Profile border
   if (profileBorderDetails) {
     profileBorderDetails.open = settings.profileBorderSectionOpen;
   }
@@ -98,9 +98,7 @@ const init = async (): Promise<void> => {
   }
 };
 
-geoDetails?.addEventListener("toggle", () => {
-  void chrome.storage.local.set({ [SETTINGS_KEYS.geoSectionOpen]: geoDetails.open });
-});
+// ── Event listeners ───────────────────────────────────────────────────────────
 
 favoritesDetails?.addEventListener("toggle", () => {
   void chrome.storage.local.set({ [SETTINGS_KEYS.favoritesSectionOpen]: favoritesDetails.open });
@@ -123,56 +121,7 @@ openSettingsBtn?.addEventListener("click", () => {
   window.close();
 });
 
-const readGeoForm = (): GeoOverride => ({
-  enabled: geoEnabled.checked,
-  latitude: parseFloat(geoLat.value) || 0,
-  longitude: parseFloat(geoLng.value) || 0,
-  accuracy: parseFloat(geoAccuracy.value) || 10,
-});
-
-const reRandomizeAccuracy = (): void => {
-  geoAccuracy.value = String(randomAccuracy());
-};
-
-geoEnabled.addEventListener("change", () => {
-  geoFields.style.display = geoEnabled.checked ? "" : "none";
-  reRandomizeAccuracy();
-});
-
-for (const field of [geoLat, geoLng]) {
-  field.addEventListener("blur", reRandomizeAccuracy);
-  field.addEventListener("input", updateGeoSave);
-}
-
-geoFillCurrent?.addEventListener("click", () => {
-  if (geoStatus) {
-    geoStatus.textContent = "Getting location...";
-  }
-  navigator.geolocation.getCurrentPosition(
-    (pos) => {
-      geoLat.value = String(pos.coords.latitude);
-      geoLng.value = String(pos.coords.longitude);
-      reRandomizeAccuracy();
-      updateGeoSave();
-      if (geoStatus) {
-        geoStatus.textContent = "";
-      }
-    },
-    (error) => {
-      log("Failed to get current position", error);
-      if (geoStatus) {
-        geoStatus.textContent = "Could not get location.";
-      }
-    },
-  );
-});
-
-geoSave?.addEventListener("click", async () => {
-  await setGeoOverride(readGeoForm());
-  if (geoStatus) {
-    geoStatus.textContent = "Saved. Reload sniffies.com to apply.";
-  }
-});
+// ── Profile border ────────────────────────────────────────────────────────────
 
 const PROFILE_BORDER_LABELS = {
   current: "Current tab",
@@ -214,5 +163,7 @@ profileBorderSave?.addEventListener("click", async () => {
   savedProfileBorderOpenInNewTab = next.openInNewTab;
   profileBorderSave.style.display = "none";
 });
+
+log("popup loaded");
 
 void init();

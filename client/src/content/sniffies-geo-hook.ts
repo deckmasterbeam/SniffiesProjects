@@ -1,26 +1,16 @@
 // Runs in the page's MAIN world at document_start on www.sniffies.com.
 // Wraps navigator.geolocation to observe calls and optionally spoof position.
 
+import { installGeoHook, type GeoOverride } from "@sniffies-projects/core";
 import { createLogger } from "../shared/log.js";
 
 (() => {
   const log = createLogger("geo");
 
-  type PatchedGeo = Geolocation & { __sniffiesPatched?: boolean };
-  const geo = navigator.geolocation as PatchedGeo | undefined;
-  if (!geo || geo.__sniffiesPatched) {
-    return;
-  }
+  let override: GeoOverride | null = null;
+  let hook: ReturnType<typeof installGeoHook> = null;
 
-  interface OverrideCoords {
-    latitude: number;
-    longitude: number;
-    accuracy: number;
-  }
-
-  let override: OverrideCoords | null = null;
-
-  // Receive override settings from isolated world
+  // Receive override settings from the isolated-world relay via postMessage.
   window.addEventListener("message", (event) => {
     if (event.source !== window) {
       return;
@@ -29,72 +19,20 @@ import { createLogger } from "../shared/log.js";
     if (!msg || msg.source !== "sniffies-geo-relay") {
       return;
     }
-    override = (msg.coords as OverrideCoords) ?? null;
+    override = (msg.coords as GeoOverride) ?? null;
     log("override updated", override);
+    hook?.refreshWatches();
   });
 
-  const applyOverride = (position: GeolocationPosition): GeolocationPosition => {
-    if (!override) {
-      return position;
-    }
-    return {
-      coords: {
-        latitude: override.latitude,
-        longitude: override.longitude,
-        accuracy: override.accuracy,
-        altitude: null,
-        altitudeAccuracy: null,
-        heading: null,
-        speed: null,
-      },
-      timestamp: Date.now(),
-    } as GeolocationPosition;
-  };
+  hook = installGeoHook(
+    () => override,
+    (coords) => {
+      log("position", coords);
+      window.postMessage({ source: "sniffies-geo-hook", kind: "position", coords }, "*");
+    },
+  );
 
-  const wrapSuccess =
-    (callback: PositionCallback): PositionCallback =>
-    (position) => {
-      log("position", {
-        lat: position.coords.latitude,
-        lng: position.coords.longitude,
-        accuracy: position.coords.accuracy,
-      });
-      window.postMessage(
-        {
-          source: "sniffies-geo-hook",
-          kind: "position",
-          coords: {
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-            accuracy: position.coords.accuracy,
-          },
-        },
-        "*",
-      );
-      callback(applyOverride(position));
-    };
-
-  const nativeGetCurrentPosition = geo.getCurrentPosition.bind(geo);
-  const nativeWatchPosition = geo.watchPosition.bind(geo);
-
-  geo.getCurrentPosition = (
-    success: PositionCallback,
-    error?: PositionErrorCallback | null,
-    options?: PositionOptions,
-  ): void => {
-    log("getCurrentPosition called");
-    nativeGetCurrentPosition(wrapSuccess(success), error, options);
-  };
-
-  geo.watchPosition = (
-    success: PositionCallback,
-    error?: PositionErrorCallback | null,
-    options?: PositionOptions,
-  ): number => {
-    log("watchPosition called");
-    return nativeWatchPosition(wrapSuccess(success), error, options);
-  };
-
-  geo.__sniffiesPatched = true;
-  log("geolocation hook installed");
+  if (hook) {
+    log("geolocation hook installed");
+  }
 })();

@@ -61,6 +61,13 @@ const copyAssets = async () => {
 };
 
 const buildOptions = {
+  alias: {
+    "@sniffies-projects/core": resolve(root, "../core/src/index.ts"),
+  },
+  loader: {
+    ".css": "text",
+    ".html": "text",
+  },
   entryPoints: tsEntries.map((entry) => ({
     in: join(root, entry),
     // Preserve the src/ layout so manifest.json paths resolve unchanged.
