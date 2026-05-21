@@ -45,12 +45,45 @@ export const wireGeoOverrideForm = (container: Element, options: GeoOverrideForm
     geoAccuracy.value = String(randomAccuracy());
   };
 
-  const updateSaveVisibility = (): void => {
-    saveBtn.style.display = geoLat.value.trim() !== "" && geoLng.value.trim() !== "" ? "" : "none";
+  const fillWithCurrentPosition = (onSuccess: () => void): void => {
+    setStatus("Getting location…");
+    options.getNativePosition(
+      (pos) => {
+        geoLat.value = String(pos.coords.latitude);
+        geoLng.value = String(pos.coords.longitude);
+        reRandomizeAccuracy();
+        updateSaveVisibility();
+        onSuccess();
+      },
+      (err) => setStatus(`Could not get location: ${err.message} (code ${err.code})`),
+      { timeout: 10000 },
+    );
   };
 
   // Populate initial values
   const { initial } = options;
+  let lastSaved: GeoOverride = { ...initial };
+
+  const formMatchesSaved = (): boolean => {
+    const form = readForm();
+    return (
+      form.enabled === lastSaved.enabled &&
+      form.latitude === lastSaved.latitude &&
+      form.longitude === lastSaved.longitude
+    );
+  };
+
+  const updateSaveVisibility = (): void => {
+    const hasCoords = geoLat.value.trim() !== "" && geoLng.value.trim() !== "";
+    saveBtn.style.display = hasCoords && !formMatchesSaved() ? "" : "none";
+  };
+
+  const commitSave = (): Promise<void> =>
+    Promise.resolve(options.onSave(readForm())).then(() => {
+      lastSaved = readForm();
+      setStatus("Saved.");
+      updateSaveVisibility();
+    });
   geoEnabled.checked = initial.enabled;
   geoFields.style.display = initial.enabled ? "" : "none";
   geoLat.value = initial.latitude !== 0 ? String(initial.latitude) : "";
@@ -61,21 +94,11 @@ export const wireGeoOverrideForm = (container: Element, options: GeoOverrideForm
   geoEnabled.addEventListener("change", () => {
     geoFields.style.display = geoEnabled.checked ? "" : "none";
     reRandomizeAccuracy();
+    updateSaveVisibility();
     if (!geoEnabled.checked) {
-      setStatus("Getting location…");
-      options.getNativePosition(
-        (pos) => {
-          geoLat.value = String(pos.coords.latitude);
-          geoLng.value = String(pos.coords.longitude);
-          reRandomizeAccuracy();
-          updateSaveVisibility();
-          void Promise.resolve(options.onSave(readForm())).then(() => {
-            setStatus("Saved.");
-          });
-        },
-        (err) => setStatus(`Could not get location: ${err.message} (code ${err.code})`),
-        { timeout: 10000 },
-      );
+      fillWithCurrentPosition(() => {
+        void commitSave();
+      });
     }
   });
 
@@ -85,23 +108,10 @@ export const wireGeoOverrideForm = (container: Element, options: GeoOverrideForm
   }
 
   fillCurrent.addEventListener("click", () => {
-    setStatus("Getting location…");
-    options.getNativePosition(
-      (pos) => {
-        geoLat.value = String(pos.coords.latitude);
-        geoLng.value = String(pos.coords.longitude);
-        reRandomizeAccuracy();
-        updateSaveVisibility();
-        setStatus("");
-      },
-      (err) => setStatus(`Could not get location: ${err.message} (code ${err.code})`),
-      { timeout: 10000 },
-    );
+    fillWithCurrentPosition(() => setStatus(""));
   });
 
   saveBtn.addEventListener("click", () => {
-    void Promise.resolve(options.onSave(readForm())).then(() => {
-      setStatus("Saved.");
-    });
+    void commitSave();
   });
 };

@@ -151,9 +151,9 @@ describe("wireGeoOverrideForm", () => {
       expect(el(container, "geo-save").style.display).toBe("none");
     });
 
-    it("shows save button when lat and lng are filled", () => {
+    it("hides save button on init even when lat and lng are filled (nothing to save)", () => {
       wireGeoOverrideForm(container, { initial: ENABLED, onSave: vi.fn(), getNativePosition: vi.fn() });
-      expect(el(container, "geo-save").style.display).toBe("");
+      expect(el(container, "geo-save").style.display).toBe("none");
     });
 
     it("shows save button after typing lat and lng", () => {
@@ -167,11 +167,36 @@ describe("wireGeoOverrideForm", () => {
       expect(el(container, "geo-save").style.display).toBe("");
     });
 
+    it("shows save button when lat is changed from saved value", () => {
+      wireGeoOverrideForm(container, { initial: ENABLED, onSave: vi.fn(), getNativePosition: vi.fn() });
+      const latInput = el<HTMLInputElement>(container, "geo-lat");
+      latInput.value = "999";
+      input(latInput);
+      expect(el(container, "geo-save").style.display).toBe("");
+    });
+
     it("hides save button when lat is cleared", () => {
       wireGeoOverrideForm(container, { initial: ENABLED, onSave: vi.fn(), getNativePosition: vi.fn() });
       const latInput = el<HTMLInputElement>(container, "geo-lat");
       latInput.value = "";
       input(latInput);
+      expect(el(container, "geo-save").style.display).toBe("none");
+    });
+
+    it("hides save button after save (form now matches saved state)", async () => {
+      const getNativePosition = vi.fn((success: PositionCallback) => {
+        success({ coords: { latitude: 51.5, longitude: -0.1, accuracy: 20 } } as GeolocationPosition);
+      });
+      wireGeoOverrideForm(container, { initial: DISABLED, onSave: vi.fn(), getNativePosition });
+      const latInput = el<HTMLInputElement>(container, "geo-lat");
+      const lngInput = el<HTMLInputElement>(container, "geo-lng");
+      latInput.value = "51.5";
+      input(latInput);
+      lngInput.value = "-0.1";
+      input(lngInput);
+      expect(el(container, "geo-save").style.display).toBe("");
+      click(el(container, "geo-save"));
+      await Promise.resolve();
       expect(el(container, "geo-save").style.display).toBe("none");
     });
   });

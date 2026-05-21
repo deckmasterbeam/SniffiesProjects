@@ -290,9 +290,7 @@ describe("popup — geo fields visibility", () => {
     await import("./popup.js");
     await flushPromises();
     const geoFields = document.getElementById("geo-fields") as HTMLElement;
-    const geoSave = document.getElementById("geo-save") as HTMLButtonElement;
     expect(geoFields.style.display).toBe("");
-    expect(geoSave.style.display).toBe("");
   });
 });
 
