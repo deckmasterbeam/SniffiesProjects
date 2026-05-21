@@ -4,10 +4,14 @@
   "version": "0.1.0",
   "description": "Core UI components and logic for user facing features.",
   "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
   "devDependencies": {
-    "prettier": "^3.8.3"
+    "prettier": "^3.8.3",
+    "vitest": "^3.0.0",
+    "jsdom": "^26.0.0"
   }
 }

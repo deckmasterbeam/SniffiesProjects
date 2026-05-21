@@ -1,25 +1,15 @@
 #snp-fab {
-  position: fixed;
-  top: 12px;
-  right: 12px;
-  z-index: 2147483646;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: #ff5500;
-  color: #fff;
-  font-size: 18px;
-  line-height: 1;
+  background: transparent;
   border: none;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
-  transition: background 0.15s;
+  font-size: 18px;
+  line-height: 1;
+  padding: 4px 6px;
+  opacity: 0.85;
+  transition: opacity 0.15s;
 }
 #snp-fab:hover {
-  background: #e04a00;
+  opacity: 1;
 }
 
 #snp-panel {

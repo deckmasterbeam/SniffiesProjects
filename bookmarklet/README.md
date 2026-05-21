@@ -5,7 +5,13 @@ Injects location spoofing into sniffies.com on browsers where extensions aren't 
 ## Bookmarklet code
 
 ```
+Prod:
+
 javascript:(function(){var s=document.createElement('script');s.src='https://sniffies-projects-bookmarklet.vercel.app/inject.js?t='+Date.now();document.head.appendChild(s);})();
+
+Preview: 
+
+javascript:(function(){var s=document.createElement('script');s.src='https://sniffies-projects-bookm-git-eb641a-joshbarnettcs-5719s-projects.vercel.app/inject.js?t='+Date.now();document.head.appendChild(s);})();
 ```
 
 ## Setting it up on iPhone Safari

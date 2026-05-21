@@ -61,6 +61,22 @@ export const wireGeoOverrideForm = (container: Element, options: GeoOverrideForm
   geoEnabled.addEventListener("change", () => {
     geoFields.style.display = geoEnabled.checked ? "" : "none";
     reRandomizeAccuracy();
+    if (!geoEnabled.checked) {
+      setStatus("Getting location…");
+      options.getNativePosition(
+        (pos) => {
+          geoLat.value = String(pos.coords.latitude);
+          geoLng.value = String(pos.coords.longitude);
+          reRandomizeAccuracy();
+          updateSaveVisibility();
+          void Promise.resolve(options.onSave(readForm())).then(() => {
+            setStatus("Saved.");
+          });
+        },
+        (err) => setStatus(`Could not get location: ${err.message} (code ${err.code})`),
+        { timeout: 10000 },
+      );
+    }
   });
 
   for (const field of [geoLat, geoLng]) {

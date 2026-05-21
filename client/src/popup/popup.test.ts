@@ -12,18 +12,7 @@ const POPUP_HTML = `
       </label>
     </div>
   </details>
-  <details class="collapsible">
-    <summary><h2>Location Override</h2></summary>
-    <input id="geo-enabled" type="checkbox" />
-    <div id="geo-fields">
-      <input id="geo-lat" type="number" />
-      <input id="geo-lng" type="number" />
-      <input id="geo-accuracy" type="number" value="10" />
-      <button id="geo-fill-current"></button>
-      <button id="geo-save"></button>
-      <p id="geo-status"></p>
-    </div>
-  </details>
+  <div id="snp-geo-root"></div>
   <details id="profile-border-details" class="section collapsible">
     <summary><h2>Open Profiles Outside Boundary</h2></summary>
     <input id="profile-border-enabled" type="checkbox" />
@@ -52,7 +41,7 @@ const getElements = () => ({
   geoFillCurrent: document.getElementById("geo-fill-current") as HTMLButtonElement,
   geoSave: document.getElementById("geo-save") as HTMLButtonElement,
   geoStatus: document.getElementById("geo-status") as HTMLElement,
-  geoDetails: document.querySelector<HTMLDetailsElement>("details.collapsible")!,
+  geoDetails: document.getElementById("geo-details") as HTMLDetailsElement,
   profileBorderEnabled: document.getElementById("profile-border-enabled") as HTMLInputElement,
   profileBorderTabField: document.getElementById("profile-border-tab-field") as HTMLElement,
   profileBorderTab: document.getElementById("profile-border-tab") as HTMLSelectElement,
@@ -347,7 +336,7 @@ describe("popup — geo override", () => {
   it("shows geo status while getting location", () => {
     const { geoFillCurrent, geoStatus } = getElements();
     geoFillCurrent.click();
-    expect(geoStatus.textContent).toBe("Getting location...");
+    expect(geoStatus.textContent).toBe("Getting location…");
   });
 });
 

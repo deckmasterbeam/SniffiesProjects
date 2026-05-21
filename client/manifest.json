@@ -1,12 +1,12 @@
 {
   "manifest_version": 3,
-  "name": "Chrome Extension Template",
+  "name": "Sniffies Projects - Chrome",
   "version": "0.1.0",
-  "description": "A starter template for a Chrome extension (Manifest V3).",
+  "description": "A Chrome extension that enhances the Sniffies experience with additional features and SMS notifications.",
   "permissions": ["storage", "activeTab", "scripting", "geolocation"],
   "host_permissions": ["<all_urls>"],
   "action": {
-    "default_title": "Chrome Extension Template",
+    "default_title": "Sniffies Projects - Chrome",
     "default_popup": "src/popup/popup.html",
     "default_icon": {
       "16": "icons/icon16.png",

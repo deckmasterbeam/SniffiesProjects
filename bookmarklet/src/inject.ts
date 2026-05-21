@@ -12,6 +12,7 @@ import {
 } from "@sniffies-projects/core";
 import PANEL_CSS from "./panel.css";
 import PANEL_HTML from "./panel.html";
+import { mountFab, isSniffiesDomain } from "./mount-fab.js";
 
 // ── Guard ────────────────────────────────────────────────────────────────────
 
@@ -51,10 +52,10 @@ if (window.__sniffiesInjected) {
 // ── Main ─────────────────────────────────────────────────────────────────────
 
 function main(): void {
-  if (!location.hostname.endsWith("sniffies.com")) {
+  if (!isSniffiesDomain()) {
     return;
   }
-  alert("sniffies inject loaded");
+  alert("Sniffies Tools loaded! Tap the 📍 button in the nav bar to open the location panel.");
 
   let currentOverride: GeoOverride = loadGeoOverride();
   console.log("[sniffies-geo] initial override", currentOverride);
@@ -94,12 +95,12 @@ function main(): void {
   geoStyle.textContent = GEO_OVERRIDE_CSS;
   document.head.appendChild(geoStyle);
 
-  // Inject FAB trigger
+  // Inject trigger button into the Sniffies nav bar
   const fab = document.createElement("button");
   fab.id = "snp-fab";
-  fab.title = "Sniffies location override";
-  fab.textContent = "📍";
-  document.body.appendChild(fab);
+  fab.title = "Sniffies Tools";
+  fab.textContent = "📍"; // TODO: change out with my icon, could stand to make it even more custom
+  mountFab(fab);
 
   // Inject panel shell
   const panel = document.createElement("div");
