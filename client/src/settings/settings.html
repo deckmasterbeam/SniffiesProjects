@@ -54,6 +54,30 @@
         <div id="grid" class="grid" aria-live="polite"></div>
       </section>
 
+      <section class="reset-section">
+        <h2>Reset</h2>
+        <p class="hint">Clear all local extension data and restore defaults.</p>
+        <div class="row">
+          <button id="reset-btn" class="reset-btn" type="button">Reset to defaults</button>
+          <p id="reset-status" class="hint" aria-live="polite"></p>
+        </div>
+      </section>
+
+      <section class="storage-section">
+        <h2>Local Storage</h2>
+        <p class="hint">Inspect the current state of the extension's local storage.</p>
+        <button id="storage-view-btn" class="save-btn" type="button">Show data</button>
+        <table id="storage-table" style="display: none">
+          <thead>
+            <tr>
+              <th>Key</th>
+              <th>Value</th>
+            </tr>
+          </thead>
+          <tbody id="storage-table-body"></tbody>
+        </table>
+      </section>
+
       <template id="card-template">
         <article class="card">
           <div class="card-image" data-role="image"></div>

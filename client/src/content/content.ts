@@ -1,6 +1,9 @@
 // Content script - runs in the context of web pages (isolated world).
 
-console.log("[sniffies-content] loaded on", location.href);
+import { createLogger } from "../shared/log.js";
+
+const log = createLogger("content");
+log("loaded on", location.href);
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message?.type === "PING") {

@@ -22,36 +22,87 @@
       </header>
 
       <details class="section collapsible">
-        <summary><h2>Location Override</h2></summary>
+        <summary><h2>Location Spoofing</h2></summary>
         <div class="collapsible-body">
           <p class="hint">Spoof the coordinates Sniffies sees.</p>
           <label class="row">
             <input id="geo-enabled" type="checkbox" />
-            <span>Enable override</span>
+            <span>Enable</span>
           </label>
-          <label class="field">
-            <span>Latitude</span>
-            <input id="geo-lat" type="number" step="any" placeholder="40.7128" autocomplete="off" />
+          <div id="geo-fields">
+            <label class="field">
+              <span>Latitude</span>
+              <input
+                id="geo-lat"
+                type="number"
+                step="any"
+                placeholder="47.61477"
+                autocomplete="off"
+              />
+            </label>
+            <label class="field">
+              <span>Longitude</span>
+              <input
+                id="geo-lng"
+                type="number"
+                step="any"
+                placeholder="-122.32525"
+                autocomplete="off"
+              />
+            </label>
+            <button id="geo-fill-current" class="secondary" type="button">Fill with current</button>
+            <label class="field">
+              <span>Accuracy (m) (randomized)</span>
+              <input
+                id="geo-accuracy"
+                type="number"
+                step="any"
+                placeholder="10"
+                autocomplete="off"
+              />
+            </label>
+            <div class="actions">
+              <button id="geo-save" class="primary" type="button">Save</button>
+            </div>
+            <p id="geo-status" class="hint" aria-live="polite"></p>
+          </div>
+        </div>
+      </details>
+
+      <details id="profile-border-details" class="section collapsible">
+        <summary><h2>Open Profiles Outside Boundary</h2></summary>
+        <div class="collapsible-body">
+          <p class="hint">
+            Bypass the paywall by directly opening profiles outside your boundary. Recommend opening
+            in a new tab, current tab triggers current page reload.
+          </p>
+          <label class="row">
+            <input id="profile-border-enabled" type="checkbox" />
+            <span>Enable</span>
           </label>
-          <label class="field">
-            <span>Longitude</span>
-            <input
-              id="geo-lng"
-              type="number"
-              step="any"
-              placeholder="-74.0060"
-              autocomplete="off"
-            />
-          </label>
-          <button id="geo-fill-current" class="secondary" type="button">Fill with current</button>
-          <label class="field">
-            <span>Accuracy (m) (randomized)</span>
-            <input id="geo-accuracy" type="number" step="any" placeholder="10" autocomplete="off" />
+          <label id="profile-border-tab-field" class="field">
+            <span>Open in</span>
+            <select id="profile-border-tab">
+              <option value="current-tab">Current tab</option>
+              <option value="new-tab">New tab</option>
+            </select>
           </label>
           <div class="actions">
-            <button id="geo-save" class="primary" type="button">Save</button>
+            <button id="profile-border-save" class="primary" type="button" style="display: none">
+              Save
+            </button>
           </div>
-          <p id="geo-status" class="hint" aria-live="polite"></p>
+        </div>
+      </details>
+
+      <details id="favorites-details" class="section collapsible">
+        <summary><h2>Favorites</h2></summary>
+        <div class="collapsible-body">
+          <p id="favorites-hint" class="hint"></p>
+          <label class="row">
+            <input id="favorites-enabled" type="checkbox" />
+            <span id="favorites-enable-label">Enable</span>
+          </label>
         </div>
       </details>
     </main>

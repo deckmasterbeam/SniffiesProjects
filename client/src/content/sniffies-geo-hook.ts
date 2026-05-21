@@ -1,8 +1,10 @@
 // Runs in the page's MAIN world at document_start on www.sniffies.com.
 // Wraps navigator.geolocation to observe calls and optionally spoof position.
 
+import { createLogger } from "../shared/log.js";
+
 (() => {
-  const TAG = "[sniffies-geo]";
+  const log = createLogger("geo");
 
   type PatchedGeo = Geolocation & { __sniffiesPatched?: boolean };
   const geo = navigator.geolocation as PatchedGeo | undefined;
@@ -28,38 +30,31 @@
       return;
     }
     override = (msg.coords as OverrideCoords) ?? null;
-    console.log(TAG, "override updated", override);
+    log("override updated", override);
   });
 
   const applyOverride = (position: GeolocationPosition): GeolocationPosition => {
     if (!override) {
       return position;
     }
-    const ov = override;
     return {
       coords: {
-        latitude: ov.latitude,
-        longitude: ov.longitude,
-        accuracy: ov.accuracy,
+        latitude: override.latitude,
+        longitude: override.longitude,
+        accuracy: override.accuracy,
         altitude: null,
         altitudeAccuracy: null,
         heading: null,
         speed: null,
-        toJSON() {
-          return this;
-        },
       },
       timestamp: Date.now(),
-      toJSON() {
-        return this;
-      },
     } as GeolocationPosition;
   };
 
   const wrapSuccess =
     (callback: PositionCallback): PositionCallback =>
     (position) => {
-      console.log(TAG, "position", {
+      log("position", {
         lat: position.coords.latitude,
         lng: position.coords.longitude,
         accuracy: position.coords.accuracy,
@@ -82,24 +77,24 @@
   const nativeGetCurrentPosition = geo.getCurrentPosition.bind(geo);
   const nativeWatchPosition = geo.watchPosition.bind(geo);
 
-  geo.getCurrentPosition = function (
+  geo.getCurrentPosition = (
     success: PositionCallback,
     error?: PositionErrorCallback | null,
     options?: PositionOptions,
-  ) {
-    console.log(TAG, "getCurrentPosition called");
+  ): void => {
+    log("getCurrentPosition called");
     nativeGetCurrentPosition(wrapSuccess(success), error, options);
   };
 
-  geo.watchPosition = function (
+  geo.watchPosition = (
     success: PositionCallback,
     error?: PositionErrorCallback | null,
     options?: PositionOptions,
-  ) {
-    console.log(TAG, "watchPosition called");
+  ): number => {
+    log("watchPosition called");
     return nativeWatchPosition(wrapSuccess(success), error, options);
   };
 
   geo.__sniffiesPatched = true;
-  console.log(TAG, "geolocation hook installed");
+  log("geolocation hook installed");
 })();

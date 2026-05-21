@@ -25,7 +25,7 @@ const child = spawn("node", [buildScript], {
   env: {
     ...process.env,
     DEBUG: "false",
-    NOTIFICATIONS_ENABLED: "false",
+    FAVORITES_NOTIFICATIONS_ENABLED: "false",
     EXTENSION_VERSION: version,
   },
 });

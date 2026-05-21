@@ -4,20 +4,28 @@
 // - When a profile panel (#app-screen) renders its cruiserNameLabel span,
 //   injects a star toggle (always shown) and the user id text (debug-gated).
 
-declare const __DEBUG__: boolean;
-declare const __SERVER_BASE__: string;
-declare const __CLIENT_SECRET__: string;
-declare const __NOTIFICATIONS_ENABLED__: boolean;
-
-import { SETTINGS_KEYS, getLocalSettings } from "../shared/settings.js";
+import {
+  CLIENT_SECRET,
+  DEBUG,
+  FAVORITES_NOTIFICATIONS_ENABLED,
+  SERVER_BASE,
+} from "../shared/env.js";
+import { createLogger } from "../shared/log.js";
+import {
+  DEFAULT_PROFILE_BORDER_OPEN,
+  SETTINGS_KEYS,
+  getLocalSettings,
+  type ProfileBorderOpen,
+} from "../shared/settings.js";
 
 const clientHeaders = (): Record<string, string> => ({
   "Content-Type": "application/json",
-  Authorization: `Bearer ${__CLIENT_SECRET__}`,
+  Authorization: `Bearer ${CLIENT_SECRET}`,
 });
 
-const TAG = "[sniffies-profile-id]";
+const log = createLogger("profile-id");
 const MARKER_SELECTOR = '[data-testid="cv-marker-avatar-image"]';
+const MARKER_CONTAINER_SELECTOR = '[data-testid="markerUserContainer"]';
 const APP_SCREEN_SELECTOR = "#app-screen";
 const NAME_LABEL_SELECTOR = '[data-testid="cruiserNameLabel"]';
 const INJECTED_ATTR = "data-sniffies-injection";
@@ -38,15 +46,16 @@ interface ApiFavoriteEntry {
 let lastSelection: ProfileSelection | null = null;
 let favoritedIds = new Set<string>();
 let currentGuid = "";
+let currentProfileBorderOpen: ProfileBorderOpen = { ...DEFAULT_PROFILE_BORDER_OPEN };
 
 const isFavorite = (userId: string): boolean => favoritedIds.has(userId);
 
 const fetchFavorites = async (guid: string): Promise<void> => {
-  if (!guid || !__SERVER_BASE__) {
+  if (!guid || !SERVER_BASE) {
     return;
   }
   try {
-    const res = await fetch(`${__SERVER_BASE__}/api/favorites?guid=${encodeURIComponent(guid)}`, {
+    const res = await fetch(`${SERVER_BASE}/api/favorites?guid=${encodeURIComponent(guid)}`, {
       headers: clientHeaders(),
     });
     if (!res.ok) {
@@ -56,7 +65,7 @@ const fetchFavorites = async (guid: string): Promise<void> => {
     favoritedIds = new Set((data.favorites ?? []).map((f) => f.user_id));
     refreshAllInjections();
   } catch (err) {
-    console.error(`${TAG} fetchFavorites failed`, err);
+    log.error("fetchFavorites failed", err);
   }
 };
 
@@ -95,7 +104,7 @@ const renderStar = (star: HTMLElement, userId: string): void => {
 };
 
 const renderIdText = (idText: HTMLElement): void => {
-  idText.style.display = __DEBUG__ ? "" : "none";
+  idText.style.display = DEBUG ? "" : "none";
 };
 
 const buildInjection = (selection: ProfileSelection): HTMLElement => {
@@ -126,7 +135,7 @@ const buildInjection = (selection: ProfileSelection): HTMLElement => {
   star.addEventListener("click", async (event) => {
     event.stopPropagation();
     if (!currentGuid) {
-      console.warn(`${TAG} no guid — open settings to register your phone`);
+      log.warn("no guid — open settings to register your phone");
       return;
     }
     const next = !isFavorite(userId);
@@ -138,7 +147,7 @@ const buildInjection = (selection: ProfileSelection): HTMLElement => {
     }
     renderStar(star, userId);
     try {
-      await fetch(`${__SERVER_BASE__}/api/favorites`, {
+      await fetch(`${SERVER_BASE}/api/favorites`, {
         method: "POST",
         headers: clientHeaders(),
         body: JSON.stringify({
@@ -149,7 +158,7 @@ const buildInjection = (selection: ProfileSelection): HTMLElement => {
         }),
       });
     } catch (err) {
-      console.error(`${TAG} failed to persist favorite`, err);
+      log.error("failed to persist favorite", err);
       // Roll back optimistic update.
       if (next) {
         favoritedIds.delete(userId);
@@ -197,7 +206,7 @@ const refreshAllInjections = (): void => {
 };
 
 const injectIntoNameLabel = (nameLabel: HTMLElement, selection: ProfileSelection): void => {
-  if (!__NOTIFICATIONS_ENABLED__) {
+  if (!FAVORITES_NOTIFICATIONS_ENABLED) {
     return;
   }
   const screen = nameLabel.closest(APP_SCREEN_SELECTOR);
@@ -214,7 +223,7 @@ const injectIntoNameLabel = (nameLabel: HTMLElement, selection: ProfileSelection
   }
   const node = buildInjection(selection);
   nameLabel.insertAdjacentElement("afterend", node);
-  console.log(`${TAG} injected for user`, selection.userId);
+  log("injected for user", selection.userId);
 };
 
 const tryInjectIntoScreen = (screen: Element): void => {
@@ -259,17 +268,33 @@ document.addEventListener(
     if (!(target instanceof Element)) {
       return;
     }
+
+    if (currentProfileBorderOpen.enabled) {
+      const container = target.closest<HTMLElement>(MARKER_CONTAINER_SELECTOR);
+      if (container && container.dataset.withinRadius === "false" && container.id) {
+        event.stopPropagation();
+        event.preventDefault();
+        const url = `https://sniffies.com/profile/${container.id}`;
+        if (currentProfileBorderOpen.openInNewTab) {
+          window.open(url, "_blank");
+        } else {
+          window.location.href = url;
+        }
+        return;
+      }
+    }
+
     const marker = target.closest<HTMLElement>(MARKER_SELECTOR);
     if (!marker) {
       return;
     }
     const selection = extractFromMarker(marker);
     if (!selection) {
-      console.log(`${TAG} click on marker but no user id found`, marker);
+      log("click on marker but no user id found", marker);
       return;
     }
     lastSelection = selection;
-    console.log(`${TAG} marker clicked`, selection);
+    log("marker clicked", selection);
     const screen = document.querySelector(APP_SCREEN_SELECTOR);
     if (screen) {
       tryInjectIntoScreen(screen);
@@ -284,12 +309,13 @@ if (document.body) {
   document.addEventListener("DOMContentLoaded", startObserving, { once: true });
 }
 
-void getLocalSettings().then(({ guid }) => {
+void getLocalSettings().then(({ guid, profileBorderOpen }) => {
   currentGuid = guid;
+  currentProfileBorderOpen = { ...DEFAULT_PROFILE_BORDER_OPEN, ...profileBorderOpen };
   if (guid) {
     void fetchFavorites(guid);
   }
-  console.log(`${TAG} initialized, guid ${guid ? "present" : "missing"}`);
+  log(`initialized, guid ${guid ? "present" : "missing"}`);
 });
 
 chrome.storage.onChanged.addListener((changes, area) => {
@@ -302,5 +328,12 @@ chrome.storage.onChanged.addListener((changes, area) => {
     if (currentGuid) {
       void fetchFavorites(currentGuid);
     }
+  }
+  const profileBorderChange = changes[SETTINGS_KEYS.profileBorderOpen];
+  if (profileBorderChange) {
+    currentProfileBorderOpen = {
+      ...DEFAULT_PROFILE_BORDER_OPEN,
+      ...(profileBorderChange.newValue as ProfileBorderOpen | undefined),
+    };
   }
 });
