@@ -5,8 +5,8 @@ import type { GeoOverride } from "./settings.js";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-const DISABLED: GeoOverride = { enabled: false, latitude: 0, longitude: 0, accuracy: 10 };
-const ENABLED: GeoOverride = { enabled: true, latitude: 47.6, longitude: -122.3, accuracy: 15 };
+const DISABLED: GeoOverride = { enabled: false, latitude: 0, longitude: 0 };
+const ENABLED: GeoOverride = { enabled: true, latitude: 47.6, longitude: -122.3 };
 
 const el = <T extends HTMLElement>(container: Element, id: string) =>
   container.querySelector<T>(`#${id}`)!;
@@ -130,6 +130,31 @@ describe("wireGeoOverrideForm", () => {
       checkbox.checked = false;
       change(checkbox);
       expect(el(container, "geo-status").textContent).toContain("Could not get location");
+    });
+
+    it("cancels pending location fetch when re-enabled before response arrives", () => {
+      const onSave = vi.fn();
+      let capturedSuccess: PositionCallback | null = null;
+      const getNativePosition = vi.fn((success: PositionCallback) => {
+        capturedSuccess = success; // hold — don't call yet
+      });
+      wireGeoOverrideForm(container, { initial: ENABLED, onSave, getNativePosition });
+      const checkbox = el<HTMLInputElement>(container, "geo-enabled");
+
+      // disable → starts pending fetch
+      checkbox.checked = false;
+      change(checkbox);
+      expect(el(container, "geo-status").textContent).toBe("Getting location…");
+
+      // re-enable before response arrives
+      checkbox.checked = true;
+      change(checkbox);
+      expect(el(container, "geo-status").textContent).toBe("");
+
+      // late response fires — should be ignored
+      capturedSuccess!({ coords: { latitude: 51.5, longitude: -0.1, accuracy: 10 } } as GeolocationPosition);
+      expect(onSave).not.toHaveBeenCalled();
+      expect(el<HTMLInputElement>(container, "geo-lat").value).toBe("47.6"); // unchanged
     });
 
     it("shows 'Saved.' after real location is fetched and saved on uncheck", async () => {

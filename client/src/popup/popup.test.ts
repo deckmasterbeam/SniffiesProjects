@@ -37,7 +37,6 @@ const getElements = () => ({
   geoEnabled: document.getElementById("geo-enabled") as HTMLInputElement,
   geoLat: document.getElementById("geo-lat") as HTMLInputElement,
   geoLng: document.getElementById("geo-lng") as HTMLInputElement,
-  geoAccuracy: document.getElementById("geo-accuracy") as HTMLInputElement,
   geoFillCurrent: document.getElementById("geo-fill-current") as HTMLButtonElement,
   geoSave: document.getElementById("geo-save") as HTMLButtonElement,
   geoStatus: document.getElementById("geo-status") as HTMLElement,
@@ -152,7 +151,7 @@ describe("popup — profile border open", () => {
     (chrome.storage.local.get as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       profileBorderOpen: { enabled: true, openInNewTab: false },
       profileBorderSectionOpen: false,
-      geoOverride: { enabled: false, latitude: 0, longitude: 0, accuracy: 10 },
+      geoOverride: { enabled: false, latitude: 0, longitude: 0 },
       geoSectionOpen: false,
       guid: "",
       phone: "",
@@ -191,7 +190,7 @@ describe("popup — favorites", () => {
       favoritesSectionOpen: false,
       profileBorderOpen: { enabled: false, openInNewTab: false },
       profileBorderSectionOpen: false,
-      geoOverride: { enabled: false, latitude: 0, longitude: 0, accuracy: 10 },
+      geoOverride: { enabled: false, latitude: 0, longitude: 0 },
       geoSectionOpen: false,
       guid: "",
       phone: "",
@@ -272,7 +271,7 @@ describe("popup — geo fields visibility", () => {
   it("shows fields and save button on init when geo is saved as enabled with coords", async () => {
     vi.resetModules();
     (chrome.storage.local.get as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      geoOverride: { enabled: true, latitude: 40.7128, longitude: -74.006, accuracy: 15 },
+      geoOverride: { enabled: true, latitude: 40.7128, longitude: -74.006 },
       geoSectionOpen: false,
       profileBorderOpen: { enabled: false, openInNewTab: false },
       profileBorderSectionOpen: false,
@@ -298,37 +297,14 @@ describe("popup — geo override", () => {
   beforeEach(loadModule);
 
   it("saves geo form values when save is clicked", async () => {
-    const { geoLat, geoLng, geoAccuracy, geoSave } = getElements();
+    const { geoLat, geoLng, geoSave } = getElements();
     geoLat.value = "40.7128";
     geoLng.value = "-74.0060";
-    geoAccuracy.value = "15";
     geoSave.click();
     await flushPromises();
     expect(chrome.storage.local.set).toHaveBeenCalledWith({
-      geoOverride: { enabled: false, latitude: 40.7128, longitude: -74.006, accuracy: 15 },
+      geoOverride: { enabled: false, latitude: 40.7128, longitude: -74.006 },
     });
-  });
-
-  it("re-randomizes accuracy when geo-enabled changes", () => {
-    const { geoEnabled, geoAccuracy } = getElements();
-    geoAccuracy.value = "999";
-    geoEnabled.checked = true;
-    geoEnabled.dispatchEvent(new Event("change"));
-    expect(geoAccuracy.value).not.toBe("999");
-  });
-
-  it("re-randomizes accuracy on lat blur", () => {
-    const { geoLat, geoAccuracy } = getElements();
-    geoAccuracy.value = "999";
-    geoLat.dispatchEvent(new Event("blur"));
-    expect(geoAccuracy.value).not.toBe("999");
-  });
-
-  it("re-randomizes accuracy on lng blur", () => {
-    const { geoLng, geoAccuracy } = getElements();
-    geoAccuracy.value = "999";
-    geoLng.dispatchEvent(new Event("blur"));
-    expect(geoAccuracy.value).not.toBe("999");
   });
 
   it("shows geo status while getting location", () => {

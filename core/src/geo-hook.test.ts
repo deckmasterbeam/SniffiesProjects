@@ -4,8 +4,8 @@ import type { GeoOverride } from "./settings.js";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-const REAL: GeoOverride = { enabled: false, latitude: 51.5, longitude: -0.1, accuracy: 10 };
-const SPOOF: GeoOverride = { enabled: true, latitude: 47.6, longitude: -122.3, accuracy: 15 };
+const REAL: GeoOverride = { enabled: false, latitude: 51.5, longitude: -0.1 };
+const SPOOF: GeoOverride = { enabled: true, latitude: 47.6, longitude: -122.3 };
 
 const makePosition = (lat: number, lng: number, accuracy = 10): GeolocationPosition =>
   ({
@@ -13,7 +13,7 @@ const makePosition = (lat: number, lng: number, accuracy = 10): GeolocationPosit
     timestamp: Date.now(),
   }) as GeolocationPosition;
 
-const REAL_POSITION = makePosition(REAL.latitude, REAL.longitude, REAL.accuracy);
+const REAL_POSITION = makePosition(REAL.latitude, REAL.longitude);
 
 type MockGeo = Geolocation & { _fireWatchers: (pos: GeolocationPosition) => void };
 
@@ -71,7 +71,7 @@ describe("installGeoHook", () => {
     const success = vi.fn();
     navigator.geolocation.getCurrentPosition(success);
     expect(success).toHaveBeenCalledWith(
-      expect.objectContaining({ coords: expect.objectContaining({ latitude: SPOOF.latitude, longitude: SPOOF.longitude, accuracy: SPOOF.accuracy }) }),
+      expect.objectContaining({ coords: expect.objectContaining({ latitude: SPOOF.latitude, longitude: SPOOF.longitude, accuracy: 10 }) }),
     );
   });
 
@@ -115,6 +115,6 @@ describe("installGeoHook", () => {
     const onPosition = vi.fn();
     installGeoHook(() => SPOOF, onPosition);
     navigator.geolocation.getCurrentPosition(vi.fn());
-    expect(onPosition).toHaveBeenCalledWith({ latitude: REAL.latitude, longitude: REAL.longitude, accuracy: REAL.accuracy });
+    expect(onPosition).toHaveBeenCalledWith({ latitude: REAL.latitude, longitude: REAL.longitude });
   });
 });

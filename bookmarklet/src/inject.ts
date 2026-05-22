@@ -67,19 +67,60 @@ function main(): void {
 
   // Intercept fetch so pre-existing watchPosition watchers (registered before this
   // bookmarklet loaded) also send spoofed coords to the Sniffies location API.
+  // Also capture the last location request so we can replay it immediately when
+  // the user saves new coords (Sniffies won't re-send otherwise).
   const nativeFetch = window.fetch.bind(window);
-  window.fetch = async (input, init) => {
-    const url = typeof input === "string" ? input : input instanceof URL ? input.href : (input as Request).url;
-    if (currentOverride.enabled && url.includes("/api/visitor/current/location")) {
+  let lastLocationRequest: { url: string; init: RequestInit } | null = null;
+  let apiBase: string | null = null;
+
+  const sendLocationUpdate = (override: typeof currentOverride): void => {
+    const spoofed = { lat: override.latitude, lng: override.longitude };
+    if (lastLocationRequest) {
       try {
-        const body = JSON.parse((init?.body as string) ?? "{}") as Record<string, unknown>;
-        const spoofed = { lat: currentOverride.latitude, lng: currentOverride.longitude };
+        const body = JSON.parse((lastLocationRequest.init.body as string) ?? "{}") as Record<string, unknown>;
         body.virtualLocation = spoofed;
         body.physicalLocation = spoofed;
-        console.log("[sniffies-geo] intercepting location request", spoofed);
-        init = { ...init, body: JSON.stringify(body) };
+        console.log("[sniffies-geo] replaying location request with new coords", spoofed);
+        void nativeFetch(lastLocationRequest.url, { ...lastLocationRequest.init, body: JSON.stringify(body) });
+        return;
       } catch {
-        // leave the request unmodified if parsing fails
+        // fall through to proactive request
+      }
+    }
+    if (apiBase) {
+      console.log("[sniffies-geo] proactively sending location update", spoofed);
+      void nativeFetch(`${apiBase}/api/visitor/current/location?state=loaded`, {
+        method: "PUT",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          virtualLocation: spoofed,
+          physicalLocation: spoofed,
+          homeDistanceInMiles: null,
+        }),
+      });
+    }
+  };
+
+  window.fetch = async (input, init) => {
+    const url = typeof input === "string" ? input : input instanceof URL ? input.href : (input as Request).url;
+    const baseMatch = url.match(/^(https?:\/\/[^/]*sniffies\.com)/);
+    if (baseMatch && !apiBase) {
+      apiBase = baseMatch[1] || null;
+    }
+    if (url.includes("/api/visitor/current/location")) {
+      lastLocationRequest = { url, init: { ...init } };
+      if (currentOverride.enabled) {
+        try {
+          const body = JSON.parse((init?.body as string) ?? "{}") as Record<string, unknown>;
+          const spoofed = { lat: currentOverride.latitude, lng: currentOverride.longitude };
+          body.virtualLocation = spoofed;
+          body.physicalLocation = spoofed;
+          console.log("[sniffies-geo] intercepting location request", spoofed);
+          init = { ...init, body: JSON.stringify(body) };
+        } catch {
+          // leave the request unmodified if parsing fails
+        }
       }
     }
     return nativeFetch(input, init);
@@ -120,6 +161,9 @@ function main(): void {
       saveGeoOverride(next);
       currentOverride = next;
       hook?.refreshWatches();
+      if (next.enabled) {
+        sendLocationUpdate(next);
+      }
     },
     getNativePosition: nativeGetCurrentPosition,
   });

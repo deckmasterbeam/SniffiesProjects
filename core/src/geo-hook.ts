@@ -20,7 +20,7 @@ export interface GeoHookResult {
  */
 export const installGeoHook = (
   getOverride: () => GeoOverride | null,
-  onPosition?: (coords: { latitude: number; longitude: number; accuracy: number }) => void,
+  onPosition?: (coords: { latitude: number; longitude: number }) => void,
 ): GeoHookResult | null => {
   const geo = navigator.geolocation as PatchedGeo | undefined;
   if (!geo || geo.__sniffiesPatched) {
@@ -43,7 +43,7 @@ export const installGeoHook = (
       coords: {
         latitude: ov.latitude,
         longitude: ov.longitude,
-        accuracy: ov.accuracy,
+        accuracy: 10,
         altitude: null,
         altitudeAccuracy: null,
         heading: null,
@@ -61,7 +61,6 @@ export const installGeoHook = (
       onPosition?.({
         latitude: position.coords.latitude,
         longitude: position.coords.longitude,
-        accuracy: position.coords.accuracy,
       });
       callback(applyOverride(position));
     };
