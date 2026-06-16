@@ -1,3 +1,5 @@
+import { DEFAULT_GEO_OVERRIDE, GeoOverride } from "@sniffies-projects/core";
+
 export const SETTINGS_KEYS = {
   guid: "guid",
   phone: "phone",

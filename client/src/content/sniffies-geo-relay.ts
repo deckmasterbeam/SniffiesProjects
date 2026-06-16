@@ -11,13 +11,7 @@ const postOverride = (override: GeoOverride): void => {
   window.postMessage(
     {
       source: "sniffies-geo-relay",
-      coords: override.enabled
-        ? {
-            latitude: override.latitude,
-            longitude: override.longitude,
-            accuracy: override.accuracy,
-          }
-        : null,
+      coords: override.enabled ? override : null,
     },
     "*",
   );
