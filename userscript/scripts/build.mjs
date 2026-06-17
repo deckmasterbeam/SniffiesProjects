@@ -7,6 +7,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = resolve(__dirname, "..");
 const distDir = join(root, "dist");
 const watch = process.argv.includes("--watch");
+const prod = process.argv.includes("--prod");
 
 const METADATA = `\
 // ==UserScript==
@@ -31,6 +32,7 @@ const buildOptions = {
   format: "iife",
   target: "safari16",
   platform: "browser",
+  minify: prod,
   sourcemap: false,
   logLevel: "info",
   alias: {
