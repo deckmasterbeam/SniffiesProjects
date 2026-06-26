@@ -1,0 +1,36 @@
+name: Release Userscript
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+        working-directory: userscript
+
+      - name: Build userscript
+        run: npm run build:prod
+        working-directory: userscript
+
+      - name: Publish release
+        run: |
+          gh release delete latest --yes --cleanup-tag 2>/dev/null || true
+          gh release create latest \
+            --title "Latest Build" \
+            --notes "Automated build from [\`${GITHUB_SHA::7}\`](https://github.com/${{ github.repository }}/commit/${{ github.sha }})" \
+            userscript/dist/sniffies-tools.user.js
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
