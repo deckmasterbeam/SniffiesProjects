@@ -1,4 +1,4 @@
-# Sniffies Projects — Chrome Extension
+# Sniffies Tools — Chrome Extension
 
 Chrome extension that enhances sniffies.com with additional features.
 

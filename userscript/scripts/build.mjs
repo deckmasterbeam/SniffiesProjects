@@ -11,7 +11,7 @@ const prod = process.argv.includes("--prod");
 
 const METADATA = `\
 // ==UserScript==
-// @name         Sniffies Projects Userscript
+// @name         Sniffies Tools Userscript
 // @namespace    https://sniffies.com
 // @author       Beam
 // @version      0.1.0
