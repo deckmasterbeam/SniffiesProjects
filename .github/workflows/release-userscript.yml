@@ -31,7 +31,7 @@ jobs:
           cp userscript/dist/sniffies-tools.user.js dist/sniffies-tools.user.js
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add dist/sniffies-tools.user.js
+          git add -f dist/sniffies-tools.user.js
           git diff --cached --quiet || git commit -m "chore: update dist/sniffies-tools.user.js [skip ci]"
           git push origin HEAD:main
 
