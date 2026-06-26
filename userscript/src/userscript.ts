@@ -14,31 +14,9 @@ import {
 import PANEL_CSS from "./panel.css";
 import PANEL_HTML from "./panel.html";
 
-// ── Guard ────────────────────────────────────────────────────────────────────
-
 declare global {
   interface Window {
     __sniffiesInjected?: boolean;
-  }
-}
-
-// Install the geo hook and fetch interceptor immediately (document-start), so
-// they're in place before any Sniffies scripts run. Defer DOM/UI work until
-// the document is ready.
-if (window.__sniffiesInjected) {
-  // Already installed — nothing to do.
-} else {
-  window.__sniffiesInjected = true;
-  let hookState: HookState | null = null;
-  try {
-    hookState = installHooks();
-  } catch (err) {
-    console.error("[sniffies-tools] hook install failed:", err);
-  }
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", () => mountUI(hookState), { once: true });
-  } else {
-    mountUI(hookState);
   }
 }
 
@@ -195,4 +173,24 @@ function mountUI(state: HookState | null): void {
   closeBtn.addEventListener("click", () => {
     panel.style.display = "none";
   });
+}
+
+// ── Entry point ───────────────────────────────────────────────────────────────
+// Must run after all const declarations above are initialized.
+
+if (window.__sniffiesInjected) {
+  // Already installed — nothing to do.
+} else {
+  window.__sniffiesInjected = true;
+  let hookState: HookState | null = null;
+  try {
+    hookState = installHooks();
+  } catch (err) {
+    console.error("[sniffies-tools] hook install failed:", err);
+  }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", () => mountUI(hookState), { once: true });
+  } else {
+    mountUI(hookState);
+  }
 }
