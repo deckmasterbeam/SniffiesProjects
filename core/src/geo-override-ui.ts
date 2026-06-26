@@ -106,6 +106,7 @@ export const wireGeoOverrideForm = (container: Element, options: GeoOverrideForm
         setStatus("");
       }
     } else {
+      void commitSave();
       fillWithCurrentPosition(() => {
         void commitSave();
       });

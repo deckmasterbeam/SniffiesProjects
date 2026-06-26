@@ -40,12 +40,21 @@ const saveGeoOverride = (override: GeoOverride): void => {
 // ── FAB mount ─────────────────────────────────────────────────────────────────
 
 const mountFab = (fab: HTMLButtonElement): void => {
-  const navTarget = document.querySelector<HTMLElement>('[title="Sitelinks"]');
-  if (navTarget?.parentElement) {
-    navTarget.parentElement.insertBefore(fab, navTarget.nextSibling);
-  } else {
-    document.body.appendChild(fab);
-  }
+  const tryInsert = (): boolean => {
+    const navTarget = document.querySelector<HTMLElement>('[title="Sitelinks"]');
+    if (navTarget?.parentElement) {
+      navTarget.parentElement.insertBefore(fab, navTarget.nextSibling);
+      return true;
+    }
+    return false;
+  };
+
+  if (tryInsert()) return;
+
+  const observer = new MutationObserver(() => {
+    if (tryInsert()) observer.disconnect();
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
 };
 
 // ── Hooks (runs at document-start, before page scripts) ──────────────────────
