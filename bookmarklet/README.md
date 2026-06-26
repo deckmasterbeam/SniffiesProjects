@@ -1,6 +1,9 @@
 # Sniffies Bookmarklet
 
-Injects location spoofing into sniffies.com on browsers where extensions aren't available (e.g. iOS Safari).
+Injects features into sniffies.com on browsers where extensions aren't available (e.g. iOS Safari) without 3rd party apps.
+
+Supported features:
+- Location spoofing (doesn't work well)
 
 ## Bookmarklet code
 
@@ -23,7 +26,5 @@ You can't type a `javascript:` URL directly into Safari on iOS — you have to c
 3. Rename it to "Sniffies Tools" (or whatever)
 4. Replace the URL with the bookmarklet code above
 5. Save
-
-The easiest way to get the code onto your phone is to send it to yourself via Notes or iMessage, then copy-paste it into the URL field in step 4.
 
 **To use:** navigate to sniffies.com in Safari, open your bookmarks, and tap "Sniffies Tools". A FAB button will appear on the page.
