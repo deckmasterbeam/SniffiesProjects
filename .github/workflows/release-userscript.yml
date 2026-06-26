@@ -25,6 +25,16 @@ jobs:
         run: npm run build:prod
         working-directory: userscript
 
+      - name: Commit dist to repo
+        run: |
+          mkdir -p dist
+          cp userscript/dist/sniffies-tools.user.js dist/sniffies-tools.user.js
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add dist/sniffies-tools.user.js
+          git diff --cached --quiet || git commit -m "chore: update dist/sniffies-tools.user.js [skip ci]"
+          git push origin HEAD:main
+
       - name: Publish release
         run: |
           gh release delete latest-userscript --yes --cleanup-tag 2>/dev/null || true

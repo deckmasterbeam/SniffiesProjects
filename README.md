@@ -1,4 +1,4 @@
-# Sniffies Projects
+# Sniffies Tools
 
 A monorepo of tools to recreate and expand functionality for [sniffies.com](https://sniffies.com)
 
