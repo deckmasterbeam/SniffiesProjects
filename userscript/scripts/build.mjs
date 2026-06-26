@@ -11,10 +11,11 @@ const prod = process.argv.includes("--prod");
 
 const METADATA = `\
 // ==UserScript==
-// @name         Sniffies Tools
+// @name         Sniffies Projects Userscript
 // @namespace    https://sniffies.com
+// @author       Beam
 // @version      0.1.0
-// @description  Location spoofing for Sniffies
+// @description  Recreating and expanding features on top of Sniffies.com
 // @match        https://sniffies.com/*
 // @match        https://*.sniffies.com/*
 // @run-at       document-start

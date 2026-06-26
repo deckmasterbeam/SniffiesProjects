@@ -38,7 +38,7 @@ jobs:
         run: |
           gh release delete latest-chrome --yes --cleanup-tag 2>/dev/null || true
           gh release create latest-chrome \
-            --title "Latest Chrome Build" \
+            --title "Latest Chrome Extension Build" \
             --notes "Automated build from [\`${GITHUB_SHA::7}\`](https://github.com/${{ github.repository }}/commit/${{ github.sha }})" \
             client/sniffies-chrome.zip
         env:
