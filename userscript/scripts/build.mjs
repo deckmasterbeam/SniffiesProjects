@@ -34,7 +34,7 @@ const buildOptions = {
   target: "safari16",
   platform: "browser",
   minify: prod,
-  sourcemap: false,
+  sourcemap: prod ? "inline" : false,
   logLevel: "info",
   alias: {
     "@sniffies-projects/core": resolve(root, "../core/src/index.ts"),

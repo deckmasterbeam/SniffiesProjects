@@ -29,11 +29,16 @@ if (window.__sniffiesInjected) {
   // Already installed — nothing to do.
 } else {
   window.__sniffiesInjected = true;
-  const teardown = installHooks();
+  let hookState: HookState | null = null;
+  try {
+    hookState = installHooks();
+  } catch (err) {
+    console.error("[sniffies-tools] hook install failed:", err);
+  }
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", () => mountUI(teardown), { once: true });
+    document.addEventListener("DOMContentLoaded", () => mountUI(hookState), { once: true });
   } else {
-    mountUI(teardown);
+    mountUI(hookState);
   }
 }
 
@@ -140,9 +145,12 @@ function installHooks(): HookState {
 
 // ── UI (runs after DOMContentLoaded) ─────────────────────────────────────────
 
-function mountUI(state: HookState): void {
-  const { hook, nativeGetCurrentPosition, sendLocationUpdate } = state;
-  let currentOverride = state.currentOverride;
+function mountUI(state: HookState | null): void {
+  const hook = state?.hook ?? null;
+  const nativeGetCurrentPosition = state?.nativeGetCurrentPosition ??
+    (() => { throw new Error("geolocation unavailable"); });
+  const sendLocationUpdate = state?.sendLocationUpdate ?? (() => {});
+  let currentOverride = state?.currentOverride ?? { ...DEFAULT_GEO_OVERRIDE };
 
   const shellStyle = document.createElement("style");
   shellStyle.textContent = PANEL_CSS;
