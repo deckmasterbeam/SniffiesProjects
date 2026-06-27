@@ -1,0 +1,108 @@
+#snp-profile-border-root .section {
+  background: #0e1825;
+  border: 1px solid #1c2b3a;
+  border-radius: 8px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+#snp-profile-border-root .section h2 {
+  margin: 0;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #7a90a4;
+}
+
+#snp-profile-border-root details.collapsible {
+  padding: 0;
+  display: block;
+}
+
+#snp-profile-border-root details.collapsible summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  user-select: none;
+}
+
+#snp-profile-border-root details.collapsible summary::-webkit-details-marker {
+  display: none;
+}
+
+#snp-profile-border-root details.collapsible summary::after {
+  content: "›";
+  margin-left: auto;
+  font-size: 16px;
+  line-height: 1;
+  color: #7a90a4;
+  transform: rotate(90deg);
+  transition: transform 0.15s;
+}
+
+#snp-profile-border-root details.collapsible[open] summary::after {
+  transform: rotate(270deg);
+}
+
+#snp-profile-border-root details.collapsible summary h2 {
+  margin: 0;
+}
+
+#snp-profile-border-root .collapsible-body {
+  padding: 0 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+#snp-profile-border-root .row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  color: #ffffff;
+}
+
+#snp-profile-border-root .row input[type="checkbox"] {
+  accent-color: #ff5500;
+  width: 14px;
+  height: 14px;
+}
+
+#snp-profile-border-root .hint {
+  font-size: 11px;
+  color: #7a90a4;
+  margin: 0;
+}
+
+#snp-profile-border-root .field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11px;
+  color: #7a90a4;
+}
+
+#snp-profile-border-root .field select {
+  font-size: 13px;
+  padding: 7px 10px;
+  border-radius: 6px;
+  border: 1px solid #1c2b3a;
+  background: #080e18;
+  color: #ffffff;
+  outline: none;
+  cursor: pointer;
+}
+
+#snp-profile-border-root #profile-border-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
