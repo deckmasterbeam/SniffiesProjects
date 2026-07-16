@@ -28,3 +28,11 @@ CREATE TABLE IF NOT EXISTS favorites (
   favorited_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   PRIMARY KEY (guid, user_id)
 );
+
+CREATE TABLE IF NOT EXISTS client_init_log (
+  id          SERIAL PRIMARY KEY,
+  occurred_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  user_id     TEXT NOT NULL,
+  client_type TEXT NOT NULL,
+  version     TEXT NOT NULL
+);

@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { json, applyCors, requireClientAuth, requireDb } from "./_shared.js";
+import { json, applyCors, requireClientAuth, requireDb, requireFeatureFlag } from "./_shared.js";
 
 interface NotifyTestBody {
   phone?: unknown;
@@ -17,6 +17,10 @@ const handler = async (req: VercelRequest, res: VercelResponse): Promise<void> =
 
   if (req.method !== "POST") {
     json(res, 405, { error: "method_not_allowed" });
+    return;
+  }
+
+  if (!requireFeatureFlag(res, "NOTIFY_TEST_ENABLED")) {
     return;
   }
 

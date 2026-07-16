@@ -16,6 +16,7 @@ const ENV: Record<string, string> = {
   CLIENT_SECRET: SECRET,
   POSTGRES_URL: "postgres://localhost/test",
   TEXTBELT_KEY: "tb_key_test",
+  SEND_GUID_ENABLED: "true",
 };
 
 const savedEnv: Record<string, string | undefined> = {};
@@ -78,6 +79,14 @@ describe("method not allowed", () => {
     const { status, body } = await call({ method: "GET" });
     expect(status).toBe(405);
     expect(body.error).toBe("method_not_allowed");
+  });
+});
+
+describe("feature gate", () => {
+  it("returns 404 when SEND_GUID_ENABLED is not set", async () => {
+    const { status, body } = await call({}, { SEND_GUID_ENABLED: undefined });
+    expect(status).toBe(404);
+    expect(body.error).toBe("not_found");
   });
 });
 

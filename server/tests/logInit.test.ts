@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import type { VercelResponse } from "@vercel/node";
-import handler from "../api/save-number.js";
+import handler from "../api/logInit.js";
 import { makeReq, makeRes } from "./_helpers.js";
 
 vi.mock("@neondatabase/serverless", () => ({ neon: vi.fn() }));
@@ -8,13 +8,13 @@ import { neon } from "@neondatabase/serverless";
 const mockNeon = vi.mocked(neon);
 
 const SECRET = "client-secret";
-const PHONE = "+15551234567";
-const GUID = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
+const USER_ID = "694abfeb1cf11f4a71d32027";
+const CLIENT_TYPE = "chrome-client";
+const VERSION = "0.1.0";
 
 const ENV: Record<string, string> = {
   CLIENT_SECRET: SECRET,
   POSTGRES_URL: "postgres://localhost/test",
-  SAVE_NUMBER_ENABLED: "true",
 };
 
 const savedEnv: Record<string, string | undefined> = {};
@@ -25,10 +25,7 @@ beforeEach(() => {
   for (const [k, v] of Object.entries(ENV)) process.env[k] = v;
   delete process.env.ALLOWED_ORIGINS;
 
-  const sqlFn = vi
-    .fn()
-    .mockResolvedValueOnce([])
-    .mockResolvedValueOnce([{ guid: GUID }]);
+  const sqlFn = vi.fn().mockResolvedValue([]);
   mockNeon.mockReturnValue(sqlFn as unknown as ReturnType<typeof neon>);
 });
 
@@ -56,7 +53,7 @@ async function call(
   const req = makeReq({
     method: "POST",
     headers: { authorization: `Bearer ${SECRET}` },
-    body: { phone: PHONE },
+    body: { userId: USER_ID, clientType: CLIENT_TYPE, version: VERSION },
     ...reqOpts,
   });
   const res = makeRes();
@@ -76,20 +73,6 @@ describe("method not allowed", () => {
     const { status, body } = await call({ method: "GET" });
     expect(status).toBe(405);
     expect(body.error).toBe("method_not_allowed");
-  });
-});
-
-describe("feature gate", () => {
-  it("returns 404 when SAVE_NUMBER_ENABLED is not set", async () => {
-    const { status, body } = await call({}, { SAVE_NUMBER_ENABLED: undefined });
-    expect(status).toBe(404);
-    expect(body.error).toBe("not_found");
-  });
-
-  it("returns 404 when SAVE_NUMBER_ENABLED is not exactly \"true\"", async () => {
-    const { status, body } = await call({}, { SAVE_NUMBER_ENABLED: "1" });
-    expect(status).toBe(404);
-    expect(body.error).toBe("not_found");
   });
 });
 
@@ -123,38 +106,47 @@ describe("authorization", () => {
   });
 });
 
-describe("phone validation", () => {
-  it("returns 400 for missing +", async () => {
-    const { status, body } = await call({ body: { phone: "15551234567" } });
+describe("validation", () => {
+  it("returns 400 when userId is missing", async () => {
+    const { status, body } = await call({ body: { clientType: CLIENT_TYPE, version: VERSION } });
     expect(status).toBe(400);
-    expect(body.error).toBe("invalid_phone");
+    expect(body.error).toBe("userId_and_version_required");
   });
 
-  it("returns 400 for too short", async () => {
-    const { status, body } = await call({ body: { phone: "+12345" } });
+  it("returns 400 when version is missing", async () => {
+    const { status, body } = await call({ body: { userId: USER_ID, clientType: CLIENT_TYPE } });
     expect(status).toBe(400);
-    expect(body.error).toBe("invalid_phone");
+    expect(body.error).toBe("userId_and_version_required");
   });
 
-  it("returns 400 for non-string", async () => {
-    const { status, body } = await call({ body: { phone: 15551234567 } });
+  it("returns 400 for an unrecognized clientType", async () => {
+    const { status, body } = await call({
+      body: { userId: USER_ID, clientType: "bookmarklet", version: VERSION },
+    });
     expect(status).toBe(400);
-    expect(body.error).toBe("invalid_phone");
+    expect(body.error).toBe("invalid_client_type");
   });
 });
 
 describe("happy path", () => {
-  it("returns 200 with guid", async () => {
+  it("returns 200 for chrome-client", async () => {
     const { status, body } = await call();
     expect(status).toBe(200);
     expect(body.ok).toBe(true);
-    expect(body.guid).toBe(GUID);
   });
 
-  it("inserts phone then selects guid", async () => {
+  it("returns 200 for userscript", async () => {
+    const { status, body } = await call({
+      body: { userId: USER_ID, clientType: "userscript", version: VERSION },
+    });
+    expect(status).toBe(200);
+    expect(body.ok).toBe(true);
+  });
+
+  it("inserts a row into client_init_log", async () => {
     await call();
     expect(mockNeon).toHaveBeenCalledOnce();
     const sqlFn = mockNeon.mock.results[0].value as ReturnType<typeof vi.fn>;
-    expect(sqlFn).toHaveBeenCalledTimes(2);
+    expect(sqlFn).toHaveBeenCalledOnce();
   });
 });
