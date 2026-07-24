@@ -26,7 +26,7 @@ if (!BUILDABLE.includes(pkg)) {
 
 const result = spawnSync(
   process.execPath,
-  ["scripts/build.mjs"],
+  ["--env-file-if-exists=.env", "scripts/build.mjs"],
   { cwd: resolve(root, pkg), stdio: "inherit" },
 );
 

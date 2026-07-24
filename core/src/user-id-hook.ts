@@ -28,6 +28,7 @@ export const installUserIdHook = (onUserId: (userId: string) => void): boolean =
     | PatchedWebSocketCtor
     | undefined;
   if (!NativeWebSocket || NativeWebSocket.__sniffiesUserIdPatched) {
+    console.log("[sniffies-user-id] hook not installed (no WebSocket or already patched)");
     return false;
   }
 
@@ -38,6 +39,7 @@ export const installUserIdHook = (onUserId: (userId: string) => void): boolean =
   ): WebSocket {
     const userId = extractUserId(url);
     if (userId) {
+      console.log("[sniffies-user-id] observed userId on WebSocket connect", userId);
       onUserId(userId);
     }
     return protocols === undefined
@@ -54,5 +56,6 @@ export const installUserIdHook = (onUserId: (userId: string) => void): boolean =
   PatchedWebSocket.__sniffiesUserIdPatched = true;
 
   window.WebSocket = PatchedWebSocket;
+  console.log("[sniffies-user-id] hook installed");
   return true;
 };

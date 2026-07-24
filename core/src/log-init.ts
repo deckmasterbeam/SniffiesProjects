@@ -16,10 +16,15 @@ export interface LogInitOptions {
 export const logInit = async (options: LogInitOptions): Promise<void> => {
   const { serverBase, clientSecret, userId, clientType, version } = options;
   if (!serverBase || !userId) {
+    console.log("[sniffies-log-init] skipping, missing serverBase or userId", {
+      serverBase,
+      userId,
+    });
     return;
   }
+  console.log("[sniffies-log-init] sending init ping", { userId, clientType, version });
   try {
-    await fetch(`${serverBase}/api/logInit`, {
+    const res = await fetch(`${serverBase}/api/logInit`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -27,7 +32,13 @@ export const logInit = async (options: LogInitOptions): Promise<void> => {
       },
       body: JSON.stringify({ userId, clientType, version }),
     });
-  } catch {
+    if (res.ok) {
+      console.log("[sniffies-log-init] init ping sent");
+    } else {
+      console.error("[sniffies-log-init] init ping rejected", res.status);
+    }
+  } catch (err) {
     // Best-effort — network/server failures are not actionable here.
+    console.error("[sniffies-log-init] init ping failed", err);
   }
 };
