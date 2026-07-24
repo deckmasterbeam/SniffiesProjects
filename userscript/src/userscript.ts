@@ -10,9 +10,12 @@ import {
   GEO_OVERRIDE_HTML,
   GEO_OVERRIDE_CSS,
   wireGeoOverrideForm,
+  createLogger,
 } from "@sniffies-projects/core";
 import PANEL_CSS from "./panel.css";
 import PANEL_HTML from "./panel.html";
+
+const log = createLogger("tools");
 
 declare global {
   interface Window {
@@ -195,7 +198,7 @@ if (window.__sniffiesInjected) {
   try {
     hookState = installHooks();
   } catch (err) {
-    console.error("[sniffies-tools] hook install failed:", err);
+    log.error("hook install failed:", err);
   }
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", () => mountUI(hookState), { once: true });

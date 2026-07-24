@@ -14,5 +14,5 @@
       "@sniffies-projects/core": ["../core/src/index.ts"]
     }
   },
-  "include": ["src/**/*.ts", "scripts/**/*.mjs"]
+  "include": ["src/**/*.ts", "scripts/**/*.mjs", "../core/src/ambient.d.ts"]
 }

@@ -2,8 +2,7 @@
 // Wraps WebSocket to observe the logged-in user's own id off the
 // prod.ws.sniffies.com connection URL.
 
-import { installUserIdHook } from "@sniffies-projects/core";
-import { createLogger } from "../shared/log.js";
+import { installUserIdHook, createLogger } from "@sniffies-projects/core";
 
 (() => {
   const log = createLogger("user-id");

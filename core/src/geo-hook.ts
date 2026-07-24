@@ -1,4 +1,5 @@
 import type { GeoOverride } from "./settings.js";
+import { createLogger } from "./log.js";
 
 type PatchedGeo = Geolocation & { __sniffiesPatched?: boolean };
 
@@ -22,6 +23,7 @@ export const installGeoHook = (
   getOverride: () => GeoOverride | null,
   onPosition?: (coords: { latitude: number; longitude: number }) => void,
 ): GeoHookResult | null => {
+  const log = createLogger("geo");
   const geo = navigator.geolocation as PatchedGeo | undefined;
   if (!geo || geo.__sniffiesPatched) {
     return null;
@@ -36,7 +38,7 @@ export const installGeoHook = (
   const applyOverride = (position: GeolocationPosition): GeolocationPosition => {
     const ov = getOverride();
     if (!ov?.enabled) {
-      console.log("[sniffies-geo] override disabled, passing real coords", position.coords);
+      log("override disabled, passing real coords", position.coords);
       return position;
     }
     const spoofed = {
@@ -51,7 +53,7 @@ export const installGeoHook = (
       },
       timestamp: Date.now(),
     } as GeolocationPosition;
-    console.log("[sniffies-geo] applying override", spoofed.coords);
+    log("applying override", spoofed.coords);
     return spoofed;
   };
 
@@ -66,12 +68,12 @@ export const installGeoHook = (
     };
 
   geo.getCurrentPosition = (success, error, options) => {
-    console.log("[sniffies-geo] getCurrentPosition intercepted");
+    log("getCurrentPosition intercepted");
     nativeGetCurrentPosition(wrapSuccess(success), error, options);
   };
 
   geo.watchPosition = (success, error, options) => {
-    console.log("[sniffies-geo] watchPosition intercepted");
+    log("watchPosition intercepted");
     const wrapped = wrapSuccess(success);
     const id = nativeWatchPosition(wrapped, error, options);
     activeWatchers.set(id, wrapped);

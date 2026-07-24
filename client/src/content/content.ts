@@ -1,6 +1,6 @@
 // Content script - runs in the context of web pages (isolated world).
 
-import { createLogger } from "../shared/log.js";
+import { createLogger } from "@sniffies-projects/core";
 
 const log = createLogger("content");
 log("loaded on", location.href);

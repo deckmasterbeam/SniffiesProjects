@@ -1,8 +1,10 @@
-// Tagged logger. The base call (log(...)) is debug-gated so production builds
-// dead-code-eliminate it (esbuild inlines DEBUG=false). `warn` and `error`
-// always log — they signal real problems and should be visible in prod.
-
-import { DEBUG } from "./env.js";
+// Tagged logger, shared by every package that bundles core. The base call
+// (log(...)) is debug-gated so production builds dead-code-eliminate it
+// (esbuild inlines __DEBUG__=false). `warn` and `error` always log — they
+// signal real problems and should be visible in prod.
+//
+// Relies on the `__DEBUG__` global, which each consumer's esbuild config
+// defines (see core/src/ambient.d.ts for the declaration).
 
 export interface Logger {
   (...args: unknown[]): void;
@@ -16,7 +18,7 @@ export const formatTag = (name: string): string => `[sniffies-${name}]`;
 export const createLogger = (name: string): Logger => {
   const tag = formatTag(name);
   const log = ((...args: unknown[]): void => {
-    if (DEBUG) {
+    if (__DEBUG__) {
       console.log(tag, ...args);
     }
   }) as Logger;

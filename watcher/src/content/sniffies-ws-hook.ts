@@ -1,14 +1,12 @@
 // Runs in the page's MAIN world at document_start on www.sniffies.com.
 // Wraps the global WebSocket so messages from prod.ws.sniffies.com are logged.
-const DEBUG = true; // Set to false to disable logging in this script.
+import { createLogger } from "@sniffies-projects/core";
 
 (() => {
   const TARGET_HOST = "prod.ws.sniffies.com";
-  const TAG = "[sniffies-ws]";
+  const log = createLogger("ws");
 
-  if (DEBUG) {
-    console.log(`${TAG} Initializing WebSocket hook for`, TARGET_HOST);
-  }
+  log("Initializing WebSocket hook for", TARGET_HOST);
 
   type PatchedCtor = typeof WebSocket & { __sniffiesPatched?: boolean };
 
@@ -35,12 +33,10 @@ const DEBUG = true; // Set to false to disable logging in this script.
       protocols === undefined ? new NativeWebSocket(url) : new NativeWebSocket(url, protocols);
 
     if (isTargetUrl(url)) {
-      console.log(`${TAG} open`, url);
+      log("open", url);
 
       socket.addEventListener("message", (event: MessageEvent) => {
-        if (DEBUG) {
-          console.log(`${TAG} message`, event.data);
-        }
+        log("message", event.data);
         // Forward to the isolated world via window.postMessage.
         try {
           const raw = event.data;
@@ -63,16 +59,16 @@ const DEBUG = true; // Set to false to disable logging in this script.
             "*",
           );
         } catch (err) {
-          console.error(`${TAG} failed to forward message`, err);
+          log.error("failed to forward message", err);
         }
       });
 
       socket.addEventListener("close", (event: CloseEvent) => {
-        console.log(`${TAG} close`, { code: event.code, reason: event.reason });
+        log("close", { code: event.code, reason: event.reason });
       });
 
       socket.addEventListener("error", (event: Event) => {
-        console.log(`${TAG} error`, event);
+        log("error", event);
       });
     }
 
@@ -88,5 +84,5 @@ const DEBUG = true; // Set to false to disable logging in this script.
   PatchedWebSocket.__sniffiesPatched = true;
 
   window.WebSocket = PatchedWebSocket;
-  console.log(`${TAG} WebSocket hook installed`);
+  log("WebSocket hook installed");
 })();

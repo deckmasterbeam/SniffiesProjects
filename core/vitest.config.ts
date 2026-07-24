@@ -12,6 +12,9 @@ export default defineConfig({
       },
     },
   ],
+  define: {
+    __DEBUG__: "false",
+  },
   test: {
     environment: "jsdom",
   },

@@ -9,6 +9,7 @@ import {
   GEO_OVERRIDE_HTML,
   GEO_OVERRIDE_CSS,
   wireGeoOverrideForm,
+  createLogger,
 } from "@sniffies-projects/core";
 import PANEL_CSS from "./panel.css";
 import PANEL_HTML from "./panel.html";
@@ -51,6 +52,8 @@ if (window.__sniffiesInjected) {
 
 // ── Main ─────────────────────────────────────────────────────────────────────
 
+const log = createLogger("geo");
+
 function main(): void {
   if (!isSniffiesDomain()) {
     return;
@@ -58,9 +61,9 @@ function main(): void {
   alert("Sniffies Tools loaded! Tap the 📍 button in the nav bar to open the location panel.");
 
   let currentOverride: GeoOverride = loadGeoOverride();
-  console.log("[sniffies-geo] initial override", currentOverride);
+  log("initial override", currentOverride);
   const hook = installGeoHook(() => currentOverride);
-  console.log("[sniffies-geo] hook installed", hook ? "yes" : "already patched");
+  log("hook installed", hook ? "yes" : "already patched");
   const nativeGetCurrentPosition =
     hook?.nativeGetCurrentPosition ??
     navigator.geolocation.getCurrentPosition.bind(navigator.geolocation);
@@ -80,7 +83,7 @@ function main(): void {
         const body = JSON.parse((lastLocationRequest.init.body as string) ?? "{}") as Record<string, unknown>;
         body.virtualLocation = spoofed;
         body.physicalLocation = spoofed;
-        console.log("[sniffies-geo] replaying location request with new coords", spoofed);
+        log("replaying location request with new coords", spoofed);
         void nativeFetch(lastLocationRequest.url, { ...lastLocationRequest.init, body: JSON.stringify(body) });
         return;
       } catch {
@@ -88,7 +91,7 @@ function main(): void {
       }
     }
     if (apiBase) {
-      console.log("[sniffies-geo] proactively sending location update", spoofed);
+      log("proactively sending location update", spoofed);
       void nativeFetch(`${apiBase}/api/visitor/current/location?state=loaded`, {
         method: "PUT",
         credentials: "include",
@@ -116,7 +119,7 @@ function main(): void {
           const spoofed = { lat: currentOverride.latitude, lng: currentOverride.longitude };
           body.virtualLocation = spoofed;
           body.physicalLocation = spoofed;
-          console.log("[sniffies-geo] intercepting location request", spoofed);
+          log("intercepting location request", spoofed);
           init = { ...init, body: JSON.stringify(body) };
         } catch {
           // leave the request unmodified if parsing fails
@@ -157,7 +160,7 @@ function main(): void {
   wireGeoOverrideForm(geoRoot, {
     initial: currentOverride,
     onSave: (next) => {
-      console.log("[sniffies-geo] override saved", next);
+      log("override saved", next);
       saveGeoOverride(next);
       currentOverride = next;
       hook?.refreshWatches();

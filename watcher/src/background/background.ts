@@ -5,11 +5,14 @@
 declare const __SERVER_BASE__: string;
 declare const __WATCHER_SECRET__: string;
 
+import { createLogger } from "@sniffies-projects/core";
 import {
   getNotifyTimestamp,
   setNotifyTimestamp,
   clearNotifyTimestamp,
 } from "../shared/settings.js";
+
+const log = createLogger("bg");
 
 const DEBOUNCE_MS = 15 * 60 * 1000;
 const WATCHED_USERS_REFRESH_MS = 5 * 60 * 1000;
@@ -26,15 +29,15 @@ const fetchWatchedUsers = async (): Promise<void> => {
       headers: { Authorization: `Bearer ${__WATCHER_SECRET__}` },
     });
     if (!res.ok) {
-      console.warn("[bg] watched-users returned", res.status);
+      log.warn("watched-users returned", res.status);
       return;
     }
     const data = (await res.json()) as { ok: boolean; userIds: string[] };
     watchedUserIds = new Set(data.userIds ?? []);
     lastWatchedFetch = Date.now();
-    console.log("[bg] watching", watchedUserIds.size, "users");
+    log("watching", watchedUserIds.size, "users");
   } catch (err) {
-    console.error("[bg] fetchWatchedUsers failed", err);
+    log.error("fetchWatchedUsers failed", err);
   }
 };
 
@@ -89,7 +92,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message?.type === "NOTIFY_FAVORITE_AWAKE" && typeof message.userId === "string") {
     handleFavoriteAwake(message.userId).then((result) => {
       if (!result.ok && result.error !== "debounced" && result.error !== "not_watched") {
-        console.warn("[bg] notify failed", result.error, message.userId);
+        log.warn("notify failed", result.error, message.userId);
       }
       sendResponse(result);
     });

@@ -1,4 +1,6 @@
-const TAG = "[sniffies-events]";
+import { createLogger } from "@sniffies-projects/core";
+
+const log = createLogger("events");
 
 interface ForwardedMessage {
   source: "sniffies-ws-hook";
@@ -46,10 +48,10 @@ const isUserJoinedEvent = (value: unknown): value is UserJoinedEvent => {
 };
 
 const notifyUser = (userId: string, trigger: string): void => {
-  console.log(`${TAG} [${trigger}] user active, forwarding to background`, userId);
+  log(`[${trigger}] user active, forwarding to background`, userId);
   chrome.runtime
     .sendMessage({ type: "NOTIFY_FAVORITE_AWAKE", userId })
-    .catch((err) => console.error(`${TAG} sendMessage failed`, err));
+    .catch((err) => log.error("sendMessage failed", err));
 };
 
 const handleParsed = (parsed: unknown): void => {
@@ -70,4 +72,4 @@ window.addEventListener("message", (event: MessageEvent) => {
   handleParsed(event.data.parsed);
 });
 
-console.log(`${TAG} initialized`);
+log("initialized");

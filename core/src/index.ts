@@ -7,3 +7,5 @@ export { GEO_OVERRIDE_HTML, GEO_OVERRIDE_CSS, wireGeoOverrideForm } from "./geo-
 export type { GeoOverrideFormContract } from "./geo-override-form-contract.js";
 export { DEFAULT_GEO_OVERRIDE } from "./settings.js";
 export type { GeoOverride } from "./settings.js";
+export type { Logger } from "./log.js";
+export { createLogger, formatTag } from "./log.js";

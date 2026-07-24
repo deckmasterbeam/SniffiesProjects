@@ -2,9 +2,8 @@
 // hook via window.postMessage, persists it to extension storage, and reports
 // client init telemetry to the server (once per content-script lifetime).
 
-import { logInit } from "@sniffies-projects/core";
+import { logInit, createLogger } from "@sniffies-projects/core";
 import { CLIENT_SECRET, SERVER_BASE } from "../shared/env.js";
-import { createLogger } from "../shared/log.js";
 import { setSniffiesUserId } from "../shared/settings.js";
 
 const log = createLogger("user-id-relay");

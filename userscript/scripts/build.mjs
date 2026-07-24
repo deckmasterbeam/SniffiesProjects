@@ -43,6 +43,9 @@ const buildOptions = {
     ".css": "text",
     ".html": "text",
   },
+  define: {
+    __DEBUG__: String(!prod),
+  },
 };
 
 const prependMetadata = async () => {

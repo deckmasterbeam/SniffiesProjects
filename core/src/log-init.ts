@@ -1,3 +1,5 @@
+import { createLogger } from "./log.js";
+
 export type ClientType = "chrome-client" | "userscript";
 
 export interface LogInitOptions {
@@ -14,15 +16,13 @@ export interface LogInitOptions {
  * Failures are swallowed — telemetry must never block or break the caller.
  */
 export const logInit = async (options: LogInitOptions): Promise<void> => {
+  const log = createLogger("log-init");
   const { serverBase, clientSecret, userId, clientType, version } = options;
   if (!serverBase || !userId) {
-    console.log("[sniffies-log-init] skipping, missing serverBase or userId", {
-      serverBase,
-      userId,
-    });
+    log("skipping, missing serverBase or userId", { serverBase, userId });
     return;
   }
-  console.log("[sniffies-log-init] sending init ping", { userId, clientType, version });
+  log("sending init ping", { userId, clientType, version });
   try {
     const res = await fetch(`${serverBase}/api/logInit`, {
       method: "POST",
@@ -33,12 +33,12 @@ export const logInit = async (options: LogInitOptions): Promise<void> => {
       body: JSON.stringify({ userId, clientType, version }),
     });
     if (res.ok) {
-      console.log("[sniffies-log-init] init ping sent");
+      log("init ping sent");
     } else {
-      console.error("[sniffies-log-init] init ping rejected", res.status);
+      log.error("init ping rejected", res.status);
     }
   } catch (err) {
     // Best-effort — network/server failures are not actionable here.
-    console.error("[sniffies-log-init] init ping failed", err);
+    log.error("init ping failed", err);
   }
 };

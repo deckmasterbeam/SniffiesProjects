@@ -6,22 +6,23 @@ on `save-number`, `send-guid`, `favorites`, and `notify-test`.
 
 ## 0. Setup
 
-- [ ] `server/.env` has `CLIENT_SECRET` set, `POSTGRES_URL` pointing at a real
+- [x] `server/.env` has `CLIENT_SECRET` set, `POSTGRES_URL` pointing at a real
       (ideally scratch/dev) Neon DB, and `TEXTBELT_KEY` set (`textbelt` works
       for the free tier).
-- [ ] Run [schema.sql](server/schema.sql) against that DB — confirms
+- [x] Run [schema.sql](server/schema.sql) against that DB — confirms
       `client_init_log` actually gets created, not just that the file has
       valid-looking SQL.
 - [ ] `client/.env` has `SERVER_BASE=http://localhost:3000` (or wherever
       `vercel dev` binds), `CLIENT_SECRET` matching the server's exact value,
-      and `DEBUG=true` so you get the `[sniffies-*]` console logs.
-- [ ] `cd server && vercel dev` — leave it running.
-- [ ] `cd client && npm run build`, then load `client/dist` as an unpacked
+      and `DEBUG=true` so you get the `[sniffies-*]` console logs. — `SERVER_BASE`
+      and `CLIENT_SECRET` are set correctly, but `DEBUG` is currently `false`.
+- [x] `cd server && vercel dev` — leave it running.
+- [x] `cd client && npm run build`, then load `client/dist` as an unpacked
       extension at `chrome://extensions` (enable Developer mode first).
 
 ## 1. User-id hook picks up the real id
 
-- [ ] Open `sniffies.com`, log in, open DevTools console (both the page
+- [x] Open `sniffies.com`, log in, open DevTools console (both the page
       console and, separately, the extension's service worker console via
       "Inspect" on `chrome://extensions`).
 - [ ] Confirm you see `[sniffies-user-id] user id observed <your-id>` in the
@@ -39,12 +40,12 @@ on `save-number`, `send-guid`, `favorites`, and `notify-test`.
 
 ## 2. logInit telemetry actually reaches the server
 
-- [ ] In the Network tab, find the `POST /api/logInit` request. Confirm status
+- [x] In the Network tab, find the `POST /api/logInit` request. Confirm status
       `200`, request body has your real `userId`, `clientType:
       "chrome-client"`, and `version` matching the extension's version in
       `chrome://extensions` (which should match `client/manifest.json`, or the
       `EXTENSION_VERSION` value if you built with that env var set).
-- [ ] Query the DB directly:
+- [x] Query the DB directly:
       `SELECT * FROM client_init_log ORDER BY id DESC LIMIT 5;` — confirm a
       row landed with the right `user_id`, `client_type`, `version`, and a
       recent `occurred_at`.
@@ -83,7 +84,7 @@ Do this with `vercel dev` running and none of the four flags set in
 
 ## 4. Regression sanity check
 
-- [ ] `npm test` in `core/`, `client/`, and `server/` — all should be green
+- [x] `npm test` in `core/`, `client/`, and `server/` — all should be green
       (the one known pre-existing flaky failure is `geo-override-ui.test.ts`
       in core, unrelated to any of this work).
 - [ ] With flags off, confirm the rest of the extension still works normally:
