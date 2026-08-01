@@ -54,4 +54,17 @@ describe("logInit", () => {
     fetchMock.mockRejectedValue(new Error("network down"));
     await expect(logInit(OPTS)).resolves.toBeUndefined();
   });
+
+  it("does not throw when the server rejects the ping", async () => {
+    fetchMock.mockResolvedValue({ ok: false, status: 401, json: async () => ({}) });
+    await expect(logInit(OPTS)).resolves.toBeUndefined();
+  });
+
+  it("strips a trailing slash from serverBase so the URL doesn't end up with a double slash", async () => {
+    await logInit({ ...OPTS, serverBase: "https://server.example/" });
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://server.example/api/logInit",
+      expect.anything(),
+    );
+  });
 });

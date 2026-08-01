@@ -197,7 +197,7 @@ Texts the GUID to the registered phone number. Used for the recovery flow when t
 
 ### `POST /api/logInit`
 
-Records a client init telemetry ping. Called by the chrome client (and, in future, the userscript) on startup once the user id is known.
+Records a client init telemetry ping. Called by the chrome client and the bookmarklet on startup once the user id is known.
 
 **Auth:** `Authorization: Bearer <CLIENT_SECRET>`
 
@@ -207,7 +207,7 @@ Records a client init telemetry ping. Called by the chrome client (and, in futur
 { "userId": "abc123", "clientType": "chrome-client", "version": "0.1.0" }
 ```
 
-`clientType` must be `"chrome-client"` or `"userscript"`.
+`clientType` must be `"chrome-client"` or `"bookmarklet"`.
 
 **Response**
 

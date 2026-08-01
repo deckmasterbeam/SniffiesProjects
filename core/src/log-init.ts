@@ -1,6 +1,6 @@
 import { createLogger } from "./log.js";
 
-export type ClientType = "chrome-client" | "userscript";
+export type ClientType = "chrome-client" | "bookmarklet";
 
 export interface LogInitOptions {
   serverBase: string;
@@ -24,7 +24,8 @@ export const logInit = async (options: LogInitOptions): Promise<void> => {
   }
   log("sending init ping", { userId, clientType, version });
   try {
-    const res = await fetch(`${serverBase}/api/logInit`, {
+    const base = serverBase.replace(/\/+$/, "");
+    const res = await fetch(`${base}/api/logInit`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

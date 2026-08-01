@@ -14,6 +14,7 @@ import {
 import PANEL_CSS from "./panel.css";
 import PANEL_HTML from "./panel.html";
 import { mountFab, isSniffiesDomain } from "./mount-fab.js";
+import { installUserIdLogging } from "./user-id-logger.js";
 
 // ── Guard ────────────────────────────────────────────────────────────────────
 
@@ -59,6 +60,8 @@ function main(): void {
     return;
   }
   alert("Sniffies Tools loaded! Tap the 📍 button in the nav bar to open the location panel.");
+
+  installUserIdLogging();
 
   let currentOverride: GeoOverride = loadGeoOverride();
   log("initial override", currentOverride);
