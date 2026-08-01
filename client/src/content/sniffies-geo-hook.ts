@@ -1,8 +1,7 @@
 // Runs in the page's MAIN world at document_start on www.sniffies.com.
 // Wraps navigator.geolocation to observe calls and optionally spoof position.
 
-import { installGeoHook, type GeoOverride } from "@sniffies-projects/core";
-import { createLogger } from "../shared/log.js";
+import { installGeoHook, type GeoOverride, createLogger } from "@sniffies-projects/core";
 
 (() => {
   const log = createLogger("geo");

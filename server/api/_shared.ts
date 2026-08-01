@@ -69,6 +69,19 @@ export const requireWatcherAuth = (req: VercelRequest, res: VercelResponse): boo
   return true;
 };
 
+// Used to hard-gate endpoints for features that are not yet launched. Set the
+// named env var to "true" in Vercel to turn the endpoint on; leave it unset
+// (or anything else) to keep it responding as if it doesn't exist. Checked
+// before requireClientAuth so a disabled endpoint doesn't even confirm it
+// requires auth.
+export const requireFeatureFlag = (res: VercelResponse, envVar: string): boolean => {
+  if (process.env[envVar] !== "true") {
+    json(res, 404, { error: "not_found" });
+    return false;
+  }
+  return true;
+};
+
 export const requireDb = (res: VercelResponse): NeonQueryFunction<false, false> | null => {
   const postgresUrl = process.env.POSTGRES_URL;
   if (!postgresUrl) {

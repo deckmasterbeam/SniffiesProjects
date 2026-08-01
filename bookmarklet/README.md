@@ -1,5 +1,7 @@
 # Sniffies Bookmarklet
 
+> **Note:** New features go in `userscript/`, not here. This package is not under active development — avoid making changes to it.
+
 Injects features into sniffies.com on browsers where extensions aren't available (e.g. iOS Safari) without 3rd party apps.
 
 Supported features:

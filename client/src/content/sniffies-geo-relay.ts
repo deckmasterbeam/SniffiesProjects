@@ -1,8 +1,7 @@
 // Isolated world. Reads geo override from extension storage and forwards it
 // to the MAIN world geo hook via window.postMessage.
 
-import { createLogger } from "../shared/log.js";
-import type { GeoOverride } from "@sniffies-projects/core";
+import { createLogger, type GeoOverride } from "@sniffies-projects/core";
 import { SETTINGS_KEYS, getLocalSettings } from "../shared/settings.js";
 
 const log = createLogger("geo-relay");

@@ -14,6 +14,7 @@ const USER_ID = "abc123def456abc123def456";
 const ENV: Record<string, string> = {
   CLIENT_SECRET: SECRET,
   POSTGRES_URL: "postgres://localhost/test",
+  FAVORITES_ENABLED: "true",
 };
 
 const savedEnv: Record<string, string | undefined> = {};
@@ -73,6 +74,22 @@ describe("CORS preflight", () => {
     const res = makeRes();
     await handler(req, res as unknown as VercelResponse);
     expect(res._status).toBe(204);
+  });
+});
+
+describe("feature gate", () => {
+  it("returns 404 when FAVORITES_ENABLED is not set (GET)", async () => {
+    delete process.env.FAVORITES_ENABLED;
+    const { status, body } = await callGet({ guid: GUID });
+    expect(status).toBe(404);
+    expect(body.error).toBe("not_found");
+  });
+
+  it("returns 404 when FAVORITES_ENABLED is not set (POST)", async () => {
+    delete process.env.FAVORITES_ENABLED;
+    const { status, body } = await callPost({ guid: GUID, userId: USER_ID, favorite: true });
+    expect(status).toBe(404);
+    expect(body.error).toBe("not_found");
   });
 });
 

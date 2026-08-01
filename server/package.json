@@ -1,10 +1,12 @@
 {
   "name": "sniffies-notify-server",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "Vercel function that sends an SMS via TextBelt on behalf of the Sniffies extension.",
   "type": "module",
   "scripts": {
+    "build": "node scripts/migrate.mjs && node scripts/generate-index.mjs",
+    "db:check": "node --env-file=.env scripts/db-check.mjs",
     "test": "vitest run",
     "format": "prettier --write .",
     "format:check": "prettier --check ."

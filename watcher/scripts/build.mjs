@@ -48,9 +48,17 @@ const buildOptions = {
   platform: "browser",
   sourcemap: true,
   logLevel: "info",
+  alias: {
+    "@sniffies-projects/core": resolve(root, "../core/src/index.ts"),
+  },
+  loader: {
+    ".css": "text",
+    ".html": "text",
+  },
   define: {
     __SERVER_BASE__: JSON.stringify(process.env.SERVER_BASE ?? ""),
     __WATCHER_SECRET__: JSON.stringify(process.env.WATCHER_SECRET ?? ""),
+    __DEBUG__: String(process.env.DEBUG === "true"),
   },
 };
 

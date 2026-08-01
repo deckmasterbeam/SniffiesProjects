@@ -10,9 +10,13 @@ import {
   GEO_OVERRIDE_HTML,
   GEO_OVERRIDE_CSS,
   wireGeoOverrideForm,
+  createLogger,
 } from "@sniffies-projects/core";
 import PANEL_CSS from "./panel.css";
 import PANEL_HTML from "./panel.html";
+import { installUserIdLogging } from "./user-id-logger.js";
+
+const log = createLogger("tools");
 
 declare global {
   interface Window {
@@ -67,6 +71,8 @@ interface HookState {
 }
 
 function installHooks(): HookState {
+  installUserIdLogging();
+
   let currentOverride: GeoOverride = loadGeoOverride();
   const hook = installGeoHook(() => currentOverride);
   const nativeGetCurrentPosition =
@@ -195,7 +201,7 @@ if (window.__sniffiesInjected) {
   try {
     hookState = installHooks();
   } catch (err) {
-    console.error("[sniffies-tools] hook install failed:", err);
+    log.error("hook install failed:", err);
   }
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", () => mountUI(hookState), { once: true });

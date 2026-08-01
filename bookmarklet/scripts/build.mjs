@@ -1,5 +1,6 @@
 import { context, build } from "esbuild";
-import { mkdir, rm } from "node:fs/promises";
+import { spawn } from "node:child_process";
+import { mkdir, readFile, rm } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -29,17 +30,54 @@ const buildOptions = {
   },
 };
 
+// Local dev convenience: copy the built script straight to the clipboard so
+// it can be pasted into Tampermonkey without hunting for dist/inject.js.
+// Skipped on Vercel (no clipboard there) and never allowed to fail the build.
+const copyToClipboard = async (text) => {
+  if (process.env.VERCEL) {
+    return;
+  }
+  const [cmd, args] =
+    process.platform === "win32"
+      ? ["clip", []]
+      : process.platform === "darwin"
+        ? ["pbcopy", []]
+        : ["xclip", ["-selection", "clipboard"]];
+  try {
+    await new Promise((res, reject) => {
+      const child = spawn(cmd, args, { stdio: ["pipe", "ignore", "ignore"] });
+      child.on("error", reject);
+      child.on("exit", (code) => (code === 0 ? res() : reject(new Error(`${cmd} exited ${code}`))));
+      child.stdin.end(text);
+    });
+    console.log("[build] copied dist/inject.js to clipboard");
+  } catch (err) {
+    console.warn("[build] could not copy to clipboard:", err.message);
+  }
+};
+
 const run = async () => {
   await rm(distDir, { recursive: true, force: true });
   await mkdir(distDir, { recursive: true });
 
   if (watch) {
-    const ctx = await context(buildOptions);
+    const plugin = {
+      name: "copy-to-clipboard",
+      setup(build) {
+        build.onEnd(async (result) => {
+          if (result.errors.length === 0) {
+            await copyToClipboard(await readFile(buildOptions.outfile, "utf8"));
+          }
+        });
+      },
+    };
+    const ctx = await context({ ...buildOptions, plugins: [plugin] });
     await ctx.watch();
     console.log("[build] watching for changes...");
   } else {
     await build(buildOptions);
     console.log("[build] dist/inject.js ready");
+    await copyToClipboard(await readFile(buildOptions.outfile, "utf8"));
   }
 };
 

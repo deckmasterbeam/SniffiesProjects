@@ -14,6 +14,7 @@ const GUID = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
 const ENV: Record<string, string> = {
   CLIENT_SECRET: SECRET,
   POSTGRES_URL: "postgres://localhost/test",
+  SAVE_NUMBER_ENABLED: "true",
 };
 
 const savedEnv: Record<string, string | undefined> = {};
@@ -75,6 +76,20 @@ describe("method not allowed", () => {
     const { status, body } = await call({ method: "GET" });
     expect(status).toBe(405);
     expect(body.error).toBe("method_not_allowed");
+  });
+});
+
+describe("feature gate", () => {
+  it("returns 404 when SAVE_NUMBER_ENABLED is not set", async () => {
+    const { status, body } = await call({}, { SAVE_NUMBER_ENABLED: undefined });
+    expect(status).toBe(404);
+    expect(body.error).toBe("not_found");
+  });
+
+  it("returns 404 when SAVE_NUMBER_ENABLED is not exactly \"true\"", async () => {
+    const { status, body } = await call({}, { SAVE_NUMBER_ENABLED: "1" });
+    expect(status).toBe(404);
+    expect(body.error).toBe("not_found");
   });
 });
 

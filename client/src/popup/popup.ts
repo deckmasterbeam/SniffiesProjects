@@ -3,9 +3,9 @@ import {
   GEO_OVERRIDE_CSS,
   GEO_OVERRIDE_HTML,
   wireGeoOverrideForm,
+  createLogger,
 } from "@sniffies-projects/core";
 import { FAVORITES_NOTIFICATIONS_ENABLED } from "../shared/env.js";
-import { createLogger } from "../shared/log.js";
 import {
   DEFAULT_PROFILE_BORDER_OPEN,
   SETTINGS_KEYS,

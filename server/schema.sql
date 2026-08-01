@@ -11,8 +11,6 @@ CREATE TABLE IF NOT EXISTS priority_numbers (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-#TODO[Josh]: these tables need to get updated
-
 CREATE TABLE IF NOT EXISTS phone_registrations (
   phone      TEXT PRIMARY KEY,
   guid       TEXT NOT NULL DEFAULT gen_random_uuid()::text,
@@ -27,4 +25,12 @@ CREATE TABLE IF NOT EXISTS favorites (
   profile_pic_url TEXT,
   favorited_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   PRIMARY KEY (guid, user_id)
+);
+
+CREATE TABLE IF NOT EXISTS client_init_log (
+  id          SERIAL PRIMARY KEY,
+  occurred_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  user_id     TEXT NOT NULL,
+  client_type TEXT NOT NULL,
+  version     TEXT NOT NULL
 );

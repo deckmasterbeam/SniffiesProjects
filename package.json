@@ -2,6 +2,7 @@
   "private": true,
   "scripts": {
     "build": "node scripts/build.mjs",
-    "test": "node scripts/test-all.mjs"
+    "test": "node scripts/test-all.mjs",
+    "db:check": "yarn --cwd server db:check"
   }
 }

@@ -28,5 +28,8 @@ beforeEach(() => {
     },
   },
   tabs: { create: vi.fn(async () => {}) },
-  runtime: { getURL: vi.fn((p: string) => p) },
+  runtime: {
+    getURL: vi.fn((p: string) => p),
+    getManifest: vi.fn(() => ({ version: "0.0.0" })),
+  },
 };

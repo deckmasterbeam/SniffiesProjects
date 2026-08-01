@@ -10,7 +10,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
 const pkg = process.argv[2];
 
-const BUILDABLE = ["client", "bookmarklet"];
+const BUILDABLE = ["client", "bookmarklet", "userscript"];
 
 if (!pkg) {
   console.error(`Usage: yarn build <package>`);
@@ -26,7 +26,7 @@ if (!BUILDABLE.includes(pkg)) {
 
 const result = spawnSync(
   process.execPath,
-  ["scripts/build.mjs"],
+  ["--env-file-if-exists=.env", "scripts/build.mjs"],
   { cwd: resolve(root, pkg), stdio: "inherit" },
 );
 

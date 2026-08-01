@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
-const packages = ["core", "client", "bookmarklet", "server"];
+const packages = ["core", "client", "bookmarklet", "userscript", "server"];
 
 let failed = false;
 

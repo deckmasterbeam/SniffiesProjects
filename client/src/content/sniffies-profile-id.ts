@@ -10,7 +10,7 @@ import {
   FAVORITES_NOTIFICATIONS_ENABLED,
   SERVER_BASE,
 } from "../shared/env.js";
-import { createLogger } from "../shared/log.js";
+import { createLogger } from "@sniffies-projects/core";
 import {
   DEFAULT_PROFILE_BORDER_OPEN,
   SETTINGS_KEYS,

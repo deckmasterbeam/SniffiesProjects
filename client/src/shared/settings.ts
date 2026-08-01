@@ -9,6 +9,7 @@ export const SETTINGS_KEYS = {
   profileBorderSectionOpen: "profileBorderSectionOpen",
   favoritesEnabled: "favoritesEnabled",
   favoritesSectionOpen: "favoritesSectionOpen",
+  sniffiesUserId: "sniffiesUserId",
 } as const;
 
 export const PHONE_E164_REGEX = /^\+[1-9]\d{6,14}$/;
@@ -32,6 +33,7 @@ export interface ExtensionLocalSettings {
   profileBorderSectionOpen: boolean;
   favoritesEnabled: boolean;
   favoritesSectionOpen: boolean;
+  sniffiesUserId: string;
 }
 
 export const DEFAULT_LOCAL_SETTINGS: ExtensionLocalSettings = {
@@ -43,6 +45,7 @@ export const DEFAULT_LOCAL_SETTINGS: ExtensionLocalSettings = {
   profileBorderSectionOpen: false,
   favoritesEnabled: false,
   favoritesSectionOpen: false,
+  sniffiesUserId: "",
 };
 
 export const getLocalSettings = async (): Promise<ExtensionLocalSettings> => {
@@ -60,4 +63,8 @@ export const setProfileBorderOpen = async (next: ProfileBorderOpen): Promise<voi
 
 export const setFavoritesEnabled = async (enabled: boolean): Promise<void> => {
   await chrome.storage.local.set({ [SETTINGS_KEYS.favoritesEnabled]: enabled });
+};
+
+export const setSniffiesUserId = async (userId: string): Promise<void> => {
+  await chrome.storage.local.set({ [SETTINGS_KEYS.sniffiesUserId]: userId });
 };

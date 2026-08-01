@@ -18,6 +18,8 @@ const tsEntries = [
   "src/content/sniffies-geo-hook.ts",
   "src/content/sniffies-geo-relay.ts",
   "src/content/sniffies-profile-id.ts",
+  "src/content/sniffies-user-id-hook.ts",
+  "src/content/sniffies-user-id-relay.ts",
   "src/popup/popup.ts",
   "src/options/options.ts",
   "src/settings/settings.ts",
