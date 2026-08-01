@@ -3,8 +3,8 @@
   "private": true,
   "version": "0.1.1",
   "scripts": {
-    "build": "node --env-file=.env scripts/build.mjs",
-    "watch": "node --env-file=.env scripts/build.mjs --watch",
+    "build": "node scripts/build.mjs",
+    "watch": "node scripts/build.mjs --watch",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",

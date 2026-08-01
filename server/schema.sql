@@ -11,8 +11,6 @@ CREATE TABLE IF NOT EXISTS priority_numbers (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- TODO[Josh]: these tables need to get updated
-
 CREATE TABLE IF NOT EXISTS phone_registrations (
   phone      TEXT PRIMARY KEY,
   guid       TEXT NOT NULL DEFAULT gen_random_uuid()::text,

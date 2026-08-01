@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { mountFab } from "./mount-fab.js";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -23,41 +23,56 @@ describe("mountFab", () => {
     document.body.innerHTML = "";
   });
 
-  it("inserts fab as sibling after [title=Sitelinks] when nav is present", () => {
+  it("inserts fab as sibling after [title=Sitelinks] and calls onMounted when already present", () => {
     const sitelinks = document.createElement("div");
     sitelinks.title = "Sitelinks";
     nav.appendChild(sitelinks);
 
     const fab = makeFab();
-    mountFab(fab);
+    const onMounted = vi.fn();
+    mountFab(fab, onMounted);
 
     expect(fab.parentElement).toBe(nav);
     expect(sitelinks.nextSibling).toBe(fab);
+    expect(onMounted).toHaveBeenCalledOnce();
   });
 
-  it("fab is not appended to body when nav is present", () => {
+  it("does not mount or call onMounted when [title=Sitelinks] isn't in the DOM yet", () => {
+    const fab = makeFab();
+    const onMounted = vi.fn();
+    mountFab(fab, onMounted);
+
+    expect(document.body.contains(fab)).toBe(false);
+    expect(onMounted).not.toHaveBeenCalled();
+  });
+
+  it("mounts and calls onMounted once [title=Sitelinks] appears later", async () => {
+    const fab = makeFab();
+    const onMounted = vi.fn();
+    mountFab(fab, onMounted);
+
     const sitelinks = document.createElement("div");
     sitelinks.title = "Sitelinks";
     nav.appendChild(sitelinks);
 
-    mountFab(makeFab());
+    // MutationObserver callbacks run as microtasks.
+    await Promise.resolve();
+    await Promise.resolve();
 
-    expect(document.body.lastElementChild?.id).not.toBe("snp-fab");
+    expect(fab.parentElement).toBe(nav);
+    expect(onMounted).toHaveBeenCalledOnce();
   });
 
-  it("falls back to appending to body when nav is not found", () => {
-    const fab = makeFab();
-    mountFab(fab);
-    expect(document.body.contains(fab)).toBe(true);
-  });
-
-  it("falls back to body when [title=Sitelinks] has no parentElement", () => {
+  it("does not mount when [title=Sitelinks] has no parentElement", () => {
     // Detached element — has the attribute but no parent in the document
     const detached = document.createElement("div");
     detached.title = "Sitelinks";
 
     const fab = makeFab();
-    mountFab(fab);
-    expect(document.body.contains(fab)).toBe(true);
+    const onMounted = vi.fn();
+    mountFab(fab, onMounted);
+
+    expect(document.body.contains(fab)).toBe(false);
+    expect(onMounted).not.toHaveBeenCalled();
   });
 });

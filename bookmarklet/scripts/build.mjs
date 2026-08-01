@@ -9,6 +9,17 @@ const root = resolve(__dirname, "..");
 const distDir = join(root, "dist");
 const watch = process.argv.includes("--watch");
 
+// Load .env for local dev convenience. Deployed builds (e.g. Vercel) have no
+// .env file — env vars are injected into process.env directly there — so a
+// missing file here is expected, not an error.
+if (typeof process.loadEnvFile === "function") {
+  try {
+    process.loadEnvFile(join(root, ".env"));
+  } catch {
+    // no .env file present — rely on process.env as already set
+  }
+}
+
 const pkg = JSON.parse(await readFile(join(root, "package.json"), "utf8"));
 
 const buildOptions = {
