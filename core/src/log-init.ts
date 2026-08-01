@@ -1,6 +1,6 @@
 import { createLogger } from "./log.js";
 
-export type ClientType = "chrome-client" | "bookmarklet";
+export type ClientType = "chrome-client" | "userscript";
 
 export interface LogInitOptions {
   serverBase: string;

@@ -50,7 +50,7 @@ describe("installUserIdLogging", () => {
     expect(installUserIdLogging()).toBe(false);
   });
 
-  it("sends a logInit ping with clientType bookmarklet and the package version", async () => {
+  it("sends a logInit ping with clientType userscript and the package version", async () => {
     installUserIdLogging();
     connect("abc123");
     expect(fetchMock).toHaveBeenCalledWith(
@@ -59,7 +59,7 @@ describe("installUserIdLogging", () => {
         method: "POST",
         body: JSON.stringify({
           userId: "abc123",
-          clientType: "bookmarklet",
+          clientType: "userscript",
           version: "1.2.3",
         }),
       }),

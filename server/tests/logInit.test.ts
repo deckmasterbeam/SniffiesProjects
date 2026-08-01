@@ -121,7 +121,7 @@ describe("validation", () => {
 
   it("returns 400 for an unrecognized clientType", async () => {
     const { status, body } = await call({
-      body: { userId: USER_ID, clientType: "userscript", version: VERSION },
+      body: { userId: USER_ID, clientType: "bookmarklet", version: VERSION },
     });
     expect(status).toBe(400);
     expect(body.error).toBe("invalid_client_type");
@@ -135,9 +135,9 @@ describe("happy path", () => {
     expect(body.ok).toBe(true);
   });
 
-  it("returns 200 for bookmarklet", async () => {
+  it("returns 200 for userscript", async () => {
     const { status, body } = await call({
-      body: { userId: USER_ID, clientType: "bookmarklet", version: VERSION },
+      body: { userId: USER_ID, clientType: "userscript", version: VERSION },
     });
     expect(status).toBe(200);
     expect(body.ok).toBe(true);

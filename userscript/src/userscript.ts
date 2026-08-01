@@ -14,6 +14,7 @@ import {
 } from "@sniffies-projects/core";
 import PANEL_CSS from "./panel.css";
 import PANEL_HTML from "./panel.html";
+import { installUserIdLogging } from "./user-id-logger.js";
 
 const log = createLogger("tools");
 
@@ -70,6 +71,8 @@ interface HookState {
 }
 
 function installHooks(): HookState {
+  installUserIdLogging();
+
   let currentOverride: GeoOverride = loadGeoOverride();
   const hook = installGeoHook(() => currentOverride);
   const nativeGetCurrentPosition =

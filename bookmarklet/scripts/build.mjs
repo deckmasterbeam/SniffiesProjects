@@ -20,8 +20,6 @@ if (typeof process.loadEnvFile === "function") {
   }
 }
 
-const pkg = JSON.parse(await readFile(join(root, "package.json"), "utf8"));
-
 const buildOptions = {
   entryPoints: [join(root, "src/inject.ts")],
   outfile: join(distDir, "inject.js"),
@@ -40,9 +38,6 @@ const buildOptions = {
   },
   define: {
     __DEBUG__: String(process.env.DEBUG === "true"),
-    __SERVER_BASE__: JSON.stringify(process.env.SERVER_BASE ?? ""),
-    __CLIENT_SECRET__: JSON.stringify(process.env.CLIENT_SECRET ?? ""),
-    __VERSION__: JSON.stringify(pkg.version),
   },
 };
 

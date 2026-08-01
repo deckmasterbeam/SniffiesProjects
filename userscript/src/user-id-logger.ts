@@ -1,6 +1,6 @@
 // Installs the shared user-id hook and reports client init telemetry to the
-// server once per bookmarklet lifetime. Unlike the Chrome extension, the
-// bookmarklet runs entirely in the page's own world, so the observed userId
+// server once per userscript lifetime. Unlike the Chrome extension, the
+// userscript runs entirely in the page's own world, so the observed userId
 // can be reported directly — no postMessage relay is needed.
 
 import { installUserIdHook, logInit, createLogger } from "@sniffies-projects/core";
@@ -20,7 +20,7 @@ export const installUserIdLogging = (): boolean => {
       serverBase: SERVER_BASE,
       clientSecret: CLIENT_SECRET,
       userId,
-      clientType: "bookmarklet",
+      clientType: "userscript",
       version: VERSION,
     });
   });

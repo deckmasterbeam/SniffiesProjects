@@ -10,7 +10,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
 const pkg = process.argv[2];
 
-const BUILDABLE = ["client", "bookmarklet"];
+const BUILDABLE = ["client", "bookmarklet", "userscript"];
 
 if (!pkg) {
   console.error(`Usage: yarn build <package>`);

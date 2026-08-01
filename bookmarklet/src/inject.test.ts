@@ -17,10 +17,6 @@ vi.mock("./mount-fab.js", () => ({
   isSniffiesDomain: () => true,
 }));
 
-vi.mock("./user-id-logger.js", () => ({
-  installUserIdLogging: vi.fn(),
-}));
-
 // This module attaches to `document` (and, once injected, `window.fetch`) as a
 // side effect of import — reset per test like the other content-script tests.
 let domContentLoadedListener: EventListenerOrEventListenerObject | undefined;
