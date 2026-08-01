@@ -48,6 +48,7 @@ function main(): void {
   if (!isSniffiesDomain()) {
     return;
   }
+  alert("Sniffies Tools loaded! Tap the 📍 button in the nav bar to open the location panel.");
 
   let currentOverride: GeoOverride = loadGeoOverride();
   log("initial override", currentOverride);
@@ -118,69 +119,56 @@ function main(): void {
     return nativeFetch(input, init);
   };
 
-  // DOM-dependent UI mounting — deferred until document.body exists. When
-  // pasted into a userscript manager (e.g. Tampermonkey) this script runs at
-  // document-start, before <body> is parsed, so this can't run inline above.
-  const mountUI = (): void => {
-    // Inject shell styles (FAB + panel chrome)
-    const shellStyle = document.createElement("style");
-    shellStyle.textContent = PANEL_CSS;
-    document.head.appendChild(shellStyle);
+  // Inject shell styles (FAB + panel chrome)
+  const shellStyle = document.createElement("style");
+  shellStyle.textContent = PANEL_CSS;
+  document.head.appendChild(shellStyle);
 
-    // Inject geo form styles from core
-    const geoStyle = document.createElement("style");
-    geoStyle.textContent = GEO_OVERRIDE_CSS;
-    document.head.appendChild(geoStyle);
+  // Inject geo form styles from core
+  const geoStyle = document.createElement("style");
+  geoStyle.textContent = GEO_OVERRIDE_CSS;
+  document.head.appendChild(geoStyle);
 
-    // Inject trigger button into the Sniffies nav bar
-    const fab = document.createElement("button");
-    fab.id = "snp-fab";
-    fab.title = "Sniffies Tools";
-    fab.textContent = "📍"; // TODO: change out with my icon, could stand to make it even more custom
-    mountFab(fab, () => {
-      alert("Sniffies Tools loaded! Tap the 📍 button in the nav bar to open the location panel.");
-    });
+  // Inject trigger button into the Sniffies nav bar
+  const fab = document.createElement("button");
+  fab.id = "snp-fab";
+  fab.title = "Sniffies Tools";
+  fab.textContent = "📍"; // TODO: change out with my icon, could stand to make it even more custom
+  mountFab(fab);
 
-    // Inject panel shell
-    const panel = document.createElement("div");
-    panel.id = "snp-panel";
+  // Inject panel shell
+  const panel = document.createElement("div");
+  panel.id = "snp-panel";
+  panel.style.display = "none";
+  panel.innerHTML = PANEL_HTML;
+  document.body.appendChild(panel);
+
+  // Inject geo form from core into placeholder
+  const geoRoot = panel.querySelector<HTMLElement>("#snp-geo-root")!;
+  geoRoot.innerHTML = GEO_OVERRIDE_HTML;
+
+  wireGeoOverrideForm(geoRoot, {
+    initial: currentOverride,
+    onSave: (next) => {
+      log("override saved", next);
+      saveGeoOverride(next);
+      currentOverride = next;
+      hook?.refreshWatches();
+      if (next.enabled) {
+        sendLocationUpdate(next);
+      }
+    },
+    getNativePosition: nativeGetCurrentPosition,
+  });
+
+  // Shell interaction
+  const closeBtn = panel.querySelector<HTMLButtonElement>("#snp-close")!;
+  fab.addEventListener("click", () => {
+    panel.style.display = panel.style.display === "none" ? "block" : "none";
+  });
+  closeBtn.addEventListener("click", () => {
     panel.style.display = "none";
-    panel.innerHTML = PANEL_HTML;
-    document.body.appendChild(panel);
-
-    // Inject geo form from core into placeholder
-    const geoRoot = panel.querySelector<HTMLElement>("#snp-geo-root")!;
-    geoRoot.innerHTML = GEO_OVERRIDE_HTML;
-
-    wireGeoOverrideForm(geoRoot, {
-      initial: currentOverride,
-      onSave: (next) => {
-        log("override saved", next);
-        saveGeoOverride(next);
-        currentOverride = next;
-        hook?.refreshWatches();
-        if (next.enabled) {
-          sendLocationUpdate(next);
-        }
-      },
-      getNativePosition: nativeGetCurrentPosition,
-    });
-
-    // Shell interaction
-    const closeBtn = panel.querySelector<HTMLButtonElement>("#snp-close")!;
-    fab.addEventListener("click", () => {
-      panel.style.display = panel.style.display === "none" ? "block" : "none";
-    });
-    closeBtn.addEventListener("click", () => {
-      panel.style.display = "none";
-    });
-  };
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", mountUI, { once: true });
-  } else {
-    mountUI();
-  }
+  });
 }
 
 // ── Entry point ───────────────────────────────────────────────────────────────

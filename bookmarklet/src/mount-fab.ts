@@ -1,32 +1,15 @@
 /**
- * Injects the FAB trigger button next to the Sniffies nav bar's Sitelinks
- * element. That element isn't present immediately on page load, so this
- * waits (observing the DOM) until it shows up rather than falling back to
- * some other mount point. Calls `onMounted` once the fab is actually in the
- * DOM.
+ * Injects the FAB trigger button into the page.
+ * Prefers to insert it next to the Sniffies nav bar's Sitelinks element.
+ * Falls back to appending to document.body if the nav is not found.
  */
-export const mountFab = (fab: HTMLButtonElement, onMounted: () => void): void => {
-  const tryInsert = (): boolean => {
-    const navTarget = document.querySelector<HTMLElement>('[title="Sitelinks"]');
-    if (!navTarget?.parentElement) {
-      return false;
-    }
+export const mountFab = (fab: HTMLButtonElement): void => {
+  const navTarget = document.querySelector<HTMLElement>('[title="Sitelinks"]');
+  if (navTarget?.parentElement) {
     navTarget.parentElement.insertBefore(fab, navTarget.nextSibling);
-    return true;
-  };
-
-  if (tryInsert()) {
-    onMounted();
-    return;
+  } else {
+    document.body.appendChild(fab);
   }
-
-  const observer = new MutationObserver(() => {
-    if (tryInsert()) {
-      observer.disconnect();
-      onMounted();
-    }
-  });
-  observer.observe(document.body, { childList: true, subtree: true });
 };
 
 /**
