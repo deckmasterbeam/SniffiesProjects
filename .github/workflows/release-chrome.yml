@@ -34,9 +34,11 @@ jobs:
 
       - name: Publish release
         run: |
-          gh release delete latest-chrome --yes --cleanup-tag 2>/dev/null || true
-          gh release create latest-chrome \
-            --title "Latest Chrome Extension Build" \
+          VERSION=$(node -p "require('./client/package.json').version")
+          TAG="chrome-$VERSION"
+          gh release delete "$TAG" --yes --cleanup-tag 2>/dev/null || true
+          gh release create "$TAG" \
+            --title "Chrome Extension v$VERSION" \
             --notes "Automated build from [\`${GITHUB_SHA::7}\`](https://github.com/${{ github.repository }}/commit/${{ github.sha }})" \
             client/sniffies-chrome.zip
         env:
