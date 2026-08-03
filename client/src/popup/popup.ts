@@ -3,6 +3,8 @@ import {
   GEO_OVERRIDE_CSS,
   GEO_OVERRIDE_HTML,
   wireGeoOverrideForm,
+  VERSION_BADGE_CSS,
+  wireVersionBadge,
   createLogger,
 } from "@sniffies-projects/core";
 import { FAVORITES_NOTIFICATIONS_ENABLED } from "../shared/env.js";
@@ -18,10 +20,14 @@ import {
 
 const log = createLogger("popup");
 
-// Inject geo form styles from core
+// Inject geo form and version badge styles from core
 const geoStyle = document.createElement("style");
 geoStyle.textContent = GEO_OVERRIDE_CSS;
 document.head.appendChild(geoStyle);
+
+const versionStyle = document.createElement("style");
+versionStyle.textContent = VERSION_BADGE_CSS;
+document.head.appendChild(versionStyle);
 
 // ── Element references ────────────────────────────────────────────────────────
 
@@ -52,6 +58,8 @@ const profileBorderSave = document.getElementById("profile-border-save");
 
 const init = async (): Promise<void> => {
   const settings = await getLocalSettings();
+
+  wireVersionBadge(document.body, chrome.runtime.getManifest().version);
 
   // Geo form — inject HTML from core and wire up logic
   const geoRoot = document.getElementById("snp-geo-root")!;

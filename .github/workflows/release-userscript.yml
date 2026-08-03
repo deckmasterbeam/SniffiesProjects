@@ -24,6 +24,9 @@ jobs:
       - name: Build userscript
         run: npm run build:prod
         working-directory: userscript
+        env:
+          SERVER_BASE: ${{ secrets.SERVER_BASE }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
 
       - name: Commit dist to repo
         run: |
