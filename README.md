@@ -16,7 +16,7 @@ A monorepo of tools to recreate and expand functionality for [sniffies.com](http
 
 The main user-facing Chrome extension. Lets users spoof their GPS location and click on profiles outside of the free geofence.
 
-**User Install:** Download `sniffies-chrome.zip` from the [latest release](https://github.com/deckmasterbeam/SniffiesProjects/releases/latest-chrome), extract it, then load the `dist/` folder as an unpacked extension in `chrome://extensions` (Developer mode on).
+**User Install:** Download `sniffies-chrome.zip` from the most recent `chrome-*` entry on the [releases page](https://github.com/deckmasterbeam/SniffiesProjects/releases), extract it, then load the `dist/` folder as an unpacked extension in `chrome://extensions` (Developer mode on).
 
 **Dev Install:** See `client/README.md` for build instructions.
 
@@ -73,29 +73,10 @@ Root-level helpers. `build.mjs` delegates to a specific package's build script (
 
 ## TODO:
 
-- Figure out how to containerize the watcher, ideally in one script to:
-   - start a VM
-   - start up chrome
-   - load an extension
-   - get the list of favorites
-   - watch polling and notify on a favorite showing up
-
-- Create a cache of images for favorited accouts?
-
-- Android Chrome mobile extension? Does Android Chrome mobile just consume chrome extensions?
 
 - Privacy policy
 
 - Map based location selection
 
-- review what kind of data is saved on the client, watcher
 
-- make the tables in the schema, think I need to remake
-
-- do manual test of favoriting path
-
-- do manual test of watcher running, getting favorites, triggering a notification
-
-- update the blog project to serve the userscript from the stable GitHub Releases URL: `https://github.com/deckmasterbeam/SniffiesProjects/releases/latest/download/sniffies-tools.user.js`
-
-- add a GitHub Actions workflow that publishes a dev (non-minified) build to a `dev` release tag on push to the dev branch, then add a dev install page to the blog pointing at `https://github.com/deckmasterbeam/SniffiesProjects/releases/download/dev/sniffies-tools.user.js`
+- update the blog project to serve the userscript from the stable GitHub Releases URL: `https://github.com/deckmasterbeam/SniffiesProjects/releases/download/userscript-0.2/sniffies-tools.user.js`

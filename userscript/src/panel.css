@@ -49,6 +49,11 @@
   align-items: center;
   justify-content: space-between;
 }
+.snp-title {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
 .snp-header h1 {
   font-size: 14px;
   font-weight: 700;

@@ -3,6 +3,7 @@ import { spawn } from "node:child_process";
 import { mkdir, rm, readFile, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { REQUIRED_RELEASE_ENV_VARS } from "../../scripts/release-env.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = resolve(__dirname, "..");
@@ -18,6 +19,14 @@ if (typeof process.loadEnvFile === "function") {
     process.loadEnvFile(join(root, ".env"));
   } catch {
     // no .env file present — rely on process.env as already set
+  }
+}
+
+if (prod) {
+  const missingEnvVars = REQUIRED_RELEASE_ENV_VARS.filter((key) => !process.env[key]);
+  if (missingEnvVars.length > 0) {
+    console.error(`error: missing required env var(s) for a release build: ${missingEnvVars.join(", ")}`);
+    process.exit(1);
   }
 }
 

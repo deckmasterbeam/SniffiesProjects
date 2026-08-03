@@ -10,11 +10,14 @@ import {
   GEO_OVERRIDE_HTML,
   GEO_OVERRIDE_CSS,
   wireGeoOverrideForm,
+  VERSION_BADGE_CSS,
+  wireVersionBadge,
   createLogger,
 } from "@sniffies-projects/core";
 import PANEL_CSS from "./panel.css";
 import PANEL_HTML from "./panel.html";
 import { installUserIdLogging } from "./user-id-logger.js";
+import { VERSION } from "./shared/env.js";
 
 const log = createLogger("tools");
 
@@ -138,7 +141,7 @@ function installHooks(): HookState {
 
 // ── UI (runs after DOMContentLoaded) ─────────────────────────────────────────
 
-function mountUI(state: HookState | null): void {
+export function mountUI(state: HookState | null): void {
   const hook = state?.hook ?? null;
   const nativeGetCurrentPosition = state?.nativeGetCurrentPosition ??
     (() => { throw new Error("geolocation unavailable"); });
@@ -153,6 +156,10 @@ function mountUI(state: HookState | null): void {
   geoStyle.textContent = GEO_OVERRIDE_CSS;
   document.head.appendChild(geoStyle);
 
+  const versionStyle = document.createElement("style");
+  versionStyle.textContent = VERSION_BADGE_CSS;
+  document.head.appendChild(versionStyle);
+
   const fab = document.createElement("button");
   fab.id = "snp-fab";
   fab.title = "Sniffies Tools";
@@ -164,6 +171,8 @@ function mountUI(state: HookState | null): void {
   panel.style.display = "none";
   panel.innerHTML = PANEL_HTML;
   document.body.appendChild(panel);
+
+  wireVersionBadge(panel, VERSION);
 
   const geoRoot = panel.querySelector<HTMLElement>("#snp-geo-root")!;
   geoRoot.innerHTML = GEO_OVERRIDE_HTML;

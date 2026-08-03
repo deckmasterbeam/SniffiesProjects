@@ -24,6 +24,9 @@ jobs:
       - name: Build userscript
         run: npm run build:prod
         working-directory: userscript
+        env:
+          SERVER_BASE: ${{ secrets.SERVER_BASE }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
 
       - name: Commit dist to repo
         run: |
@@ -37,9 +40,11 @@ jobs:
 
       - name: Publish release
         run: |
-          gh release delete latest-userscript --yes --cleanup-tag 2>/dev/null || true
-          gh release create latest-userscript \
-            --title "Latest Userscript Build" \
+          VERSION=$(node -p "require('./userscript/package.json').version")
+          TAG="userscript-$VERSION"
+          gh release delete "$TAG" --yes --cleanup-tag 2>/dev/null || true
+          gh release create "$TAG" \
+            --title "Userscript v$VERSION" \
             --notes "Automated build from [\`${GITHUB_SHA::7}\`](https://github.com/${{ github.repository }}/commit/${{ github.sha }})" \
             userscript/dist/sniffies-tools.user.js
         env:

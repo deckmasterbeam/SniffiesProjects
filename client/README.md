@@ -14,7 +14,7 @@ Copy `.env.example` to `.env` and fill in the values, then:
 ```bash
 yarn install   # one time
 yarn build     # dev build — reads .env for config
-yarn build:prod <version>  # prod build — pass version as X.Y.Z (e.g. yarn build:prod 1.2.0)
+yarn build:prod  # prod build — reads version from package.json, requires SERVER_BASE/CLIENT_SECRET
 yarn watch     # dev build, rebuilds on save
 ```
 
