@@ -22,9 +22,7 @@ jobs:
         working-directory: client
 
       - name: Build extension
-        run: |
-          VERSION=$(node -p "require('./package.json').version")
-          yarn build:prod $VERSION
+        run: yarn build:prod
         working-directory: client
         env:
           SERVER_BASE: ${{ secrets.SERVER_BASE }}
