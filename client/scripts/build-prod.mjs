@@ -26,6 +26,7 @@ const child = spawn("node", [buildScript], {
     ...process.env,
     DEBUG: "false",
     FAVORITES_NOTIFICATIONS_ENABLED: "false",
+    REPORTING_ENABLED: "false",
     EXTENSION_VERSION: version,
   },
 });

@@ -1,0 +1,117 @@
+/* Injected directly into the Sniffies page (not a popup/settings root), so
+   this is scoped under #snp-report-backdrop rather than relying on :root
+   variables that don't exist in that context — same approach as
+   geo-override.css. Palette lifted from popup.css. */
+
+#snp-report-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 2147483647;
+  background: rgba(8, 14, 24, 0.65);
+  align-items: center;
+  justify-content: center;
+  font-family:
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    sans-serif;
+}
+
+#snp-report-backdrop .snp-report-modal {
+  width: min(320px, calc(100vw - 32px));
+  background: #0e1825;
+  border: 1px solid #1c2b3a;
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+#snp-report-backdrop h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+#snp-report-backdrop .hint {
+  font-size: 11px;
+  color: #7a90a4;
+  margin: 0;
+}
+
+#snp-report-backdrop .field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11px;
+  color: #7a90a4;
+}
+
+#snp-report-backdrop .field textarea {
+  font-size: 13px;
+  padding: 7px 10px;
+  border-radius: 6px;
+  border: 1px solid #1c2b3a;
+  background: #080e18;
+  color: #ffffff;
+  outline: none;
+  resize: vertical;
+  font-family: inherit;
+  transition: border-color 0.15s;
+}
+
+#snp-report-backdrop .field textarea:focus {
+  border-color: #ff5500;
+}
+
+#snp-report-backdrop .actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+#snp-report-backdrop button.primary {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 7px 16px;
+  border-radius: 20px;
+  border: none;
+  background: #ff5500;
+  color: #fff;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  transition: background 0.15s;
+}
+
+#snp-report-backdrop button.primary:hover:not(:disabled) {
+  background: #e04a00;
+}
+
+#snp-report-backdrop button.primary:disabled {
+  background: #1c2b3a;
+  color: #7a90a4;
+  cursor: not-allowed;
+}
+
+#snp-report-backdrop button.secondary {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 7px 16px;
+  border-radius: 20px;
+  border: 1px solid #1c2b3a;
+  background: transparent;
+  color: #7a90a4;
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    color 0.15s;
+}
+
+#snp-report-backdrop button.secondary:hover:not(:disabled) {
+  border-color: #7a90a4;
+  color: #ffffff;
+}

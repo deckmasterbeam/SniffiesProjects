@@ -12,6 +12,16 @@ const POPUP_HTML = `
       </label>
     </div>
   </details>
+  <details id="bot-blocking-details" class="section collapsible">
+    <summary><h2>Block Bot Accounts</h2></summary>
+    <div class="collapsible-body">
+      <p id="bot-blocking-hint" class="hint"></p>
+      <label class="row">
+        <input id="bot-blocking-enabled" type="checkbox" />
+        <span id="bot-blocking-enable-label">Enable</span>
+      </label>
+    </div>
+  </details>
   <div id="snp-geo-root"></div>
   <details id="profile-border-details" class="section collapsible">
     <summary><h2>Open Profiles Outside Boundary</h2></summary>
@@ -33,6 +43,10 @@ const getElements = () => ({
   favoritesDetails: document.getElementById("favorites-details") as HTMLDetailsElement,
   favoritesHint: document.getElementById("favorites-hint") as HTMLElement,
   favoritesEnableLabel: document.getElementById("favorites-enable-label") as HTMLElement,
+  botBlockingEnabled: document.getElementById("bot-blocking-enabled") as HTMLInputElement,
+  botBlockingDetails: document.getElementById("bot-blocking-details") as HTMLDetailsElement,
+  botBlockingHint: document.getElementById("bot-blocking-hint") as HTMLElement,
+  botBlockingEnableLabel: document.getElementById("bot-blocking-enable-label") as HTMLElement,
   geoFields: document.getElementById("geo-fields") as HTMLElement,
   geoEnabled: document.getElementById("geo-enabled") as HTMLInputElement,
   geoLat: document.getElementById("geo-lat") as HTMLInputElement,
@@ -216,6 +230,33 @@ describe("popup — favorites", () => {
     favoritesDetails.open = true;
     favoritesDetails.dispatchEvent(new Event("toggle"));
     expect(chrome.storage.local.set).toHaveBeenCalledWith({ favoritesSectionOpen: true });
+  });
+});
+
+describe("popup — bot blocking", () => {
+  beforeEach(loadModule);
+
+  it("checkbox is unchecked and disabled on init when REPORTING_ENABLED is false", () => {
+    const { botBlockingEnabled } = getElements();
+    expect(botBlockingEnabled.checked).toBe(false);
+    expect(botBlockingEnabled.disabled).toBe(true);
+  });
+
+  it("shows coming soon hint when REPORTING_ENABLED is false", () => {
+    const { botBlockingHint } = getElements();
+    expect(botBlockingHint.textContent).toBe("Coming soon!");
+  });
+
+  it("strikes through enable label when REPORTING_ENABLED is false", () => {
+    const { botBlockingEnableLabel } = getElements();
+    expect(botBlockingEnableLabel.style.textDecoration).toBe("line-through");
+  });
+
+  it("saves bot blocking section open state on toggle", () => {
+    const { botBlockingDetails } = getElements();
+    botBlockingDetails.open = true;
+    botBlockingDetails.dispatchEvent(new Event("toggle"));
+    expect(chrome.storage.local.set).toHaveBeenCalledWith({ botBlockingSectionOpen: true });
   });
 });
 

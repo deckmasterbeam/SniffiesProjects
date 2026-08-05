@@ -5,11 +5,12 @@ import {
   wireGeoOverrideForm,
   createLogger,
 } from "@sniffies-projects/core";
-import { FAVORITES_NOTIFICATIONS_ENABLED } from "../shared/env.js";
+import { FAVORITES_NOTIFICATIONS_ENABLED, REPORTING_ENABLED } from "../shared/env.js";
 import {
   DEFAULT_PROFILE_BORDER_OPEN,
   SETTINGS_KEYS,
   getLocalSettings,
+  setBotBlockingEnabled,
   setFavoritesEnabled,
   setGeoOverride,
   setProfileBorderOpen,
@@ -31,6 +32,15 @@ const favoritesDetails = document.getElementById("favorites-details") as HTMLDet
 const favoritesEnabledCheckbox = document.getElementById("favorites-enabled") as HTMLInputElement;
 const favoritesHint = document.getElementById("favorites-hint");
 const favoritesEnableLabel = document.getElementById("favorites-enable-label");
+
+const botBlockingDetails = document.getElementById(
+  "bot-blocking-details",
+) as HTMLDetailsElement | null;
+const botBlockingEnabledCheckbox = document.getElementById(
+  "bot-blocking-enabled",
+) as HTMLInputElement;
+const botBlockingHint = document.getElementById("bot-blocking-hint");
+const botBlockingEnableLabel = document.getElementById("bot-blocking-enable-label");
 
 const openSettingsBtn = document.getElementById("open-settings");
 
@@ -83,6 +93,27 @@ const init = async (): Promise<void> => {
     favoritesEnabledCheckbox.checked = settings.favoritesEnabled;
   }
 
+  // Bot blocking
+  if (botBlockingDetails) {
+    botBlockingDetails.open = settings.botBlockingSectionOpen;
+  }
+  if (!REPORTING_ENABLED) {
+    botBlockingEnabledCheckbox.checked = false;
+    botBlockingEnabledCheckbox.disabled = true;
+    if (botBlockingHint) {
+      botBlockingHint.textContent = "Coming soon!";
+    }
+    if (botBlockingEnableLabel) {
+      botBlockingEnableLabel.style.textDecoration = "line-through";
+    }
+  } else {
+    botBlockingEnabledCheckbox.checked = settings.botBlockingEnabled;
+    if (botBlockingHint) {
+      botBlockingHint.textContent =
+        "Hide profiles that have been confirmed as bots from the map and live updates.";
+    }
+  }
+
   // Profile border
   if (profileBorderDetails) {
     profileBorderDetails.open = settings.profileBorderSectionOpen;
@@ -106,6 +137,16 @@ favoritesDetails?.addEventListener("toggle", () => {
 
 favoritesEnabledCheckbox.addEventListener("change", () => {
   void setFavoritesEnabled(favoritesEnabledCheckbox.checked);
+});
+
+botBlockingDetails?.addEventListener("toggle", () => {
+  void chrome.storage.local.set({
+    [SETTINGS_KEYS.botBlockingSectionOpen]: botBlockingDetails.open,
+  });
+});
+
+botBlockingEnabledCheckbox.addEventListener("change", () => {
+  void setBotBlockingEnabled(botBlockingEnabledCheckbox.checked);
 });
 
 profileBorderDetails?.addEventListener("toggle", () => {

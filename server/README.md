@@ -59,6 +59,9 @@ Run [`schema.sql`](./schema.sql) against your Neon database to create all tables
 | `notify_log`          | Record of every SMS sent, used for rate-limiting     |
 | `priority_numbers`    | Phones exempt from the daily SMS limit               |
 | `client_init_log`     | Record of every client init telemetry ping           |
+| `blocked_reporters`   | Sniffies ids whose reports are silently dropped      |
+| `pending_reports`     | Consolidated bot reports awaiting manual review      |
+| `validated_reports`   | Manually confirmed bot reports; served as the "blocked bots" list |
 
 ---
 

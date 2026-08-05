@@ -8,13 +8,21 @@ import {
   CLIENT_SECRET,
   DEBUG,
   FAVORITES_NOTIFICATIONS_ENABLED,
+  REPORTING_ENABLED,
   SERVER_BASE,
 } from "../shared/env.js";
-import { createLogger } from "@sniffies-projects/core";
+import {
+  createLogger,
+  REPORT_MODAL_CSS,
+  REPORT_MODAL_HTML,
+  wireReportModal,
+  type ReportModalHandle,
+} from "@sniffies-projects/core";
 import {
   DEFAULT_PROFILE_BORDER_OPEN,
   SETTINGS_KEYS,
   getLocalSettings,
+  setBlockedBots,
   type ProfileBorderOpen,
 } from "../shared/settings.js";
 
@@ -28,9 +36,13 @@ const MARKER_SELECTOR = '[data-testid="cv-marker-avatar-image"]';
 const MARKER_CONTAINER_SELECTOR = '[data-testid="markerUserContainer"]';
 const APP_SCREEN_SELECTOR = "#app-screen";
 const NAME_LABEL_SELECTOR = '[data-testid="cruiserNameLabel"]';
+const PIN_BUTTON_SELECTOR = '[data-testid="pinUserButton"]';
 const INJECTED_ATTR = "data-sniffies-injection";
+const REPORT_INJECTED_ATTR = "data-sniffies-report-injection";
+const REPORT_MODAL_ROOT_ID = "snp-report-root";
 const STAR_ON = "★";
 const STAR_OFF = "☆";
+const BLOCKED_BOTS_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
 interface ProfileSelection {
   userId: string;
@@ -43,10 +55,18 @@ interface ApiFavoriteEntry {
   favorited_at: string;
 }
 
+interface ApiBlockedBotsResponse {
+  ok: boolean;
+  userIds: string[];
+}
+
 let lastSelection: ProfileSelection | null = null;
 let favoritedIds = new Set<string>();
 let currentGuid = "";
+let currentSniffiesUserId = "";
 let currentProfileBorderOpen: ProfileBorderOpen = { ...DEFAULT_PROFILE_BORDER_OPEN };
+let reportModal: ReportModalHandle | null = null;
+let reportTarget: string | null = null;
 
 const isFavorite = (userId: string): boolean => favoritedIds.has(userId);
 
@@ -66,6 +86,76 @@ const fetchFavorites = async (guid: string): Promise<void> => {
     refreshAllInjections();
   } catch (err) {
     log.error("fetchFavorites failed", err);
+  }
+};
+
+const submitReport = async (reportedUserId: string, message: string): Promise<void> => {
+  if (!SERVER_BASE) {
+    throw new Error("server not configured");
+  }
+  const res = await fetch(`${SERVER_BASE}/api/report`, {
+    method: "POST",
+    headers: clientHeaders(),
+    body: JSON.stringify({
+      reportType: "bot_suspected",
+      reportedUserId,
+      reporterUserId: currentSniffiesUserId,
+      message: message || undefined,
+    }),
+  });
+  if (!res.ok) {
+    throw new Error(`report failed with status ${res.status}`);
+  }
+};
+
+const ensureReportModal = (): ReportModalHandle => {
+  if (reportModal) {
+    return reportModal;
+  }
+  const style = document.createElement("style");
+  style.textContent = REPORT_MODAL_CSS;
+  document.head.appendChild(style);
+
+  const root = document.createElement("div");
+  root.id = REPORT_MODAL_ROOT_ID;
+  root.innerHTML = REPORT_MODAL_HTML;
+  document.body.appendChild(root);
+
+  reportModal = wireReportModal(root, {
+    onSubmit: async (message) => {
+      if (!reportTarget) {
+        return;
+      }
+      await submitReport(reportTarget, message);
+    },
+    onCancel: () => {
+      reportTarget = null;
+    },
+  });
+  return reportModal;
+};
+
+const fetchBlockedBots = async (): Promise<void> => {
+  if (!SERVER_BASE) {
+    return;
+  }
+  try {
+    const res = await fetch(`${SERVER_BASE}/api/blocked-bots`, {
+      headers: clientHeaders(),
+    });
+    if (!res.ok) {
+      return;
+    }
+    const data = (await res.json()) as ApiBlockedBotsResponse;
+    await setBlockedBots(data.userIds ?? [], Date.now());
+  } catch (err) {
+    log.error("fetchBlockedBots failed", err);
+  }
+};
+
+const refreshBlockedBotsIfStale = async (blockedBotsFetchedAt: number): Promise<void> => {
+  if (Date.now() - blockedBotsFetchedAt > BLOCKED_BOTS_MAX_AGE_MS) {
+    await fetchBlockedBots();
   }
 };
 
@@ -185,6 +275,55 @@ const buildInjection = (selection: ProfileSelection): HTMLElement => {
   return wrap;
 };
 
+const buildReportButton = (userId: string): HTMLButtonElement => {
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.setAttribute(REPORT_INJECTED_ATTR, userId);
+  btn.setAttribute("aria-label", "Report profile");
+  btn.title = "Report as suspected bot";
+  btn.style.cssText = [
+    "background:transparent",
+    "border:none",
+    "padding:0 8px",
+    "cursor:pointer",
+    "font-size:16px",
+    "line-height:1",
+    "color:#f04438",
+    "display:flex",
+    "align-items:center",
+  ].join(";");
+  btn.textContent = "🚩";
+  btn.addEventListener("click", (event) => {
+    event.stopPropagation();
+    if (!currentSniffiesUserId) {
+      log.warn("no sniffies user id observed yet — cannot report");
+      return;
+    }
+    reportTarget = userId;
+    ensureReportModal().open();
+  });
+  return btn;
+};
+
+const injectReportButton = (screen: Element, selection: ProfileSelection): void => {
+  if (!REPORTING_ENABLED) {
+    return;
+  }
+  const pinButton = screen.querySelector<HTMLElement>(PIN_BUTTON_SELECTOR);
+  const controlsContainer = pinButton?.parentElement;
+  if (!controlsContainer) {
+    return;
+  }
+  const existing = controlsContainer.querySelector<HTMLElement>(`[${REPORT_INJECTED_ATTR}]`);
+  if (existing) {
+    if (existing.getAttribute(REPORT_INJECTED_ATTR) === selection.userId) {
+      return;
+    }
+    existing.remove();
+  }
+  controlsContainer.prepend(buildReportButton(selection.userId));
+};
+
 const refreshInjection = (wrap: HTMLElement, userId: string): void => {
   const star = wrap.querySelector<HTMLElement>('[data-role="favorite-toggle"]');
   const idText = wrap.querySelector<HTMLElement>('[data-role="user-id"]');
@@ -234,6 +373,7 @@ const tryInjectIntoScreen = (screen: Element): void => {
   if (nameLabel) {
     injectIntoNameLabel(nameLabel, lastSelection);
   }
+  injectReportButton(screen, lastSelection);
 };
 
 const observer = new MutationObserver((mutations) => {
@@ -245,13 +385,16 @@ const observer = new MutationObserver((mutations) => {
       if (!(node instanceof HTMLElement)) {
         continue;
       }
-      if (node.matches?.(NAME_LABEL_SELECTOR)) {
-        injectIntoNameLabel(node, lastSelection);
+      const matchesNameLabel =
+        node.matches?.(NAME_LABEL_SELECTOR) || !!node.querySelector?.(NAME_LABEL_SELECTOR);
+      const matchesPinButton =
+        node.matches?.(PIN_BUTTON_SELECTOR) || !!node.querySelector?.(PIN_BUTTON_SELECTOR);
+      if (!matchesNameLabel && !matchesPinButton) {
         continue;
       }
-      const nested = node.querySelector?.<HTMLElement>(NAME_LABEL_SELECTOR);
-      if (nested) {
-        injectIntoNameLabel(nested, lastSelection);
+      const screen = document.querySelector(APP_SCREEN_SELECTOR);
+      if (screen) {
+        tryInjectIntoScreen(screen);
       }
     }
   }
@@ -309,14 +452,20 @@ if (document.body) {
   document.addEventListener("DOMContentLoaded", startObserving, { once: true });
 }
 
-void getLocalSettings().then(({ guid, profileBorderOpen }) => {
-  currentGuid = guid;
-  currentProfileBorderOpen = { ...DEFAULT_PROFILE_BORDER_OPEN, ...profileBorderOpen };
-  if (guid) {
-    void fetchFavorites(guid);
-  }
-  log(`initialized, guid ${guid ? "present" : "missing"}`);
-});
+void getLocalSettings().then(
+  ({ guid, profileBorderOpen, sniffiesUserId, blockedBotsFetchedAt }) => {
+    currentGuid = guid;
+    currentSniffiesUserId = sniffiesUserId;
+    currentProfileBorderOpen = { ...DEFAULT_PROFILE_BORDER_OPEN, ...profileBorderOpen };
+    if (guid) {
+      void fetchFavorites(guid);
+    }
+    if (REPORTING_ENABLED) {
+      void refreshBlockedBotsIfStale(blockedBotsFetchedAt);
+    }
+    log(`initialized, guid ${guid ? "present" : "missing"}`);
+  },
+);
 
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area !== "local") {
@@ -328,6 +477,11 @@ chrome.storage.onChanged.addListener((changes, area) => {
     if (currentGuid) {
       void fetchFavorites(currentGuid);
     }
+  }
+  const sniffiesUserIdChange = changes[SETTINGS_KEYS.sniffiesUserId];
+  if (sniffiesUserIdChange) {
+    currentSniffiesUserId =
+      typeof sniffiesUserIdChange.newValue === "string" ? sniffiesUserIdChange.newValue : "";
   }
   const profileBorderChange = changes[SETTINGS_KEYS.profileBorderOpen];
   if (profileBorderChange) {

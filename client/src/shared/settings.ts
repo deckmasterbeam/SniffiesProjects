@@ -10,6 +10,10 @@ export const SETTINGS_KEYS = {
   favoritesEnabled: "favoritesEnabled",
   favoritesSectionOpen: "favoritesSectionOpen",
   sniffiesUserId: "sniffiesUserId",
+  blockedBots: "blockedBots",
+  blockedBotsFetchedAt: "blockedBotsFetchedAt",
+  botBlockingEnabled: "botBlockingEnabled",
+  botBlockingSectionOpen: "botBlockingSectionOpen",
 } as const;
 
 export const PHONE_E164_REGEX = /^\+[1-9]\d{6,14}$/;
@@ -34,6 +38,10 @@ export interface ExtensionLocalSettings {
   favoritesEnabled: boolean;
   favoritesSectionOpen: boolean;
   sniffiesUserId: string;
+  blockedBots: string[];
+  blockedBotsFetchedAt: number;
+  botBlockingEnabled: boolean;
+  botBlockingSectionOpen: boolean;
 }
 
 export const DEFAULT_LOCAL_SETTINGS: ExtensionLocalSettings = {
@@ -46,6 +54,10 @@ export const DEFAULT_LOCAL_SETTINGS: ExtensionLocalSettings = {
   favoritesEnabled: false,
   favoritesSectionOpen: false,
   sniffiesUserId: "",
+  blockedBots: [],
+  blockedBotsFetchedAt: 0,
+  botBlockingEnabled: true,
+  botBlockingSectionOpen: false,
 };
 
 export const getLocalSettings = async (): Promise<ExtensionLocalSettings> => {
@@ -67,4 +79,15 @@ export const setFavoritesEnabled = async (enabled: boolean): Promise<void> => {
 
 export const setSniffiesUserId = async (userId: string): Promise<void> => {
   await chrome.storage.local.set({ [SETTINGS_KEYS.sniffiesUserId]: userId });
+};
+
+export const setBlockedBots = async (userIds: string[], fetchedAt: number): Promise<void> => {
+  await chrome.storage.local.set({
+    [SETTINGS_KEYS.blockedBots]: userIds,
+    [SETTINGS_KEYS.blockedBotsFetchedAt]: fetchedAt,
+  });
+};
+
+export const setBotBlockingEnabled = async (enabled: boolean): Promise<void> => {
+  await chrome.storage.local.set({ [SETTINGS_KEYS.botBlockingEnabled]: enabled });
 };

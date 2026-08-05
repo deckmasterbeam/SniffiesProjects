@@ -89,6 +89,7 @@ const buildOptions = {
     __FAVORITES_NOTIFICATIONS_ENABLED__: String(
       process.env.FAVORITES_NOTIFICATIONS_ENABLED !== "false",
     ),
+    __REPORTING_ENABLED__: String(process.env.REPORTING_ENABLED !== "false"),
   },
 };
 

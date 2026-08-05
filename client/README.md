@@ -6,6 +6,7 @@ Supported features:
 - Location spoofing
 - Opening profiles outside geofence
 - Profile online notification service *(in progress)*
+- Bot reporting and blocking *(in progress)*
 
 ## Building
 
@@ -36,3 +37,4 @@ After rebuilding, click the **reload** (↻) button on the extension card. For c
 | `CLIENT_SECRET`                 | Bearer token for client-facing API endpoints. Baked into the bundle.     |
 | `DEBUG`                         | Set to `true` to enable debug overlays on sniffies.com                   |
 | `FAVORITES_NOTIFICATIONS_ENABLED` | Set to `true` to enable favorites/notification features (not yet shipped) |
+| `REPORTING_ENABLED`             | Set to `true` to enable bot reporting (report button + blocked-bots fetch; not yet shipped) |
