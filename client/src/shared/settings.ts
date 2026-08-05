@@ -1,52 +1,15 @@
-import { DEFAULT_GEO_OVERRIDE, GeoOverride } from "@sniffies-projects/core";
+import {
+  DEFAULT_LOCAL_SETTINGS,
+  DEFAULT_PROFILE_BORDER_OPEN,
+  ExtensionLocalSettings,
+  GeoOverride,
+  PHONE_E164_REGEX,
+  ProfileBorderOpen,
+  SETTINGS_KEYS,
+} from "@sniffies-projects/core";
 
-export const SETTINGS_KEYS = {
-  guid: "guid",
-  phone: "phone",
-  geoOverride: "geoOverride",
-  geoSectionOpen: "geoSectionOpen",
-  profileBorderOpen: "profileBorderOpen",
-  profileBorderSectionOpen: "profileBorderSectionOpen",
-  favoritesEnabled: "favoritesEnabled",
-  favoritesSectionOpen: "favoritesSectionOpen",
-  sniffiesUserId: "sniffiesUserId",
-} as const;
-
-export const PHONE_E164_REGEX = /^\+[1-9]\d{6,14}$/;
-
-export interface ProfileBorderOpen {
-  enabled: boolean;
-  openInNewTab: boolean;
-}
-
-export const DEFAULT_PROFILE_BORDER_OPEN: ProfileBorderOpen = {
-  enabled: false,
-  openInNewTab: true,
-};
-
-export interface ExtensionLocalSettings {
-  guid: string;
-  phone: string;
-  geoOverride: GeoOverride;
-  geoSectionOpen: boolean;
-  profileBorderOpen: ProfileBorderOpen;
-  profileBorderSectionOpen: boolean;
-  favoritesEnabled: boolean;
-  favoritesSectionOpen: boolean;
-  sniffiesUserId: string;
-}
-
-export const DEFAULT_LOCAL_SETTINGS: ExtensionLocalSettings = {
-  guid: "",
-  phone: "",
-  geoOverride: DEFAULT_GEO_OVERRIDE,
-  geoSectionOpen: false,
-  profileBorderOpen: DEFAULT_PROFILE_BORDER_OPEN,
-  profileBorderSectionOpen: false,
-  favoritesEnabled: false,
-  favoritesSectionOpen: false,
-  sniffiesUserId: "",
-};
+export { DEFAULT_LOCAL_SETTINGS, DEFAULT_PROFILE_BORDER_OPEN, PHONE_E164_REGEX, SETTINGS_KEYS };
+export type { ExtensionLocalSettings, ProfileBorderOpen };
 
 export const getLocalSettings = async (): Promise<ExtensionLocalSettings> => {
   const stored = await chrome.storage.local.get(DEFAULT_LOCAL_SETTINGS);

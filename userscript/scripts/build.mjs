@@ -32,6 +32,12 @@ if (prod) {
 
 const pkg = JSON.parse(await readFile(join(root, "package.json"), "utf8"));
 
+// GITHUB_ACTIONS is set by the release workflow (.github/workflows/release-userscript.yml),
+// which is the only place userscript builds are committed/published from. Any build without
+// it is a local dev build.
+const buildTime = new Date().toISOString();
+const buildLocation = process.env.GITHUB_ACTIONS === "true" ? "remote" : "local";
+
 const METADATA = `\
 // ==UserScript==
 // @name         Sniffies Tools Userscript
@@ -44,6 +50,8 @@ const METADATA = `\
 // @run-at       document-start
 // @grant        none
 // ==/UserScript==
+// @buildTime     ${buildTime}
+// @buildLocation ${buildLocation}
 `;
 
 const tmpFile = join(distDir, "_userscript.tmp.js");

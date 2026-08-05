@@ -10,7 +10,7 @@ import {
   FAVORITES_NOTIFICATIONS_ENABLED,
   SERVER_BASE,
 } from "../shared/env.js";
-import { createLogger } from "@sniffies-projects/core";
+import { createLogger, installProfileBorderRedirect } from "@sniffies-projects/core";
 import {
   DEFAULT_PROFILE_BORDER_OPEN,
   SETTINGS_KEYS,
@@ -25,7 +25,6 @@ const clientHeaders = (): Record<string, string> => ({
 
 const log = createLogger("profile-id");
 const MARKER_SELECTOR = '[data-testid="cv-marker-avatar-image"]';
-const MARKER_CONTAINER_SELECTOR = '[data-testid="markerUserContainer"]';
 const APP_SCREEN_SELECTOR = "#app-screen";
 const NAME_LABEL_SELECTOR = '[data-testid="cruiserNameLabel"]';
 const INJECTED_ATTR = "data-sniffies-injection";
@@ -261,27 +260,16 @@ const startObserving = (): void => {
   observer.observe(document.body, { childList: true, subtree: true });
 };
 
+// Registered before the favorites click listener below so it can claim
+// out-of-radius profile clicks first (via stopImmediatePropagation).
+installProfileBorderRedirect(() => currentProfileBorderOpen);
+
 document.addEventListener(
   "click",
   (event) => {
     const target = event.target;
     if (!(target instanceof Element)) {
       return;
-    }
-
-    if (currentProfileBorderOpen.enabled) {
-      const container = target.closest<HTMLElement>(MARKER_CONTAINER_SELECTOR);
-      if (container && container.dataset.withinRadius === "false" && container.id) {
-        event.stopPropagation();
-        event.preventDefault();
-        const url = `https://sniffies.com/profile/${container.id}`;
-        if (currentProfileBorderOpen.openInNewTab) {
-          window.open(url, "_blank");
-        } else {
-          window.location.href = url;
-        }
-        return;
-      }
     }
 
     const marker = target.closest<HTMLElement>(MARKER_SELECTOR);
