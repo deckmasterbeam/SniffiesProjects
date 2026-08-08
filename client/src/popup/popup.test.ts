@@ -17,17 +17,7 @@ const POPUP_HTML = `
     </div>
   </details>
   <div id="snp-geo-root"></div>
-  <details id="profile-border-details" class="section collapsible">
-    <summary><h2>Open Profiles Outside Boundary</h2></summary>
-    <input id="profile-border-enabled" type="checkbox" />
-    <label id="profile-border-tab-field" class="field">
-      <select id="profile-border-tab">
-        <option value="current-tab">Current tab</option>
-        <option value="new-tab">New tab</option>
-      </select>
-    </label>
-    <button id="profile-border-save"></button>
-  </details>
+  <div id="snp-profile-border-root"></div>
 `;
 
 const flushPromises = () => new Promise<void>((r) => setTimeout(r, 0));

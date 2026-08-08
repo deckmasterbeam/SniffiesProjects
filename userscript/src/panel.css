@@ -1,6 +1,7 @@
 #snp-fab {
   position: fixed;
-  bottom: 80px;
+  /* TODO This may still need reworking */
+  bottom: calc(80px + 5vh);
   right: 16px;
   z-index: 2147483646;
   background: rgba(14, 24, 37, 0.85);
