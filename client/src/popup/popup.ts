@@ -10,6 +10,9 @@ import {
   wireVersionBadge,
   wireProfileBorderForm,
   createLogger,
+  UPDATE_BANNER_HTML,
+  UPDATE_BANNER_CSS,
+  wireUpdateBanner,
 } from "@sniffies-projects/core";
 import { FAVORITES_NOTIFICATIONS_ENABLED } from "../shared/env.js";
 import {
@@ -35,6 +38,10 @@ const versionStyle = document.createElement("style");
 versionStyle.textContent = VERSION_BADGE_CSS;
 document.head.appendChild(versionStyle);
 
+const updateBannerStyle = document.createElement("style");
+updateBannerStyle.textContent = UPDATE_BANNER_CSS;
+document.head.appendChild(updateBannerStyle);
+
 // ── Element references ────────────────────────────────────────────────────────
 
 const favoritesDetails = document.getElementById("favorites-details") as HTMLDetailsElement | null;
@@ -49,7 +56,12 @@ const openSettingsBtn = document.getElementById("open-settings");
 const init = async (): Promise<void> => {
   const settings = await getLocalSettings();
 
-  wireVersionBadge(document.body, chrome.runtime.getManifest().version);
+  const version = chrome.runtime.getManifest().version;
+  wireVersionBadge(document.body, version);
+
+  const updateRoot = document.getElementById("snp-update-root")!;
+  updateRoot.innerHTML = UPDATE_BANNER_HTML;
+  wireUpdateBanner(updateRoot, "chrome", version);
 
   // Geo form — inject HTML from core and wire up logic
   const geoRoot = document.getElementById("snp-geo-root")!;

@@ -19,6 +19,9 @@ import {
   PROFILE_BORDER_CSS,
   wireProfileBorderForm,
   createLogger,
+  UPDATE_BANNER_HTML,
+  UPDATE_BANNER_CSS,
+  wireUpdateBanner,
 } from "@sniffies-projects/core";
 import PANEL_CSS from "./panel.css";
 import PANEL_HTML from "./panel.html";
@@ -192,6 +195,10 @@ export function mountUI(state: HookState | null): void {
   versionStyle.textContent = VERSION_BADGE_CSS;
   document.head.appendChild(versionStyle);
 
+  const updateBannerStyle = document.createElement("style");
+  updateBannerStyle.textContent = UPDATE_BANNER_CSS;
+  document.head.appendChild(updateBannerStyle);
+
   const fab = document.createElement("button");
   fab.id = "snp-fab";
   fab.title = "Sniffies Tools";
@@ -205,6 +212,10 @@ export function mountUI(state: HookState | null): void {
   document.body.appendChild(panel);
 
   wireVersionBadge(panel, VERSION);
+
+  const updateRoot = panel.querySelector<HTMLElement>("#snp-update-root")!;
+  updateRoot.innerHTML = UPDATE_BANNER_HTML;
+  wireUpdateBanner(updateRoot, "userscript", VERSION);
 
   const geoRoot = panel.querySelector<HTMLElement>("#snp-geo-root")!;
   geoRoot.innerHTML = GEO_OVERRIDE_HTML;

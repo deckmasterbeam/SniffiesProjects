@@ -16,6 +16,7 @@ const POPUP_HTML = `
       </label>
     </div>
   </details>
+  <div id="snp-update-root"></div>
   <div id="snp-geo-root"></div>
   <div id="snp-profile-border-root"></div>
 `;
@@ -64,7 +65,9 @@ describe("popup — version badge", () => {
   });
 
   it("renders a different version when the manifest reports one", async () => {
-    (chrome.runtime.getManifest as ReturnType<typeof vi.fn>).mockReturnValueOnce({ version: "2.3.4" });
+    (chrome.runtime.getManifest as ReturnType<typeof vi.fn>).mockReturnValueOnce({
+      version: "2.3.4",
+    });
     await loadModule();
     const { version } = getElements();
     expect(version.textContent).toBe("v2.3.4");
