@@ -1,43 +1,25 @@
-import { DEFAULT_GEO_OVERRIDE, GeoOverride } from "@sniffies-projects/core";
+import {
+  DEFAULT_LOCAL_SETTINGS as CORE_DEFAULT_LOCAL_SETTINGS,
+  DEFAULT_PROFILE_BORDER_OPEN,
+  ExtensionLocalSettings as CoreExtensionLocalSettings,
+  GeoOverride,
+  PHONE_E164_REGEX,
+  ProfileBorderOpen,
+  SETTINGS_KEYS as CORE_SETTINGS_KEYS,
+} from "@sniffies-projects/core";
+
+export { DEFAULT_PROFILE_BORDER_OPEN, PHONE_E164_REGEX };
+export type { ProfileBorderOpen };
 
 export const SETTINGS_KEYS = {
-  guid: "guid",
-  phone: "phone",
-  geoOverride: "geoOverride",
-  geoSectionOpen: "geoSectionOpen",
-  profileBorderOpen: "profileBorderOpen",
-  profileBorderSectionOpen: "profileBorderSectionOpen",
-  favoritesEnabled: "favoritesEnabled",
-  favoritesSectionOpen: "favoritesSectionOpen",
-  sniffiesUserId: "sniffiesUserId",
+  ...CORE_SETTINGS_KEYS,
   blockedBots: "blockedBots",
   blockedBotsFetchedAt: "blockedBotsFetchedAt",
   botBlockingEnabled: "botBlockingEnabled",
   botBlockingSectionOpen: "botBlockingSectionOpen",
 } as const;
 
-export const PHONE_E164_REGEX = /^\+[1-9]\d{6,14}$/;
-
-export interface ProfileBorderOpen {
-  enabled: boolean;
-  openInNewTab: boolean;
-}
-
-export const DEFAULT_PROFILE_BORDER_OPEN: ProfileBorderOpen = {
-  enabled: false,
-  openInNewTab: true,
-};
-
-export interface ExtensionLocalSettings {
-  guid: string;
-  phone: string;
-  geoOverride: GeoOverride;
-  geoSectionOpen: boolean;
-  profileBorderOpen: ProfileBorderOpen;
-  profileBorderSectionOpen: boolean;
-  favoritesEnabled: boolean;
-  favoritesSectionOpen: boolean;
-  sniffiesUserId: string;
+export interface ExtensionLocalSettings extends CoreExtensionLocalSettings {
   blockedBots: string[];
   blockedBotsFetchedAt: number;
   botBlockingEnabled: boolean;
@@ -45,15 +27,7 @@ export interface ExtensionLocalSettings {
 }
 
 export const DEFAULT_LOCAL_SETTINGS: ExtensionLocalSettings = {
-  guid: "",
-  phone: "",
-  geoOverride: DEFAULT_GEO_OVERRIDE,
-  geoSectionOpen: false,
-  profileBorderOpen: DEFAULT_PROFILE_BORDER_OPEN,
-  profileBorderSectionOpen: false,
-  favoritesEnabled: false,
-  favoritesSectionOpen: false,
-  sniffiesUserId: "",
+  ...CORE_DEFAULT_LOCAL_SETTINGS,
   blockedBots: [],
   blockedBotsFetchedAt: 0,
   botBlockingEnabled: true,

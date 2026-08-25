@@ -2,6 +2,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const POPUP_HTML = `
   <button id="open-settings"></button>
+  <div class="snp-title">
+    <h1>Sniffies Plug-ins</h1>
+    <span id="snp-version" class="snp-version"></span>
+  </div>
   <details id="favorites-details" class="section collapsible">
     <summary><h2>Favorites</h2></summary>
     <div class="collapsible-body">
@@ -23,22 +27,13 @@ const POPUP_HTML = `
     </div>
   </details>
   <div id="snp-geo-root"></div>
-  <details id="profile-border-details" class="section collapsible">
-    <summary><h2>Open Profiles Outside Boundary</h2></summary>
-    <input id="profile-border-enabled" type="checkbox" />
-    <label id="profile-border-tab-field" class="field">
-      <select id="profile-border-tab">
-        <option value="current-tab">Current tab</option>
-        <option value="new-tab">New tab</option>
-      </select>
-    </label>
-    <button id="profile-border-save"></button>
-  </details>
+  <div id="snp-profile-border-root"></div>
 `;
 
 const flushPromises = () => new Promise<void>((r) => setTimeout(r, 0));
 
 const getElements = () => ({
+  version: document.getElementById("snp-version") as HTMLElement,
   favoritesEnabled: document.getElementById("favorites-enabled") as HTMLInputElement,
   favoritesDetails: document.getElementById("favorites-details") as HTMLDetailsElement,
   favoritesHint: document.getElementById("favorites-hint") as HTMLElement,
@@ -73,6 +68,22 @@ const loadModule = async () => {
   await import("./popup.js");
   await flushPromises();
 };
+
+describe("popup — version badge", () => {
+  beforeEach(loadModule);
+
+  it("renders the extension's manifest version", () => {
+    const { version } = getElements();
+    expect(version.textContent).toBe("v0.0.0");
+  });
+
+  it("renders a different version when the manifest reports one", async () => {
+    (chrome.runtime.getManifest as ReturnType<typeof vi.fn>).mockReturnValueOnce({ version: "2.3.4" });
+    await loadModule();
+    const { version } = getElements();
+    expect(version.textContent).toBe("v2.3.4");
+  });
+});
 
 describe("popup — profile border open", () => {
   beforeEach(loadModule);

@@ -1,0 +1,139 @@
+/* Section shell — shared with geo-override.css (popup.css .section, details.collapsible, .collapsible-body) */
+
+#snp-profile-border-root .section {
+  background: #0e1825;
+  border: 1px solid #1c2b3a;
+  border-radius: 8px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+#snp-profile-border-root .section h2 {
+  margin: 0;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #7a90a4;
+}
+
+#snp-profile-border-root details.collapsible {
+  padding: 0;
+  display: block;
+}
+
+#snp-profile-border-root details.collapsible summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  user-select: none;
+}
+
+#snp-profile-border-root details.collapsible summary::-webkit-details-marker {
+  display: none;
+}
+
+#snp-profile-border-root details.collapsible summary::after {
+  content: "›";
+  margin-left: auto;
+  font-size: 16px;
+  line-height: 1;
+  color: #7a90a4;
+  transform: rotate(90deg);
+  transition: transform 0.15s;
+}
+
+#snp-profile-border-root details.collapsible[open] summary::after {
+  transform: rotate(270deg);
+}
+
+#snp-profile-border-root details.collapsible summary h2 {
+  margin: 0;
+}
+
+#snp-profile-border-root .collapsible-body {
+  padding: 0 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Form fields — shared with geo-override.css (popup.css .row, .hint, .field, button.primary/secondary, .actions) */
+
+#snp-profile-border-root .row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  color: #ffffff;
+}
+
+#snp-profile-border-root .row input[type="checkbox"] {
+  accent-color: #ff5500;
+  width: 14px;
+  height: 14px;
+}
+
+#snp-profile-border-root .hint {
+  font-size: 11px;
+  color: #7a90a4;
+  margin: 0;
+}
+
+#snp-profile-border-root button.primary {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 7px 16px;
+  border-radius: 20px;
+  border: none;
+  background: #ff5500;
+  color: #fff;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  transition: background 0.15s;
+}
+
+#snp-profile-border-root button.primary:hover:not(:disabled) {
+  background: #e04a00;
+}
+
+#snp-profile-border-root button.primary:disabled {
+  background: #1c2b3a;
+  color: #7a90a4;
+  cursor: not-allowed;
+}
+
+#snp-profile-border-root .field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11px;
+  color: #7a90a4;
+}
+
+#snp-profile-border-root .field select {
+  font-size: 13px;
+  padding: 7px 10px;
+  border-radius: 6px;
+  border: 1px solid #1c2b3a;
+  background: #080e18;
+  color: #ffffff;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+#snp-profile-border-root .field select:focus {
+  border-color: #ff5500;
+}
+
+#snp-profile-border-root .actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}

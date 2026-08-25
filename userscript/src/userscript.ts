@@ -10,11 +10,26 @@ import {
   GEO_OVERRIDE_HTML,
   GEO_OVERRIDE_CSS,
   wireGeoOverrideForm,
+  VERSION_BADGE_CSS,
+  wireVersionBadge,
+  installProfileBorderRedirect,
+  type ProfileBorderOpen,
+  DEFAULT_PROFILE_BORDER_OPEN,
+  PROFILE_BORDER_HTML,
+  PROFILE_BORDER_CSS,
+  wireProfileBorderForm,
   createLogger,
 } from "@sniffies-projects/core";
 import PANEL_CSS from "./panel.css";
 import PANEL_HTML from "./panel.html";
+import {
+  getGeoOverride,
+  setGeoOverride,
+  getProfileBorderOpen,
+  setProfileBorderOpen,
+} from "./shared/settings.js";
 import { installUserIdLogging } from "./user-id-logger.js";
+import { VERSION } from "./shared/env.js";
 
 const log = createLogger("tools");
 
@@ -23,23 +38,6 @@ declare global {
     __sniffiesInjected?: boolean;
   }
 }
-
-// ── Storage — localStorage adapter ───────────────────────────────────────────
-
-const STORAGE_KEY = "sniffies-geo";
-
-const loadGeoOverride = (): GeoOverride => {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? { ...DEFAULT_GEO_OVERRIDE, ...JSON.parse(raw) } : { ...DEFAULT_GEO_OVERRIDE };
-  } catch {
-    return { ...DEFAULT_GEO_OVERRIDE };
-  }
-};
-
-const saveGeoOverride = (override: GeoOverride): void => {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(override));
-};
 
 // ── FAB mount ─────────────────────────────────────────────────────────────────
 
@@ -68,12 +66,14 @@ interface HookState {
   hook: ReturnType<typeof installGeoHook>;
   nativeGetCurrentPosition: Geolocation["getCurrentPosition"];
   sendLocationUpdate: (override: GeoOverride) => void;
+  currentProfileBorderOpen: ProfileBorderOpen;
+  updateProfileBorderOpen: (next: ProfileBorderOpen) => void;
 }
 
 function installHooks(): HookState {
   installUserIdLogging();
 
-  let currentOverride: GeoOverride = loadGeoOverride();
+  let currentOverride: GeoOverride = getGeoOverride();
   const hook = installGeoHook(() => currentOverride);
   const nativeGetCurrentPosition =
     hook?.nativeGetCurrentPosition ??
@@ -87,10 +87,16 @@ function installHooks(): HookState {
     const spoofed = { lat: override.latitude, lng: override.longitude };
     if (lastLocationRequest) {
       try {
-        const body = JSON.parse((lastLocationRequest.init.body as string) ?? "{}") as Record<string, unknown>;
+        const body = JSON.parse((lastLocationRequest.init.body as string) ?? "{}") as Record<
+          string,
+          unknown
+        >;
         body.virtualLocation = spoofed;
         body.physicalLocation = spoofed;
-        void nativeFetch(lastLocationRequest.url, { ...lastLocationRequest.init, body: JSON.stringify(body) });
+        void nativeFetch(lastLocationRequest.url, {
+          ...lastLocationRequest.init,
+          body: JSON.stringify(body),
+        });
         return;
       } catch {
         // fall through to proactive request
@@ -111,7 +117,12 @@ function installHooks(): HookState {
   };
 
   window.fetch = async (input, init) => {
-    const url = typeof input === "string" ? input : input instanceof URL ? input.href : (input as Request).url;
+    const url =
+      typeof input === "string"
+        ? input
+        : input instanceof URL
+          ? input.href
+          : (input as Request).url;
     const baseMatch = url.match(/^(https?:\/\/[^/]*sniffies\.com)/);
     if (baseMatch && !apiBase) {
       apiBase = baseMatch[1] ?? null;
@@ -133,17 +144,37 @@ function installHooks(): HookState {
     return nativeFetch(input, init);
   };
 
-  return { currentOverride, hook, nativeGetCurrentPosition, sendLocationUpdate };
+  let currentProfileBorderOpen: ProfileBorderOpen = getProfileBorderOpen();
+  installProfileBorderRedirect(() => currentProfileBorderOpen);
+  const updateProfileBorderOpen = (next: ProfileBorderOpen): void => {
+    currentProfileBorderOpen = next;
+  };
+
+  return {
+    currentOverride,
+    hook,
+    nativeGetCurrentPosition,
+    sendLocationUpdate,
+    currentProfileBorderOpen,
+    updateProfileBorderOpen,
+  };
 }
 
 // ── UI (runs after DOMContentLoaded) ─────────────────────────────────────────
 
-function mountUI(state: HookState | null): void {
+export function mountUI(state: HookState | null): void {
   const hook = state?.hook ?? null;
-  const nativeGetCurrentPosition = state?.nativeGetCurrentPosition ??
-    (() => { throw new Error("geolocation unavailable"); });
+  const nativeGetCurrentPosition =
+    state?.nativeGetCurrentPosition ??
+    (() => {
+      throw new Error("geolocation unavailable");
+    });
   const sendLocationUpdate = state?.sendLocationUpdate ?? (() => {});
   let currentOverride = state?.currentOverride ?? { ...DEFAULT_GEO_OVERRIDE };
+  const updateProfileBorderOpen = state?.updateProfileBorderOpen ?? (() => {});
+  const currentProfileBorderOpen = state?.currentProfileBorderOpen ?? {
+    ...DEFAULT_PROFILE_BORDER_OPEN,
+  };
 
   const shellStyle = document.createElement("style");
   shellStyle.textContent = PANEL_CSS;
@@ -152,6 +183,14 @@ function mountUI(state: HookState | null): void {
   const geoStyle = document.createElement("style");
   geoStyle.textContent = GEO_OVERRIDE_CSS;
   document.head.appendChild(geoStyle);
+
+  const profileBorderStyle = document.createElement("style");
+  profileBorderStyle.textContent = PROFILE_BORDER_CSS;
+  document.head.appendChild(profileBorderStyle);
+
+  const versionStyle = document.createElement("style");
+  versionStyle.textContent = VERSION_BADGE_CSS;
+  document.head.appendChild(versionStyle);
 
   const fab = document.createElement("button");
   fab.id = "snp-fab";
@@ -165,13 +204,15 @@ function mountUI(state: HookState | null): void {
   panel.innerHTML = PANEL_HTML;
   document.body.appendChild(panel);
 
+  wireVersionBadge(panel, VERSION);
+
   const geoRoot = panel.querySelector<HTMLElement>("#snp-geo-root")!;
   geoRoot.innerHTML = GEO_OVERRIDE_HTML;
 
   wireGeoOverrideForm(geoRoot, {
     initial: currentOverride,
     onSave: (next) => {
-      saveGeoOverride(next);
+      setGeoOverride(next);
       currentOverride = next;
       hook?.refreshWatches();
       if (next.enabled) {
@@ -179,11 +220,26 @@ function mountUI(state: HookState | null): void {
       }
     },
     getNativePosition: nativeGetCurrentPosition,
+    initialOpen: false,
+    onToggle: () => {},
+  });
+
+  const profileBorderRoot = panel.querySelector<HTMLElement>("#snp-profile-border-root")!;
+  profileBorderRoot.innerHTML = PROFILE_BORDER_HTML;
+
+  wireProfileBorderForm(profileBorderRoot, {
+    initial: currentProfileBorderOpen,
+    onSave: (next) => {
+      setProfileBorderOpen(next);
+      updateProfileBorderOpen(next);
+    },
+    initialOpen: false,
+    onToggle: () => {},
   });
 
   const closeBtn = panel.querySelector<HTMLButtonElement>("#snp-close")!;
   fab.addEventListener("click", () => {
-    panel.style.display = panel.style.display === "none" ? "block" : "none";
+    panel.style.display = panel.style.display === "none" ? "flex" : "none";
   });
   closeBtn.addEventListener("click", () => {
     panel.style.display = "none";

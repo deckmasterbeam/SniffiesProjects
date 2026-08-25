@@ -20,13 +20,8 @@ export const wireGeoOverrideForm = (container: Element, options: GeoOverrideForm
 
   // Wire collapsible
   if (details) {
-    if (options.initialOpen !== undefined) {
-      details.open = options.initialOpen;
-    }
-    if (options.onToggle) {
-      const onToggle = options.onToggle;
-      details.addEventListener("toggle", () => onToggle(details.open));
-    }
+    details.open = options.initialOpen;
+    details.addEventListener("toggle", () => options.onToggle(details.open));
   }
 
   const setStatus = (text: string): void => {
@@ -44,13 +39,15 @@ export const wireGeoOverrideForm = (container: Element, options: GeoOverrideForm
   // from mutating state after the user has re-enabled spoofing.
   let pendingFetch: { aborted: boolean } | null = null;
 
-  const fillWithCurrentPosition = (onSuccess: () => void): void => {
+  const fillWithCurrentPosition = (onSuccess: () => void, onError?: () => void): void => {
     const token = { aborted: false };
     pendingFetch = token;
     setStatus("Getting location…");
     options.getNativePosition(
       (pos) => {
-        if (token.aborted) { return; }
+        if (token.aborted) {
+          return;
+        }
         pendingFetch = null;
         geoLat.value = String(pos.coords.latitude);
         geoLng.value = String(pos.coords.longitude);
@@ -58,9 +55,12 @@ export const wireGeoOverrideForm = (container: Element, options: GeoOverrideForm
         onSuccess();
       },
       (err) => {
-        if (token.aborted) { return; }
+        if (token.aborted) {
+          return;
+        }
         pendingFetch = null;
         setStatus(`Could not get location: ${err.message} (code ${err.code})`);
+        onError?.();
       },
       { timeout: 10000 },
     );
@@ -106,10 +106,10 @@ export const wireGeoOverrideForm = (container: Element, options: GeoOverrideForm
         setStatus("");
       }
     } else {
-      void commitSave();
-      fillWithCurrentPosition(() => {
-        void commitSave();
-      });
+      fillWithCurrentPosition(
+        () => void commitSave(),
+        () => void commitSave(),
+      );
     }
   });
 

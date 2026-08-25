@@ -70,11 +70,17 @@ function main(): void {
     const spoofed = { lat: override.latitude, lng: override.longitude };
     if (lastLocationRequest) {
       try {
-        const body = JSON.parse((lastLocationRequest.init.body as string) ?? "{}") as Record<string, unknown>;
+        const body = JSON.parse((lastLocationRequest.init.body as string) ?? "{}") as Record<
+          string,
+          unknown
+        >;
         body.virtualLocation = spoofed;
         body.physicalLocation = spoofed;
         log("replaying location request with new coords", spoofed);
-        void nativeFetch(lastLocationRequest.url, { ...lastLocationRequest.init, body: JSON.stringify(body) });
+        void nativeFetch(lastLocationRequest.url, {
+          ...lastLocationRequest.init,
+          body: JSON.stringify(body),
+        });
         return;
       } catch {
         // fall through to proactive request
@@ -96,7 +102,12 @@ function main(): void {
   };
 
   window.fetch = async (input, init) => {
-    const url = typeof input === "string" ? input : input instanceof URL ? input.href : (input as Request).url;
+    const url =
+      typeof input === "string"
+        ? input
+        : input instanceof URL
+          ? input.href
+          : (input as Request).url;
     const baseMatch = url.match(/^(https?:\/\/[^/]*sniffies\.com)/);
     if (baseMatch && !apiBase) {
       apiBase = baseMatch[1] || null;
@@ -159,12 +170,14 @@ function main(): void {
       }
     },
     getNativePosition: nativeGetCurrentPosition,
+    initialOpen: false,
+    onToggle: () => {},
   });
 
   // Shell interaction
   const closeBtn = panel.querySelector<HTMLButtonElement>("#snp-close")!;
   fab.addEventListener("click", () => {
-    panel.style.display = panel.style.display === "none" ? "block" : "none";
+    panel.style.display = panel.style.display === "none" ? "flex" : "none";
   });
   closeBtn.addEventListener("click", () => {
     panel.style.display = "none";
@@ -177,7 +190,7 @@ function main(): void {
 if (window.__sniffiesInjected) {
   const panel = document.getElementById("snp-panel");
   if (panel) {
-    panel.style.display = panel.style.display === "none" ? "block" : "none";
+    panel.style.display = panel.style.display === "none" ? "flex" : "none";
   }
 } else {
   window.__sniffiesInjected = true;

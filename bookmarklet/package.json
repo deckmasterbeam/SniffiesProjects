@@ -1,7 +1,7 @@
 {
   "name": "sniffies-mobile",
   "private": true,
-  "version": "0.1.1",
+  "version": "0.2",
   "scripts": {
     "build": "node scripts/build.mjs",
     "watch": "node scripts/build.mjs --watch",

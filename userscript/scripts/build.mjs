@@ -3,6 +3,7 @@ import { spawn } from "node:child_process";
 import { mkdir, rm, readFile, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { REQUIRED_RELEASE_ENV_VARS } from "../../scripts/release-env.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = resolve(__dirname, "..");
@@ -21,7 +22,21 @@ if (typeof process.loadEnvFile === "function") {
   }
 }
 
+if (prod) {
+  const missingEnvVars = REQUIRED_RELEASE_ENV_VARS.filter((key) => !process.env[key]);
+  if (missingEnvVars.length > 0) {
+    console.error(`error: missing required env var(s) for a release build: ${missingEnvVars.join(", ")}`);
+    process.exit(1);
+  }
+}
+
 const pkg = JSON.parse(await readFile(join(root, "package.json"), "utf8"));
+
+// GITHUB_ACTIONS is set by the release workflow (.github/workflows/release-userscript.yml),
+// which is the only place userscript builds are committed/published from. Any build without
+// it is a local dev build.
+const buildTime = new Date().toISOString();
+const buildLocation = process.env.GITHUB_ACTIONS === "true" ? "remote" : "local";
 
 const METADATA = `\
 // ==UserScript==
@@ -35,6 +50,8 @@ const METADATA = `\
 // @run-at       document-start
 // @grant        none
 // ==/UserScript==
+// @buildTime     ${buildTime}
+// @buildLocation ${buildLocation}
 `;
 
 const tmpFile = join(distDir, "_userscript.tmp.js");
