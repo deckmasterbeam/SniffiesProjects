@@ -44,14 +44,14 @@ CREATE TABLE IF NOT EXISTS blocked_reporters (
 );
 
 -- report_type is TEXT + CHECK rather than a native Postgres ENUM: schema.sql
--- is applied by splitting on ";" (see scripts/migrate.mjs) and re-run on
--- every deploy, which can't safely re-issue a bare `CREATE TYPE` a second
--- time. Add new values to the CHECK list here as they're needed.
+-- is applied by splitting on the semicolon character (see scripts/migrate.mjs)
+-- and re-run on every deploy, which can't safely re-issue a bare `CREATE TYPE`
+-- a second time. Add new values to the CHECK list here as they're needed.
 --
 -- One row per (reported_user_id, report_type) — multiple reports against the
 -- same profile consolidate into this row rather than inserting a new one.
 -- reporting_user_ids is a deduped comma-separated list of reporter Sniffies
--- ids; messages holds the optional per-reporter message text since the
+-- ids. messages holds the optional per-reporter message text since the
 -- comma-separated id list has nowhere to carry that.
 CREATE TABLE IF NOT EXISTS pending_reports (
   id                 SERIAL PRIMARY KEY,
