@@ -32,6 +32,10 @@ export const SETTINGS_KEYS = {
   favoritesEnabled: "favoritesEnabled",
   favoritesSectionOpen: "favoritesSectionOpen",
   sniffiesUserId: "sniffiesUserId",
+  blockedBots: "blockedBots",
+  blockedBotsFetchedAt: "blockedBotsFetchedAt",
+  botBlockingEnabled: "botBlockingEnabled",
+  botBlockingSectionOpen: "botBlockingSectionOpen",
 } as const;
 
 export interface ExtensionLocalSettings {
@@ -44,6 +48,10 @@ export interface ExtensionLocalSettings {
   favoritesEnabled: boolean;
   favoritesSectionOpen: boolean;
   sniffiesUserId: string;
+  blockedBots: string[];
+  blockedBotsFetchedAt: number;
+  botBlockingEnabled: boolean;
+  botBlockingSectionOpen: boolean;
 }
 
 export const DEFAULT_LOCAL_SETTINGS: ExtensionLocalSettings = {
@@ -56,4 +64,8 @@ export const DEFAULT_LOCAL_SETTINGS: ExtensionLocalSettings = {
   favoritesEnabled: false,
   favoritesSectionOpen: false,
   sniffiesUserId: "",
+  blockedBots: [],
+  blockedBotsFetchedAt: 0,
+  botBlockingEnabled: true,
+  botBlockingSectionOpen: false,
 };

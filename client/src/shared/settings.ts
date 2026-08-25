@@ -1,38 +1,15 @@
 import {
-  DEFAULT_LOCAL_SETTINGS as CORE_DEFAULT_LOCAL_SETTINGS,
+  DEFAULT_LOCAL_SETTINGS,
   DEFAULT_PROFILE_BORDER_OPEN,
-  ExtensionLocalSettings as CoreExtensionLocalSettings,
+  ExtensionLocalSettings,
   GeoOverride,
   PHONE_E164_REGEX,
   ProfileBorderOpen,
-  SETTINGS_KEYS as CORE_SETTINGS_KEYS,
+  SETTINGS_KEYS,
 } from "@sniffies-projects/core";
 
-export { DEFAULT_PROFILE_BORDER_OPEN, PHONE_E164_REGEX };
-export type { ProfileBorderOpen };
-
-export const SETTINGS_KEYS = {
-  ...CORE_SETTINGS_KEYS,
-  blockedBots: "blockedBots",
-  blockedBotsFetchedAt: "blockedBotsFetchedAt",
-  botBlockingEnabled: "botBlockingEnabled",
-  botBlockingSectionOpen: "botBlockingSectionOpen",
-} as const;
-
-export interface ExtensionLocalSettings extends CoreExtensionLocalSettings {
-  blockedBots: string[];
-  blockedBotsFetchedAt: number;
-  botBlockingEnabled: boolean;
-  botBlockingSectionOpen: boolean;
-}
-
-export const DEFAULT_LOCAL_SETTINGS: ExtensionLocalSettings = {
-  ...CORE_DEFAULT_LOCAL_SETTINGS,
-  blockedBots: [],
-  blockedBotsFetchedAt: 0,
-  botBlockingEnabled: true,
-  botBlockingSectionOpen: false,
-};
+export { DEFAULT_LOCAL_SETTINGS, DEFAULT_PROFILE_BORDER_OPEN, PHONE_E164_REGEX, SETTINGS_KEYS };
+export type { ExtensionLocalSettings, ProfileBorderOpen };
 
 export const getLocalSettings = async (): Promise<ExtensionLocalSettings> => {
   const stored = await chrome.storage.local.get(DEFAULT_LOCAL_SETTINGS);
