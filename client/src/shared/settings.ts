@@ -6,9 +6,17 @@ import {
   PHONE_E164_REGEX,
   ProfileBorderOpen,
   SETTINGS_KEYS,
+  SNIFFIES_USER_ID_REGEX,
+  recordBlockedBotIds,
 } from "@sniffies-projects/core";
 
-export { DEFAULT_LOCAL_SETTINGS, DEFAULT_PROFILE_BORDER_OPEN, PHONE_E164_REGEX, SETTINGS_KEYS };
+export {
+  DEFAULT_LOCAL_SETTINGS,
+  DEFAULT_PROFILE_BORDER_OPEN,
+  PHONE_E164_REGEX,
+  SETTINGS_KEYS,
+  SNIFFIES_USER_ID_REGEX,
+};
 export type { ExtensionLocalSettings, ProfileBorderOpen };
 
 export const getLocalSettings = async (): Promise<ExtensionLocalSettings> => {
@@ -41,4 +49,10 @@ export const setBlockedBots = async (userIds: string[], fetchedAt: number): Prom
 
 export const setBotBlockingEnabled = async (enabled: boolean): Promise<void> => {
   await chrome.storage.local.set({ [SETTINGS_KEYS.botBlockingEnabled]: enabled });
+};
+
+export const recordBlockedBotEvent = async (ids: string[]): Promise<void> => {
+  const { blockedBotEventsByDay } = await getLocalSettings();
+  const next = recordBlockedBotIds(blockedBotEventsByDay, ids);
+  await chrome.storage.local.set({ [SETTINGS_KEYS.blockedBotEventsByDay]: next });
 };

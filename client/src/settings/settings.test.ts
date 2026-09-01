@@ -18,6 +18,11 @@ const SETTINGS_HTML = `
       <p id="summary"></p>
       <div id="grid"></div>
     </section>
+    <section class="blocked-bots-section">
+      <textarea id="blocked-bots-input"></textarea>
+      <button id="blocked-bots-save" type="button"></button>
+      <p id="blocked-bots-status"></p>
+    </section>
     <section class="reset-section">
       <button id="reset-btn" type="button"></button>
       <p id="reset-status"></p>
@@ -50,6 +55,9 @@ const getElements = () => ({
   storageViewBtn: document.getElementById("storage-view-btn") as HTMLButtonElement,
   storageTable: document.getElementById("storage-table") as HTMLTableElement,
   storageTableBody: document.getElementById("storage-table-body") as HTMLElement,
+  blockedBotsInput: document.getElementById("blocked-bots-input") as HTMLTextAreaElement,
+  blockedBotsSaveBtn: document.getElementById("blocked-bots-save") as HTMLButtonElement,
+  blockedBotsStatus: document.getElementById("blocked-bots-status") as HTMLElement,
 });
 
 const loadModule = async () => {
@@ -157,5 +165,56 @@ describe("settings — storage view", () => {
     await flushPromises();
     expect(storageTable.style.display).toBe("");
     expect(storageTableBody.querySelectorAll("tr").length).toBe(rowsBefore);
+  });
+});
+
+describe("settings — blocked bot accounts", () => {
+  beforeEach(loadModule);
+
+  it("populates the textarea with the currently blocked ids on load", async () => {
+    await chrome.storage.local.set({ blockedBots: ["694abfeb1cf11f4a71d32027"] });
+    await loadModule();
+    const { blockedBotsInput } = getElements();
+    expect(blockedBotsInput.value).toBe("694abfeb1cf11f4a71d32027");
+  });
+
+  it("saves distinct, trimmed ids from the textarea", async () => {
+    const { blockedBotsInput, blockedBotsSaveBtn, blockedBotsStatus } = getElements();
+    blockedBotsInput.value =
+      "  694abfeb1cf11f4a71d32027 \n\n6a9062e8ff8911106469c969\n694abfeb1cf11f4a71d32027";
+    blockedBotsSaveBtn.click();
+    await flushPromises();
+
+    expect(chrome.storage.local.set).toHaveBeenCalledWith(
+      expect.objectContaining({
+        blockedBots: ["694abfeb1cf11f4a71d32027", "6a9062e8ff8911106469c969"],
+      }),
+    );
+    expect(blockedBotsStatus.textContent).toBe("Saved 2 blocked accounts.");
+  });
+
+  it("rejects ids that aren't valid Sniffies ids, without saving", async () => {
+    const { blockedBotsInput, blockedBotsSaveBtn, blockedBotsStatus } = getElements();
+    blockedBotsInput.value = "not-a-real-id";
+    blockedBotsSaveBtn.click();
+    await flushPromises();
+
+    expect(chrome.storage.local.set).not.toHaveBeenCalledWith(
+      expect.objectContaining({ blockedBots: expect.anything() }),
+    );
+    expect(blockedBotsStatus.textContent).toContain("not-a-real-id");
+    expect(blockedBotsInput.classList.contains("invalid")).toBe(true);
+  });
+
+  it("clears the invalid state once the textarea is edited again", async () => {
+    const { blockedBotsInput, blockedBotsSaveBtn } = getElements();
+    blockedBotsInput.value = "not-a-real-id";
+    blockedBotsSaveBtn.click();
+    await flushPromises();
+    expect(blockedBotsInput.classList.contains("invalid")).toBe(true);
+
+    blockedBotsInput.value = "not-a-real-id-still";
+    blockedBotsInput.dispatchEvent(new Event("input"));
+    expect(blockedBotsInput.classList.contains("invalid")).toBe(false);
   });
 });

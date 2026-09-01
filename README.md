@@ -73,10 +73,6 @@ Root-level helpers. `build.mjs` delegates to a specific package's build script (
 
 ## TODO:
 
-
 - Privacy policy
 
 - Map based location selection
-
-
-- update the blog project to serve the userscript from the stable GitHub Releases URL: `https://github.com/deckmasterbeam/SniffiesProjects/releases/download/userscript-0.2/sniffies-tools.user.js`

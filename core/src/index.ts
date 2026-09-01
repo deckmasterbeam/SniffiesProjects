@@ -1,6 +1,16 @@
 export type { GeoHookResult } from "./geo-hook.js";
 export { installGeoHook } from "./geo-hook.js";
 export { installUserIdHook } from "./user-id-hook.js";
+export type { BotBlockState, BotBlockHookResult } from "./bot-block-hook.js";
+export {
+  installBotBlockHook,
+  filterPostAuthenticationPayload,
+  filterChatDataPayload,
+  filterMessagesPayload,
+  shouldFilterWebSocketFrame,
+} from "./bot-block-hook.js";
+export type { BlockedBotDailyLog } from "./blocked-bot-log.js";
+export { recordBlockedBotIds, countDistinctBlockedBotsLast24h } from "./blocked-bot-log.js";
 export type { ProfileBorderHookResult } from "./profile-border-hook.js";
 export { installProfileBorderRedirect } from "./profile-border-hook.js";
 export type { ClientType, LogInitOptions } from "./log-init.js";
@@ -21,6 +31,7 @@ export {
   DEFAULT_GEO_OVERRIDE,
   DEFAULT_PROFILE_BORDER_OPEN,
   PHONE_E164_REGEX,
+  SNIFFIES_USER_ID_REGEX,
   SETTINGS_KEYS,
   DEFAULT_LOCAL_SETTINGS,
 } from "./settings.js";

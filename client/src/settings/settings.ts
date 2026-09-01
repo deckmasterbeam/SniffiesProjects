@@ -1,9 +1,16 @@
-import { CLIENT_SECRET, FAVORITES_NOTIFICATIONS_ENABLED, SERVER_BASE } from "../shared/env.js";
+import {
+  CLIENT_SECRET,
+  FAVORITES_NOTIFICATIONS_ENABLED,
+  REPORTING_ENABLED,
+  SERVER_BASE,
+} from "../shared/env.js";
 import {
   DEFAULT_LOCAL_SETTINGS,
   PHONE_E164_REGEX,
   SETTINGS_KEYS,
+  SNIFFIES_USER_ID_REGEX,
   getLocalSettings,
+  setBlockedBots,
 } from "../shared/settings.js";
 
 if (!FAVORITES_NOTIFICATIONS_ENABLED) {
@@ -12,6 +19,13 @@ if (!FAVORITES_NOTIFICATIONS_ENABLED) {
     if (el) {
       el.style.display = "none";
     }
+  }
+}
+
+if (!REPORTING_ENABLED) {
+  const el = document.querySelector<HTMLElement>(".blocked-bots-section");
+  if (el) {
+    el.style.display = "none";
   }
 }
 
@@ -232,6 +246,50 @@ const loadFavorites = async (guid: string): Promise<void> => {
   }
 };
 
+// ── Blocked bot accounts ─────────────────────────────────────────────────────
+
+const blockedBotsInput = document.getElementById("blocked-bots-input") as HTMLTextAreaElement;
+const blockedBotsSaveBtn = document.getElementById("blocked-bots-save") as HTMLButtonElement;
+const blockedBotsStatus = document.getElementById("blocked-bots-status");
+
+const setBlockedBotsStatus = (text: string): void => {
+  if (blockedBotsStatus) {
+    blockedBotsStatus.textContent = text;
+  }
+};
+
+const parseBlockedBotsInput = (raw: string): string[] => [
+  ...new Set(
+    raw
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean),
+  ),
+];
+
+blockedBotsSaveBtn.addEventListener("click", async () => {
+  const ids = parseBlockedBotsInput(blockedBotsInput.value);
+  const invalid = ids.filter((id) => !SNIFFIES_USER_ID_REGEX.test(id));
+  if (invalid.length > 0) {
+    setBlockedBotsStatus(`Not a valid Sniffies id, not saved: ${invalid.join(", ")}`);
+    blockedBotsInput.classList.add("invalid");
+    return;
+  }
+  blockedBotsInput.classList.remove("invalid");
+  blockedBotsSaveBtn.disabled = true;
+  setBlockedBotsStatus("Saving…");
+  try {
+    await setBlockedBots(ids, Date.now());
+    setBlockedBotsStatus(`Saved ${ids.length} blocked account${ids.length === 1 ? "" : "s"}.`);
+  } catch (err) {
+    setBlockedBotsStatus(`Error: ${err instanceof Error ? err.message : String(err)}`);
+  } finally {
+    blockedBotsSaveBtn.disabled = false;
+  }
+});
+
+blockedBotsInput.addEventListener("input", () => blockedBotsInput.classList.remove("invalid"));
+
 // ── Storage view ──────────────────────────────────────────────────────────────
 
 const storageViewBtn = document.getElementById("storage-view-btn") as HTMLButtonElement;
@@ -306,4 +364,8 @@ void getLocalSettings().then(({ phone, guid }) => {
       grid.replaceChildren();
     }
   }
+});
+
+void getLocalSettings().then(({ blockedBots }) => {
+  blockedBotsInput.value = blockedBots.join("\n");
 });

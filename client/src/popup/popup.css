@@ -61,6 +61,17 @@ body {
   margin: 0;
 }
 
+.stat {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+}
+
+.stat:empty {
+  display: none;
+}
+
 button.primary {
   font-size: 12px;
   font-weight: 700;

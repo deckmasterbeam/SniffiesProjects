@@ -61,6 +61,12 @@ interface ApiBlockedBotsResponse {
 }
 
 let lastSelection: ProfileSelection | null = null;
+// Bumped on every marker click / initial-load resolution. scheduleReinjectionRetries
+// captures the value at schedule time so a retry chain can tell it's been
+// superseded by a newer click and stop — this replaces comparing against a
+// specific ProfileSelection object, which doesn't work now that a click can
+// kick off a retry chain without ever producing one (see tryInjectIntoScreen).
+let selectionGeneration = 0;
 let favoritedIds = new Set<string>();
 let currentGuid = "";
 let currentSniffiesUserId = "";
@@ -167,6 +173,15 @@ const extractUserIdFromUrl = (url: string): string | null => {
   } catch {
     return null;
   }
+};
+
+// Matches /profile/<id> (and subpaths like /profile/<id>/chat) for a page
+// that loads directly onto a profile — no marker click fires in that case,
+// so this is the only way to learn which profile is showing on init.
+const extractUserIdFromProfilePath = (pathname: string): string | null => {
+  const segments = pathname.split("/").filter(Boolean);
+  const id = segments[0] === "profile" ? segments[1] : undefined;
+  return id && /^[a-f0-9]{16,}$/i.test(id) ? id : null;
 };
 
 const extractFromMarker = (el: HTMLElement): ProfileSelection | null => {
@@ -365,7 +380,26 @@ const injectIntoNameLabel = (nameLabel: HTMLElement, selection: ProfileSelection
   log("injected for user", selection.userId);
 };
 
+// ── Profile injection ────────────────────────────────────────────────────────
+// Injects the favorite star + report flag into whichever profile panel is
+// currently open. Three things trigger it — a marker click, an initial page
+// load landing directly on a profile URL, and a MutationObserver watching
+// for the panel's DOM — and all three funnel through tryInjectIntoScreen,
+// which resolves *who* from the URL rather than trusting whichever trigger
+// called it.
+
 const tryInjectIntoScreen = (screen: Element): void => {
+  // A marker's background-image (the other source of identity — used below
+  // only for profilePicUrl) is absent for accounts with no profile photo,
+  // so it can't always say who's showing. The URL can: Sniffies' routing
+  // updates it to /profile/<id> whenever a panel opens, photo or not. Re-
+  // resolving here on every call — not just once at click time — lets it
+  // override a stale or absent lastSelection, which is what makes injection
+  // self-correct no matter which trigger ends up calling this.
+  const urlUserId = extractUserIdFromProfilePath(location.pathname);
+  if (urlUserId && lastSelection?.userId !== urlUserId) {
+    lastSelection = { userId: urlUserId, profilePicUrl: null };
+  }
   if (!lastSelection) {
     return;
   }
@@ -376,10 +410,70 @@ const tryInjectIntoScreen = (screen: Element): void => {
   injectReportButton(screen, lastSelection);
 };
 
-const observer = new MutationObserver((mutations) => {
-  if (!lastSelection) {
-    return;
+// A click-triggered panel switch is a quick, already-loaded transition, so
+// it's worth polling relatively often to keep the flag feeling responsive.
+const CLICK_REINJECT_RETRY_WINDOW_MS = 1000;
+const CLICK_REINJECT_RETRY_INTERVAL_MS = 100;
+// An initial page load has no interactive urgency but can take longer to
+// settle (a full data fetch + app bootstrap, not just a panel swap), so
+// this polls less often over a longer window than the click case.
+const INITIAL_LOAD_REINJECT_RETRY_WINDOW_MS = 3000;
+const INITIAL_LOAD_REINJECT_RETRY_INTERVAL_MS = 300;
+
+// Reruns tryInjectIntoScreen every intervalMs until windowMs elapses.
+// Unconditional, no "did it work" check: injectReportButton always stamps
+// whatever container it finds, so checking our own attribute afterward
+// would look "done" immediately even mid-transition, into the wrong
+// (outgoing) panel. Idempotent and cheap, so polling past the point of
+// actually succeeding costs nothing. Bails out once `generation` is stale
+// — a newer click/load has advanced selectionGeneration since this chain
+// was scheduled.
+const scheduleReinjectionRetries = (
+  generation: number,
+  windowMs: number = CLICK_REINJECT_RETRY_WINDOW_MS,
+  intervalMs: number = CLICK_REINJECT_RETRY_INTERVAL_MS,
+): void => {
+  const deadline = performance.now() + windowMs;
+  const attempt = (): void => {
+    if (generation !== selectionGeneration) {
+      return;
+    }
+    const screen = document.querySelector(APP_SCREEN_SELECTOR);
+    if (screen) {
+      tryInjectIntoScreen(screen);
+    }
+    if (performance.now() < deadline) {
+      setTimeout(attempt, intervalMs);
+    }
+  };
+  setTimeout(attempt, intervalMs);
+};
+
+// Shared entry point for both triggers below. Advances selectionGeneration
+// (invalidating any older retry chain still running), takes one immediate
+// attempt, then starts polling in case the panel hasn't rendered yet.
+// `selection` may be null (e.g. a no-photo marker click) since
+// tryInjectIntoScreen can resolve the id from the URL on its own.
+const triggerInjection = (
+  selection: ProfileSelection | null,
+  windowMs: number = CLICK_REINJECT_RETRY_WINDOW_MS,
+  intervalMs: number = CLICK_REINJECT_RETRY_INTERVAL_MS,
+): void => {
+  selectionGeneration += 1;
+  if (selection) {
+    lastSelection = selection;
   }
+  const screen = document.querySelector(APP_SCREEN_SELECTOR);
+  if (screen) {
+    tryInjectIntoScreen(screen);
+  }
+  scheduleReinjectionRetries(selectionGeneration, windowMs, intervalMs);
+};
+
+const observer = new MutationObserver((mutations) => {
+  // No lastSelection guard here: tryInjectIntoScreen resolves the id from
+  // the URL itself, which matters when the very first profile ever viewed
+  // has no photo (no click-derived selection to fall back on either).
   for (const m of mutations) {
     for (const node of m.addedNodes) {
       if (!(node instanceof HTMLElement)) {
@@ -420,17 +514,19 @@ document.addEventListener(
     if (!marker) {
       return;
     }
+    // This listener runs in the capture phase, before Sniffies' own click
+    // handling has switched the panel — so identity and timing both need
+    // handling downstream: extractFromMarker can't identify a no-photo
+    // account at all, and even when it can, the panel it's reading from may
+    // still be showing the *previous* profile. triggerInjection's immediate
+    // attempt + retry loop, and tryInjectIntoScreen's URL resolution, cover
+    // both.
     const selection = extractFromMarker(marker);
-    if (!selection) {
-      log("click on marker but no user id found", marker);
-      return;
-    }
-    lastSelection = selection;
-    log("marker clicked", selection);
-    const screen = document.querySelector(APP_SCREEN_SELECTOR);
-    if (screen) {
-      tryInjectIntoScreen(screen);
-    }
+    log(
+      selection ? "marker clicked" : "marker clicked but no id in its image — resolving from URL",
+      selection ?? marker,
+    );
+    triggerInjection(selection);
   },
   true,
 );
@@ -439,6 +535,22 @@ if (document.body) {
   startObserving();
 } else {
   document.addEventListener("DOMContentLoaded", startObserving, { once: true });
+}
+
+// Landing directly on a profile URL (deep link, hard refresh) shows that
+// profile's panel without any marker click ever firing.
+const initialProfileUserId = extractUserIdFromProfilePath(location.pathname);
+if (initialProfileUserId) {
+  const initialSelection: ProfileSelection = {
+    userId: initialProfileUserId,
+    profilePicUrl: null,
+  };
+  log("initial page load on a profile URL", initialSelection);
+  triggerInjection(
+    initialSelection,
+    INITIAL_LOAD_REINJECT_RETRY_WINDOW_MS,
+    INITIAL_LOAD_REINJECT_RETRY_INTERVAL_MS,
+  );
 }
 
 void getLocalSettings().then(

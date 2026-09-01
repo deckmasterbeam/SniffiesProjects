@@ -93,7 +93,7 @@ Decisions locked in from discussion:
       `ReportModalHandle` from `core/src/index.ts`.
 - [x] Tests: `report-ui.test.ts` (12 tests — open/close, cancel, backdrop-click-to-close, submit
       with trimmed message, pending/success/error states).
-- [ ] `bot-block-hook.ts` — still section 5 below; not started.
+- [x] `bot-block-hook.ts` — done, see section 5 below.
 
 ## 4. Client (`client/src`) — done except userscript mirroring
 
@@ -107,6 +107,74 @@ Decisions locked in from discussion:
   - Report button anchored off `[data-testid="pinUserButton"]`'s parent, `prepend`ed as first child.
   - The `MutationObserver` that used to only watch for the name label now also watches for the pin
     button, and `tryInjectIntoScreen` injects both — reused rather than duplicated.
+  - **Bug found and fixed:** clicking profile A then profile B (panel already open) wouldn't show
+    the flag on B until clicking B's marker a second time. Root cause: the click listener runs in
+    the capture phase, before Sniffies' own click handling switches the panel — so the immediate
+    `tryInjectIntoScreen` call queries stale DOM (still A's) and mis-injects a B-attributed button
+    into A's container. The `MutationObserver` is supposed to correct this once the real DOM
+    updates, but if Sniffies updates the existing panel nodes in place for a same-panel profile
+    switch (rather than replacing them), no `childList` mutation fires to trigger a second attempt.
+    A single `requestAnimationFrame` retry wasn't enough either — confirmed live: the panel switch
+    is animated, and the outgoing profile's DOM stays in place (as the first `querySelector` match)
+    through the whole transition, so a same-frame retry still injects into the profile animating
+    *out*. First attempt at fixing that added an `isInjectionCurrentFor` early-exit to the retry
+    loop, which was itself wrong — `injectReportButton` always stamps whatever container it finds
+    with the current selection's id, so checking our own just-written attribute afterward is
+    circular: it reports "done" on frame one, into the outgoing panel, before the transition even
+    finishes. `scheduleReinjectionRetries` now just reruns `tryInjectIntoScreen` unconditionally,
+    `setTimeout`-driven (not `requestAnimationFrame`) — confirmed working live, then dialed back
+    from rAF's ~60/sec, first to 200ms/2s per request, then user-tuned further to
+    `CLICK_REINJECT_RETRY_INTERVAL_MS`/`_WINDOW_MS` = 100ms/1s, to cut the CPU cost of polling after
+    every single marker click. `scheduleReinjectionRetries` now takes the window/interval as optional
+    params (defaulting to the click-path constants above) since the deep-link init call (below) needs
+    its own, more relaxed cadence — `INITIAL_LOAD_REINJECT_RETRY_INTERVAL_MS`/`_WINDOW_MS` = 300ms/3s,
+    slower and longer than the click case since page load has no interactive urgency but can take
+    longer to settle (full data fetch + app bootstrap, not just a panel swap). All four are named
+    constants next to each other if the rates need tuning again. Idempotent and cheap regardless of
+    rate, so there's no cost to not short-circuiting, and it self-corrects the moment the outgoing
+    DOM is actually removed and the incoming panel becomes the match. Still bails immediately if a
+    newer selection has superseded it (`lastSelection` reassigned). Lives right above the click
+    handler in
+    `sniffies-profile-id.ts`. No test coverage (this file has none, like the other content scripts —
+    DOM-heavy IIFE-style side effects at import time); needs manual verification: click through
+    several profiles in a row with the panel already open and confirm the flag shows on the
+    *incoming* profile once its animation settles, not the outgoing one. There's also a
+    stray `console.log("tryInjectIntoScreen", ...)` at the top of that function that isn't from this
+    work — left in place rather than silently removed, in case it's intentional debug scaffolding.
+  - **Deep-link injection.** Landing directly on `https://sniffies.com/profile/<id>` (hard
+    refresh, direct link) shows that profile's panel without any marker click ever firing, so
+    nothing set `lastSelection` for the observer/injection logic to act on. Added
+    `extractUserIdFromProfilePath` (matches `/profile/<id>` and subpaths like `/profile/<id>/chat`)
+    and an init-time check right after `startObserving()`: if the initial `location.pathname`
+    matches, sets `lastSelection` from the URL (with `profilePicUrl: null` — unknown until the DOM
+    renders) and runs the same immediate-attempt + `scheduleReinjectionRetries` pattern the click
+    handler uses, since the initial panel render is async (data fetch) and may not be ready yet.
+    Only handles a fresh page load, not SPA-internal navigation to a profile URL outside of a
+    marker click — not something this request covered. Needs manual verification (not yet
+    confirmed live): hard-load `sniffies.com/profile/<id>` directly and confirm the flag appears.
+  - **Bug found and fixed: wrong-account attribution for no-photo profiles.** Reported live,
+    confirmed against real DOM from a no-photo profile's header (Angular, not React —
+    `_ngcontent-ng-*` attrs — worth knowing for future DOM-shape assumptions in this file).
+    `extractFromMarker` returns `null` when a marker has no `background-image` (accounts with no
+    profile photo render a generic icon instead), and the click handler used to `return` immediately
+    in that case — never updating `lastSelection`, never scheduling a retry. But the
+    `MutationObserver` doesn't know the click "failed": it still fires once Sniffies renders the new
+    panel, and it used to require `lastSelection` truthy before doing anything — so it would inject
+    using whatever profile was *last successfully read from a marker image*, attributing the report
+    button to the **wrong account**. Not just missing — actively wrong, which matters for a
+    report-as-bot feature. Fixed by making the URL authoritative: `tryInjectIntoScreen` now calls
+    `extractUserIdFromProfilePath(location.pathname)` (reusing the deep-link helper above) on *every*
+    invocation and overrides `lastSelection` whenever it disagrees, rather than trusting a value
+    captured once at click time. The click handler no longer bails out when the marker yields no id —
+    it still schedules `scheduleReinjectionRetries` so the URL-resolution above gets polled until
+    routing catches up. `scheduleReinjectionRetries` had to switch from comparing a captured
+    `ProfileSelection` object to a `selectionGeneration` counter bumped on every click/load, since a
+    no-photo click no longer produces a `ProfileSelection` to compare against. The observer's
+    `if (!lastSelection) return` guard was also removed, since it could otherwise refuse to act on
+    the very first profile ever viewed if that one happened to have no photo. Needs manual
+    verification (not yet confirmed live): click a no-photo profile (or several in a row, mixing
+    photo/no-photo) and confirm the flag is attributed to the one actually on screen, not a
+    previous one.
   - `reporterUserId` comes from `settings.sniffiesUserId` (tracked in module state, kept in sync
     via `chrome.storage.onChanged`, same pattern as `currentGuid`) — **not** `guid`, per the
     identity decision above. If it's empty (hook hasn't observed it yet), the button no-ops with a
@@ -116,11 +184,12 @@ Decisions locked in from discussion:
   - `fetchBlockedBots` / `refreshBlockedBotsIfStale` added, called from the existing init flow
     (mirrors `fetchFavorites`'s "fetch on init" pattern) — gated on `REPORTING_ENABLED`, staleness
     check is `Date.now() - blockedBotsFetchedAt > 24h`.
-  - **Not yet consumed anywhere** — the fetched list is cached but nothing filters against it yet;
-    that's section 5.
+  - Now consumed by `sniffies-bot-block-relay.ts` (section 5), which reads the cached list straight
+    out of `chrome.storage` rather than this module relaying it directly.
 - [x] Popup: "Block Bot Accounts" collapsible section, same disabled/"Coming soon!" gating as
-      Favorites when `REPORTING_ENABLED` is false. Toggle only persists the preference for now —
-      it has nothing to propagate to yet since the section 5 hook doesn't exist.
+      Favorites when `REPORTING_ENABLED` is false. The toggle now propagates live: it writes
+      `botBlockingEnabled` to storage, which `sniffies-bot-block-relay.ts` picks up via
+      `chrome.storage.onChanged` and forwards to the MAIN-world hook.
 - [x] Tests: extended `popup.test.ts` with a "bot blocking" describe block (gated-state assertions
       + section-open persistence), mirroring the favorites tests.
 - [ ] Mirror the report button into `userscript/src/userscript.ts` — still unstarted, scope
@@ -134,19 +203,142 @@ Decisions locked in from discussion:
 This is the part of the feature with the most technical risk and the least existing precedent in
 the codebase, so treat it as a spike first, implementation second.
 
-- [ ] **Investigate before building anything:**
-  - What does the "init" call actually look like? (Likely a `fetch`/`XHR` request on page load that seeds nearby cruisers before the WebSocket takes over — needs to be found via the Network tab, not guessed.) Capture its endpoint, request/response shape, and where the user id lives in each entry.
-  - What does a live WebSocket update look like? `installUserIdHook` only reads the *connect URL*, never the message payload — this feature needs the actual message format (does each `message` event carry one user's data or a batch? is it JSON, or something else?).
-  - Confirm whether removing/mutating entries from these payloads before the Sniffies app parses them actually hides the user from the map/UI, or whether the app also correlates data some other way (e.g. a separate profile-fetch call) that would leak the blocked user back in.
-- [ ] Design the hook (`core/src/bot-block-hook.ts`) once the above is known:
-  - Likely needs to patch `window.fetch`/`XMLHttpRequest` for the init call, **and** wrap the WebSocket *instance* returned by the constructor (intercepting `onmessage`/`addEventListener('message', ...)`, not just reading the connect URL like `installUserIdHook` does) to filter or rewrite incoming payloads before dispatching them to the page's real listeners.
-  - Needs a live-updatable blocklist (`Set<string>`) and an enabled/disabled flag, both settable after install — mirror `installGeoHook`'s `getOverride()` callback pattern rather than baking the list in at install time.
-  - Race condition to handle: this hook runs at `document_start`, before the isolated-world content script has read `chrome.storage` and relayed the blocklist over. Buffer or pass through unfiltered until the first blocklist relay arrives; document that early messages may not be filtered.
-- [ ] `client/src/content/sniffies-bot-block-hook.ts` (MAIN world, `document_start`) — installs the hook, mirrors `sniffies-user-id-hook.ts`.
-- [ ] `client/src/content/sniffies-bot-block-relay.ts` (isolated world, `document_start`) — reads `blockedBots` + `botBlockingEnabled` from storage, posts them to the MAIN-world hook on load and on `chrome.storage.onChanged`, mirrors `sniffies-geo-relay.ts`.
-- [ ] Register both in `client/manifest.json` alongside the existing MAIN/isolated pairs.
-- [ ] This is inherently fragile — it depends on reverse-engineered wire formats that Sniffies can change without notice. Note that explicitly somewhere visible (README or a code comment on the hook) so a future silent breakage isn't a mystery.
-- [ ] No automated test coverage is realistic for the actual filtering logic against live Sniffies traffic — plan for manual verification only, and say so rather than claiming test coverage that doesn't exist.
+- [x] **Investigate before building anything:** (findings from a HAR capture of page load + live session, 2026-08-31)
+  - Map init: `POST https://uswapi2.sniffies.com/api/post-authentication` — one large JSON response.
+    User ids to filter live at `nearbyVisitors.visitors[]._id` (the map pins; each entry is
+    `{ _id, data: { location, profile, ... }, initialTTLSeconds, distance, activeVisits }`), and
+    also at `partialVisitorData[]._id` (lighter partial profile records), `places.activeVisits[].userId`
+    (place check-ins), and `globalMessages.messages[].author` (public map chat wall) — those last two
+    are lower priority, not confirmed as in-scope.
+  - Chat init: `GET https://uswapi2.sniffies.com/api/v2/post-authentication/chat-data` — user ids
+    live at `conversationData.conversations[].participants`, `.author1`, `.author2`,
+    `.lastSentMessage.author`, the flat `conversationData.userIds[]` array, and
+    `partialVisitorData[]._id` (the profile card shown in the conversation list).
+  - Live WebSocket (`wss://prod.ws.sniffies.com/?userId=...`): plain JSON text frames shaped
+    `{"eventName": ..., "data": ...}`. Confirmed event shapes: `userJoined` and `userUpdated` carry
+    `data._id` + a full profile at `data.data`; `userAwake` and `userDisconnected` carry a bare
+    user-id string as `data` (no `_id` wrapper). **Gap:** no live chat message arrived during the
+    capture, so the WS event for an incoming chat message is still unconfirmed — needs a fresh HAR
+    capture that includes someone sending a message.
+  - Leak risk confirmed: `POST https://uswapi2.sniffies.com/api/user/full` with body
+    `{"userId": "<id>"}` returns one user's full profile on demand. If anything in the client still
+    holds a blocked id after the lists above are filtered (e.g. stale chat history, a "visited you"
+    list) and re-requests it via this endpoint, the profile comes back unfiltered — this endpoint
+    itself has no way to know a user is blocked, so filtering must also happen wherever its response
+    is consumed, not just on the three list endpoints above.
+- [x] Design the hook (`core/src/bot-block-hook.ts`):
+  - Patches `XMLHttpRequest` (confirmed via the HAR — Sniffies uses XHR, not `fetch`, for both init
+    calls), shadowing `responseText`/`response` as instance-level accessor properties so the app
+    gets the filtered payload no matter when it reads the response, rather than racing its own
+    `load`/`readystatechange` listeners. Wraps the WebSocket *instance* returned by the constructor
+    (`addEventListener('message', ...)` and the `onmessage` property, both shadowed) to drop
+    blocked-account frames before they reach the page's real listeners.
+  - Filtering scope, per the investigation findings above: `nearbyVisitors.visitors` +
+    `partialVisitorData` (post-authentication), `conversationData.conversations` +
+    `.userIds` + `partialVisitorData` (chat-data), and `userJoined`/`userUpdated`/`userAwake`/
+    `userDisconnected` WS frames. `places.activeVisits`, `globalMessages`, and the `/api/user/full`
+    leak path are **not** filtered — explicitly out of scope, noted in the investigation findings.
+  - Live-updatable blocklist + enabled flag via a `getState()` callback, mirroring
+    `installGeoHook`'s `getOverride()` pattern.
+  - Race condition handled as planned: `sniffies-bot-block-hook.ts` starts with
+    `{ blockedIds: new Set(), enabled: false }` until the relay's first `postMessage` arrives, so
+    early responses pass through unfiltered rather than guessing.
+  - Pure filter/decision functions (`filterPostAuthenticationPayload`, `filterChatDataPayload`,
+    `shouldFilterWebSocketFrame`) are unit tested in `bot-block-hook.test.ts` (17 tests), including
+    end-to-end instance-level XHR/WS filtering against mock constructors mirroring
+    `user-id-hook.test.ts`'s pattern.
+- [x] `client/src/content/sniffies-bot-block-hook.ts` (MAIN world, `document_start`) — installs the hook, mirrors `sniffies-user-id-hook.ts`.
+- [x] `client/src/content/sniffies-bot-block-relay.ts` (isolated world, `document_start`) — reads `blockedBots` + `botBlockingEnabled` from storage, posts them to the MAIN-world hook on load and on `chrome.storage.onChanged`, mirrors `sniffies-geo-relay.ts`.
+- [x] Registered both in `client/manifest.json` alongside the existing MAIN/isolated pairs, and added both entry points to `client/scripts/build.mjs`'s `tsEntries`.
+- [x] Fragility noted in a header comment on both `core/src/bot-block-hook.ts` and `client/src/content/sniffies-bot-block-hook.ts` — not yet in a README.
+- [x] The pure filter/decision functions and the instance-level XHR/WS wiring have unit test coverage (above). What's still unverified: the hook's actual behavior against **live** Sniffies traffic — that needs manual testing in the browser (load the extension, report/add a test account to `blockedBots`, confirm it disappears from the map, chat list, and live WS updates) before shipping.
+- [x] **Real-world regression found and fixed** (from a second HAR capture, ~1hr after the first, while manually testing with `blockedBots` seeded via `chrome.storage.local`):
+  - The blocked chat account was still showing up. Root cause: every `/api/*` call had moved hosts
+    between the two captures — `uswapi2.sniffies.com` → `usw.api.sniffies.com` — and XHR matching
+    was hardcoded to the first hostname, so `classifyXhrUrl` silently returned `null` for
+    everything and nothing was ever filtered. Fixed by matching on **path only** against any
+    `*.sniffies.com` host (`isSniffiesApiHost`), not a fixed hostname. Regression test added.
+  - While investigating, found a fourth surface this session's traffic exercised that wasn't
+    covered: `GET /api/messages?conversationId=...` (fetched when a conversation is actually
+    opened), returning `{ messages: [{ author, ... }], partialUsers: [{ _id, ... }] }`. Added
+    `filterMessagesPayload` for it — filters `messages[]` by `.author` and `partialUsers[]` by
+    `._id`. This is defense-in-depth: if `chat-data` filtering works, the conversation shouldn't be
+    reachable from the inbox in the first place, but a stale/cached/bookmarked thread could still
+    hit this endpoint directly.
+  - Added logging per user request: every successful filter now calls `log.warn` (always visible,
+    not gated behind `__DEBUG__`) naming exactly which blocked id(s) were removed and from which
+    endpoint/WS event — `[sniffies-bot-block] filtered blocked account(s) from <kind> response: [...]`
+    or `... from WS <eventName> frame: <id>`. Check the console with this filter if blocking seems
+    to not be working.
+  - `places.activeVisits`, `globalMessages`, and the `/api/user/full` leak path (confirmed hit again
+    in this second capture — the user navigated directly to the blocked account's `/profile/<id>`
+    page) remain **unaddressed**, same as noted in the original investigation findings above.
+
+## 5b. Popup stat + manual editing — done
+
+- [x] **"N bots blocked in the last 24 hours" popup stat.** `core/src/blocked-bot-log.ts`:
+  day-bucketed log (`BlockedBotDailyLog = { [dateKey]: string[] }`, UTC calendar day). `recordBlockedBotIds`
+  merges newly-filtered ids into today's bucket and drops every bucket except today + yesterday (so it
+  can't grow unbounded); `countDistinctBlockedBotsLast24h` unions those two buckets — an approximation
+  of a rolling 24h window using day buckets, not an exact timestamp cutoff, per the original ask.
+  - `installBotBlockHook` (`core/src/bot-block-hook.ts`) takes an optional second `onFiltered?: (ids:
+    string[]) => void` param, fired alongside the existing `log.warn` every time a filter actually
+    removes something (both XHR and WS paths).
+  - `sniffies-bot-block-hook.ts` (MAIN world) wires `onFiltered` to `window.postMessage({ source:
+    "sniffies-bot-block-hook", kind: "filtered", ids })`. `sniffies-bot-block-relay.ts` (isolated
+    world) listens for it and calls `recordBlockedBotEvent` (`client/src/shared/settings.ts`), which
+    reads/merges/writes the `blockedBotEventsByDay` storage key — same MAIN→isolated round-trip
+    pattern `sniffies-geo-hook.ts`/`sniffies-geo-relay.ts` already uses for observed positions.
+  - Popup (`bot-blocking-count` element, under the "Block Bot Accounts" header) renders
+    `countDistinctBlockedBotsLast24h(settings.blockedBotEventsByDay)` on open — a static read, not
+    live-updating while the popup is open (popups are short-lived; not worth the
+    `chrome.storage.onChanged` wiring for that). Hidden (empty text, `.stat:empty` CSS) when the
+    count is 0 or `REPORTING_ENABLED` is false.
+  - Tests: `core/src/blocked-bot-log.test.ts` (8 tests, pure functions with an injectable `now`),
+    2 new `installBotBlockHook` tests for `onFiltered`, 3 new popup tests (the enabled branch needs
+    `vi.doMock("../shared/env.js", ...)` since `__REPORTING_ENABLED__` is baked in `false` at the
+    `vitest.config.ts` level — remember `vi.doMock` survives `vi.resetModules()`, so that describe
+    block explicitly `vi.doUnmock`s in `afterEach` or the mock leaks into every later describe block
+    in the file).
+- [x] **Manual editing of the blocklist in the settings page.** New `.blocked-bots-section` in
+  `client/src/settings/settings.html`/`.ts`/`.css`: a textarea (one Sniffies id per line), populated
+  from `blockedBots` on load, validated against `SNIFFIES_USER_ID_REGEX` (`core/src/settings.ts` —
+  24-char hex Mongo ObjectId, confirmed via HAR) on save. Invalid input shows which id(s) failed and
+  does not save (mirrors the existing phone-number validation UX). Saving reuses `setBlockedBots`
+  (the same setter `fetchBlockedBots` uses), so it also refreshes `blockedBotsFetchedAt` — a manual
+  edit won't immediately get overwritten by the next staleness-triggered auto-refresh. Section hidden
+  when `REPORTING_ENABLED` is false, same gating convention as the other feature-flagged sections.
+  Tests: `settings.test.ts` (4 new tests — populate, save with dedupe/trim, reject invalid, clear
+  invalid state on edit).
+
+## 5c. Live chat message leak — found and fixed
+
+User report: reloading with bot-blocking on was still causing the blocked test account to see its
+messages marked as read. Investigated via a fresh HAR (`sniffiesChatRead.har`) captured with
+Preserve Log on and DevTools open from before reload.
+
+- [x] **Root cause: the `newMsg` WebSocket event was completely unfiltered.** It's the live 1:1
+  chat-message event — unconfirmed in the original investigation (no message arrived during that
+  capture), now confirmed: `{"eventName":"newMsg","data":{"message":{author,body,conversationId,
+  userIdFrom,userIdTo,...},"conversation":{...}}}`. In the HAR, each `newMsg` frame from the blocked
+  account is followed **~1ms later** by a `GET /api/conversation/visitor?visitorId=<author>` — proving
+  the app reacts to the WS frame by immediately fetching full conversation details, which is almost
+  certainly what causes the read-receipt-like effect on the counterpart's side.
+  - This is a case response-filtering fundamentally can't fix: `newMsg` isn't an XHR response we
+    rewrite after the fact, it's a WS push. Once it reaches the app, whatever side effect it triggers
+    (here, the `/api/conversation/visitor` fetch) has already happened. Dropping the frame itself —
+    which the WS hook already does for other event types — is what actually stops the chain.
+  - Fixed in `parseWsFrame` (`core/src/bot-block-hook.ts`): added `newMsg` (extracts
+    `data.message.author`) alongside the existing event types. Also added `userRemoved` — another
+    bare-string-id presence event, sibling to `userDisconnected`, found unfiltered in the same HAR's
+    event-name census, fixed the same way (low-risk, same code path already handles this shape).
+  - Investigation note for future reference: the full event-name census (grep `_webSocketMessages`
+    for `eventName`) is a cheap, thorough way to catch this class of gap — better than waiting on a
+    live capture to happen to include the specific event. Worth doing again if new symptoms show up:
+    `activeVisitUpdated`, `globalChatMessageDeleted`, `newGlobalMsg` also turned up unfiltered but are
+    the already-noted-out-of-scope place-visit/global-chat-wall surfaces, not touched.
+  - Tests: 3 new (`shouldFilterWebSocketFrame` for `newMsg` and `userRemoved`, plus one end-to-end
+    `installBotBlockHook` test dispatching a `newMsg` MessageEvent through the WS instance).
 
 ## 6. Docs
 

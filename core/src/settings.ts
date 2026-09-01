@@ -1,3 +1,5 @@
+import type { BlockedBotDailyLog } from "./blocked-bot-log.js";
+
 export interface GeoOverride {
   enabled: boolean;
   latitude: number;
@@ -22,6 +24,9 @@ export const DEFAULT_PROFILE_BORDER_OPEN: ProfileBorderOpen = {
 
 export const PHONE_E164_REGEX = /^\+[1-9]\d{6,14}$/;
 
+// Sniffies user ids are 24-character hex Mongo ObjectIds (confirmed via HAR).
+export const SNIFFIES_USER_ID_REGEX = /^[a-f0-9]{24}$/i;
+
 export const SETTINGS_KEYS = {
   guid: "guid",
   phone: "phone",
@@ -36,6 +41,7 @@ export const SETTINGS_KEYS = {
   blockedBotsFetchedAt: "blockedBotsFetchedAt",
   botBlockingEnabled: "botBlockingEnabled",
   botBlockingSectionOpen: "botBlockingSectionOpen",
+  blockedBotEventsByDay: "blockedBotEventsByDay",
 } as const;
 
 export interface ExtensionLocalSettings {
@@ -52,6 +58,7 @@ export interface ExtensionLocalSettings {
   blockedBotsFetchedAt: number;
   botBlockingEnabled: boolean;
   botBlockingSectionOpen: boolean;
+  blockedBotEventsByDay: BlockedBotDailyLog;
 }
 
 export const DEFAULT_LOCAL_SETTINGS: ExtensionLocalSettings = {
@@ -68,4 +75,5 @@ export const DEFAULT_LOCAL_SETTINGS: ExtensionLocalSettings = {
   blockedBotsFetchedAt: 0,
   botBlockingEnabled: true,
   botBlockingSectionOpen: false,
+  blockedBotEventsByDay: {},
 };

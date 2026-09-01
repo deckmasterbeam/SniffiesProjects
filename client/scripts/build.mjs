@@ -21,7 +21,9 @@ let releaseVersion = null;
 if (prod) {
   const missingEnvVars = REQUIRED_RELEASE_ENV_VARS.filter((key) => !process.env[key]);
   if (missingEnvVars.length > 0) {
-    console.error(`error: missing required env var(s) for a release build: ${missingEnvVars.join(", ")}`);
+    console.error(
+      `error: missing required env var(s) for a release build: ${missingEnvVars.join(", ")}`,
+    );
     process.exit(1);
   }
 
@@ -38,6 +40,8 @@ const tsEntries = [
   "src/content/sniffies-profile-id.ts",
   "src/content/sniffies-user-id-hook.ts",
   "src/content/sniffies-user-id-relay.ts",
+  "src/content/sniffies-bot-block-hook.ts",
+  "src/content/sniffies-bot-block-relay.ts",
   "src/popup/popup.ts",
   "src/options/options.ts",
   "src/settings/settings.ts",

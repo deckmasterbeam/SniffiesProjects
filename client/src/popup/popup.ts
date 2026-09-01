@@ -10,6 +10,7 @@ import {
   wireVersionBadge,
   wireProfileBorderForm,
   createLogger,
+  countDistinctBlockedBotsLast24h,
 } from "@sniffies-projects/core";
 import { FAVORITES_NOTIFICATIONS_ENABLED, REPORTING_ENABLED } from "../shared/env.js";
 import {
@@ -51,6 +52,7 @@ const botBlockingEnabledCheckbox = document.getElementById(
 ) as HTMLInputElement;
 const botBlockingHint = document.getElementById("bot-blocking-hint");
 const botBlockingEnableLabel = document.getElementById("bot-blocking-enable-label");
+const botBlockingCount = document.getElementById("bot-blocking-count");
 
 const openSettingsBtn = document.getElementById("open-settings");
 
@@ -121,6 +123,11 @@ const init = async (): Promise<void> => {
     if (botBlockingHint) {
       botBlockingHint.textContent =
         "Hide profiles that have been confirmed as bots from the map and live updates.";
+    }
+    if (botBlockingCount) {
+      const count = countDistinctBlockedBotsLast24h(settings.blockedBotEventsByDay);
+      botBlockingCount.textContent =
+        count > 0 ? `${count} bot${count === 1 ? "" : "s"} blocked in the last 24 hours` : "";
     }
   }
 };

@@ -54,6 +54,26 @@
         <div id="grid" class="grid" aria-live="polite"></div>
       </section>
 
+      <section class="blocked-bots-section">
+        <h2>Blocked Bot Accounts</h2>
+        <p class="hint">
+          Sniffies user IDs hidden from the map, chat, and live updates. One per line.
+        </p>
+        <label class="field">
+          <span>Blocked account IDs</span>
+          <textarea
+            id="blocked-bots-input"
+            rows="8"
+            autocomplete="off"
+            spellcheck="false"
+          ></textarea>
+        </label>
+        <div class="row">
+          <button id="blocked-bots-save" class="save-btn" type="button">Save</button>
+          <p id="blocked-bots-status" class="hint" aria-live="polite"></p>
+        </div>
+      </section>
+
       <section class="reset-section">
         <h2>Reset</h2>
         <p class="hint">Clear all local extension data and restore defaults.</p>
