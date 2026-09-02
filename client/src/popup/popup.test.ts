@@ -16,19 +16,9 @@ const POPUP_HTML = `
       </label>
     </div>
   </details>
-  <details id="bot-blocking-details" class="section collapsible">
-    <summary><h2>Block Bot Accounts</h2></summary>
-    <div class="collapsible-body">
-      <p id="bot-blocking-count" class="stat"></p>
-      <p id="bot-blocking-hint" class="hint"></p>
-      <label class="row">
-        <input id="bot-blocking-enabled" type="checkbox" />
-        <span id="bot-blocking-enable-label">Enable</span>
-      </label>
-    </div>
-  </details>
   <div id="snp-geo-root"></div>
   <div id="snp-profile-border-root"></div>
+  <div id="snp-bot-block-root"></div>
 `;
 
 const flushPromises = () => new Promise<void>((r) => setTimeout(r, 0));
@@ -39,11 +29,11 @@ const getElements = () => ({
   favoritesDetails: document.getElementById("favorites-details") as HTMLDetailsElement,
   favoritesHint: document.getElementById("favorites-hint") as HTMLElement,
   favoritesEnableLabel: document.getElementById("favorites-enable-label") as HTMLElement,
-  botBlockingEnabled: document.getElementById("bot-blocking-enabled") as HTMLInputElement,
-  botBlockingDetails: document.getElementById("bot-blocking-details") as HTMLDetailsElement,
-  botBlockingHint: document.getElementById("bot-blocking-hint") as HTMLElement,
-  botBlockingEnableLabel: document.getElementById("bot-blocking-enable-label") as HTMLElement,
-  botBlockingCount: document.getElementById("bot-blocking-count") as HTMLElement,
+  botBlockingEnabled: document.getElementById("bot-block-enabled") as HTMLInputElement,
+  botBlockingDetails: document.getElementById("bot-block-details") as HTMLDetailsElement,
+  botBlockingHint: document.getElementById("bot-block-hint") as HTMLElement,
+  botBlockingEnableLabel: document.getElementById("bot-block-enable-label") as HTMLElement,
+  botBlockingCount: document.getElementById("bot-block-count") as HTMLElement,
   geoFields: document.getElementById("geo-fields") as HTMLElement,
   geoEnabled: document.getElementById("geo-enabled") as HTMLInputElement,
   geoLat: document.getElementById("geo-lat") as HTMLInputElement,

@@ -11,6 +11,9 @@ import {
   wireProfileBorderForm,
   createLogger,
   countDistinctBlockedBotsLast24h,
+  BOT_BLOCK_HTML,
+  BOT_BLOCK_CSS,
+  wireBotBlockForm,
 } from "@sniffies-projects/core";
 import { FAVORITES_NOTIFICATIONS_ENABLED, REPORTING_ENABLED } from "../shared/env.js";
 import {
@@ -24,7 +27,7 @@ import {
 
 const log = createLogger("popup");
 
-// Inject geo form, profile border form, and version badge styles from core
+// Inject geo form, profile border form, bot-block form, and version badge styles from core
 const geoStyle = document.createElement("style");
 geoStyle.textContent = GEO_OVERRIDE_CSS;
 document.head.appendChild(geoStyle);
@@ -32,6 +35,10 @@ document.head.appendChild(geoStyle);
 const profileBorderStyle = document.createElement("style");
 profileBorderStyle.textContent = PROFILE_BORDER_CSS;
 document.head.appendChild(profileBorderStyle);
+
+const botBlockStyle = document.createElement("style");
+botBlockStyle.textContent = BOT_BLOCK_CSS;
+document.head.appendChild(botBlockStyle);
 
 const versionStyle = document.createElement("style");
 versionStyle.textContent = VERSION_BADGE_CSS;
@@ -43,16 +50,6 @@ const favoritesDetails = document.getElementById("favorites-details") as HTMLDet
 const favoritesEnabledCheckbox = document.getElementById("favorites-enabled") as HTMLInputElement;
 const favoritesHint = document.getElementById("favorites-hint");
 const favoritesEnableLabel = document.getElementById("favorites-enable-label");
-
-const botBlockingDetails = document.getElementById(
-  "bot-blocking-details",
-) as HTMLDetailsElement | null;
-const botBlockingEnabledCheckbox = document.getElementById(
-  "bot-blocking-enabled",
-) as HTMLInputElement;
-const botBlockingHint = document.getElementById("bot-blocking-hint");
-const botBlockingEnableLabel = document.getElementById("bot-blocking-enable-label");
-const botBlockingCount = document.getElementById("bot-blocking-count");
 
 const openSettingsBtn = document.getElementById("open-settings");
 
@@ -105,31 +102,19 @@ const init = async (): Promise<void> => {
     favoritesEnabledCheckbox.checked = settings.favoritesEnabled;
   }
 
-  // Bot blocking
-  if (botBlockingDetails) {
-    botBlockingDetails.open = settings.botBlockingSectionOpen;
-  }
-  if (!REPORTING_ENABLED) {
-    botBlockingEnabledCheckbox.checked = false;
-    botBlockingEnabledCheckbox.disabled = true;
-    if (botBlockingHint) {
-      botBlockingHint.textContent = "Coming soon!";
-    }
-    if (botBlockingEnableLabel) {
-      botBlockingEnableLabel.style.textDecoration = "line-through";
-    }
-  } else {
-    botBlockingEnabledCheckbox.checked = settings.botBlockingEnabled;
-    if (botBlockingHint) {
-      botBlockingHint.textContent =
-        "Hide profiles that have been confirmed as bots from the map and live updates.";
-    }
-    if (botBlockingCount) {
-      const count = countDistinctBlockedBotsLast24h(settings.blockedBotEventsByDay);
-      botBlockingCount.textContent =
-        count > 0 ? `${count} bot${count === 1 ? "" : "s"} blocked in the last 24 hours` : "";
-    }
-  }
+  // Bot blocking form — inject HTML from core and wire up logic
+  const botBlockRoot = document.getElementById("snp-bot-block-root")!;
+  botBlockRoot.innerHTML = BOT_BLOCK_HTML;
+  wireBotBlockForm(botBlockRoot, {
+    reportingEnabled: REPORTING_ENABLED,
+    initialEnabled: settings.botBlockingEnabled,
+    initialCount: countDistinctBlockedBotsLast24h(settings.blockedBotEventsByDay),
+    initialOpen: settings.botBlockingSectionOpen,
+    onToggle: (open) => {
+      void chrome.storage.local.set({ [SETTINGS_KEYS.botBlockingSectionOpen]: open });
+    },
+    onToggleEnabled: setBotBlockingEnabled,
+  });
 };
 
 // ── Event listeners ───────────────────────────────────────────────────────────
@@ -140,16 +125,6 @@ favoritesDetails?.addEventListener("toggle", () => {
 
 favoritesEnabledCheckbox.addEventListener("change", () => {
   void setFavoritesEnabled(favoritesEnabledCheckbox.checked);
-});
-
-botBlockingDetails?.addEventListener("toggle", () => {
-  void chrome.storage.local.set({
-    [SETTINGS_KEYS.botBlockingSectionOpen]: botBlockingDetails.open,
-  });
-});
-
-botBlockingEnabledCheckbox.addEventListener("change", () => {
-  void setBotBlockingEnabled(botBlockingEnabledCheckbox.checked);
 });
 
 openSettingsBtn?.addEventListener("click", () => {

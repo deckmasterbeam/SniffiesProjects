@@ -18,6 +18,10 @@ import {
   REPORT_MODAL_HTML,
   wireReportModal,
   type ReportModalHandle,
+  MARKER_AVATAR_SELECTOR as MARKER_SELECTOR,
+  APP_SCREEN_SELECTOR,
+  NAME_LABEL_SELECTOR,
+  PIN_BUTTON_SELECTOR,
 } from "@sniffies-projects/core";
 import {
   DEFAULT_PROFILE_BORDER_OPEN,
@@ -33,10 +37,6 @@ const clientHeaders = (): Record<string, string> => ({
 });
 
 const log = createLogger("profile-id");
-const MARKER_SELECTOR = '[data-testid="cv-marker-avatar-image"]';
-const APP_SCREEN_SELECTOR = "#app-screen";
-const NAME_LABEL_SELECTOR = '[data-testid="cruiserNameLabel"]';
-const PIN_BUTTON_SELECTOR = '[data-testid="pinUserButton"]';
 const INJECTED_ATTR = "data-sniffies-injection";
 const REPORT_INJECTED_ATTR = "data-sniffies-report-injection";
 const REPORT_MODAL_ROOT_ID = "snp-report-root";

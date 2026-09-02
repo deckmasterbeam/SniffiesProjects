@@ -79,4 +79,13 @@ describe("installUserIdLogging", () => {
     new window.WebSocket("wss://some-other-host.com/?userId=abc123");
     expect(fetchMock).not.toHaveBeenCalled();
   });
+
+  it("calls the optional onUserId callback with every observed id, not just the first", () => {
+    const onUserId = vi.fn();
+    installUserIdLogging(onUserId);
+    connect("abc123");
+    connect("xyz789");
+    expect(onUserId).toHaveBeenNthCalledWith(1, "abc123");
+    expect(onUserId).toHaveBeenNthCalledWith(2, "xyz789");
+  });
 });

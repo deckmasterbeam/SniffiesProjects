@@ -27,6 +27,8 @@ export {
   wireProfileBorderForm,
 } from "./profile-border-ui.js";
 export type { ProfileBorderFormContract } from "./profile-border-form-contract.js";
+export { BOT_BLOCK_HTML, BOT_BLOCK_CSS, wireBotBlockForm } from "./bot-block-ui.js";
+export type { BotBlockFormContract } from "./bot-block-form-contract.js";
 export {
   DEFAULT_GEO_OVERRIDE,
   DEFAULT_PROFILE_BORDER_OPEN,
@@ -38,3 +40,13 @@ export {
 export type { GeoOverride, ProfileBorderOpen, ExtensionLocalSettings } from "./settings.js";
 export type { Logger } from "./log.js";
 export { createLogger, formatTag } from "./log.js";
+export {
+  SNIFFIES_SELECTORS,
+  MARKER_CONTAINER_SELECTOR,
+  MARKER_AVATAR_SELECTOR,
+  APP_SCREEN_SELECTOR,
+  NAME_LABEL_SELECTOR,
+  PIN_BUTTON_SELECTOR,
+  SITELINKS_NAV_SELECTOR,
+} from "./sniffies-selectors.js";
+export type { SniffiesSelectorName } from "./sniffies-selectors.js";

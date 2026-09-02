@@ -24,6 +24,7 @@ vercel deploy     # production
 | `SEND_GUID_ENABLED` | No     | Must be exactly `"true"` to turn on `send-guid`. See [Feature gates](#feature-gates). |
 | `FAVORITES_ENABLED` | No     | Must be exactly `"true"` to turn on `favorites`. See [Feature gates](#feature-gates). |
 | `NOTIFY_TEST_ENABLED` | No   | Must be exactly `"true"` to turn on `notify-test`. See [Feature gates](#feature-gates). |
+| `REPORTING_ENABLED` | No     | Must be exactly `"true"` to turn on `report`. See [Feature gates](#feature-gates). |
 
 ### Two-secret model
 
@@ -45,6 +46,7 @@ The phone/favorites flow (`save-number`, `send-guid`, `favorites`, `notify-test`
 | `send-guid`    | `SEND_GUID_ENABLED`    |
 | `favorites`    | `FAVORITES_ENABLED`    |
 | `notify-test`  | `NOTIFY_TEST_ENABLED`  |
+| `report`       | `REPORTING_ENABLED`    |
 
 Until an endpoint's flag is set to exactly `"true"` in the Vercel project's environment variables (and redeployed), it responds `404 { "error": "not_found" }` — before the auth check runs, so a disabled endpoint doesn't even confirm that it exists or that it expects a bearer token. Flip the relevant flag to `"true"` and redeploy when that endpoint is ready to launch; no code changes needed. Each flag can be turned on independently. The gate lives in `requireFeatureFlag` in [`_shared.ts`](./api/_shared.ts).
 
@@ -279,3 +281,128 @@ A 200 with `"sent": 0, "detail": "no_subscribers"` means no one has favorited th
 | 401    | `unauthorized`         | Missing or wrong bearer token |
 | 500    | `server_misconfigured` | `TEXTBELT_KEY` not set        |
 | 500    | `db_error`             | Database failure              |
+
+---
+
+### `POST /api/report`
+
+Reports a profile as a suspected bot. Called from the report button injected into a Sniffies profile panel.
+
+**Auth:** `Authorization: Bearer <CLIENT_SECRET>`
+
+**Feature gate:** `REPORTING_ENABLED=true` (see [Feature gates](#feature-gates))
+
+**Request**
+
+```json
+{
+  "reportType": "bot_suspected",
+  "reportedUserId": "abc123",
+  "reporterUserId": "def456",
+  "message": "optional note, max 500 chars"
+}
+```
+
+**Response**
+
+```json
+{ "ok": true }
+```
+
+Always `{ "ok": true }` on success — including when `reporterUserId` is on the `blocked_reporters`
+list, in which case the request is silently dropped (no row written) so a blocked abuser sees a
+normal-looking success and gets no signal that anything was suppressed. Multiple reports against
+the same `(reportedUserId, reportType)` consolidate into one `pending_reports` row; the same
+reporter reporting the same profile twice is a no-op.
+
+**Errors**
+
+| Status | `error`                                    | Meaning                              |
+| ------ | ------------------------------------------- | ------------------------------------- |
+| 400    | `invalid_report_type`                      | `reportType` not a recognized value   |
+| 400    | `reportedUserId_and_reporterUserId_required` | Missing required fields             |
+| 404    | `not_found`                                 | Feature gate is off                   |
+| 500    | `db_error`                                  | Database failure                      |
+
+---
+
+### `GET /api/blocked-bots`
+
+Returns every Sniffies user id that has been manually promoted to `validated_reports`. Fetched by
+the client on init (and cached for 24h) to build the "blocked bots" filter list.
+
+**Auth:** `Authorization: Bearer <CLIENT_SECRET>`
+
+**Response**
+
+```json
+{ "ok": true, "userIds": ["abc123", "def456"] }
+```
+
+**Errors**
+
+| Status | `error`     | Meaning                       |
+| ------ | ----------- | ------------------------------- |
+| 401    | `unauthorized` | Missing or wrong bearer token |
+| 500    | `db_error`  | Database failure                |
+
+---
+
+## Manual review workflow
+
+There is no admin UI for reviewing reports (see the TODO's "Future TODO" section). Everything below
+is done with direct database access — paste these into the Neon console's SQL Editor (the queries
+below run as a real session there, so `BEGIN`/`COMMIT` work as written; the project's `POSTGRES_URL`
+in `.env` names which Neon project/branch to open it against).
+
+**Reviewing what's still pending**, ordered so the accounts reported by the most distinct people
+surface first (the strongest signal):
+
+```sql
+SELECT
+  id,
+  reported_user_id,
+  report_type,
+  report_count,
+  reporting_user_ids,
+  messages,
+  first_reported_at,
+  last_reported_at
+FROM pending_reports
+WHERE status = 'pending'
+ORDER BY report_count DESC, last_reported_at DESC;
+```
+
+**Promoting a confirmed bot report** — insert a corresponding row into `validated_reports`
+(`source_report_id` keeps a pointer back to the `pending_reports` row it came from) and mark the
+pending row handled. It's kept, not deleted: `validated_reports` doesn't carry `reporting_user_ids`
+or `messages`, so `pending_reports` is the only place that audit trail (who reported it, and what
+they said) lives, and `source_report_id` is a foreign key that would reject deleting a row it still
+points to anyway. Swap in the `pending_reports.id` you're promoting (from the query above):
+
+```sql
+BEGIN;
+
+INSERT INTO validated_reports (reported_user_id, report_type, source_report_id, note)
+SELECT reported_user_id, report_type, id, 'promoted after manual review'
+FROM pending_reports
+WHERE id = 123;  -- the pending_reports.id you're promoting
+
+UPDATE pending_reports
+SET status = 'validated'
+WHERE id = 123;
+
+COMMIT;
+```
+
+It's a one-way promotion — there's currently no code path to un-block/expire a validated report, so
+`DELETE FROM validated_reports WHERE reported_user_id = '...'` manually if one needs to be reversed.
+
+**Blocking an abusive reporter:** insert a row into `blocked_reporters` — `sniffies_user_id` is the
+only required column, `reason` is a free-text note for whoever's looking at the table later. Once
+blocked, that reporter's `/api/report` calls are silently dropped (see above).
+
+```sql
+INSERT INTO blocked_reporters (sniffies_user_id, reason)
+VALUES ('abc123def456abc123def456', 'spamming reports against unrelated accounts');
+```

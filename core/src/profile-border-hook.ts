@@ -1,7 +1,6 @@
 import type { ProfileBorderOpen } from "./settings.js";
 import { createLogger } from "./log.js";
-
-const MARKER_CONTAINER_SELECTOR = '[data-testid="markerUserContainer"]';
+import { MARKER_CONTAINER_SELECTOR } from "./sniffies-selectors.js";
 
 export interface ProfileBorderHookResult {
   uninstall: () => void;

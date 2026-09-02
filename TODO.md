@@ -44,9 +44,9 @@ Decisions locked in from discussion:
       `report_type`, `validated_at`, `source_report_id REFERENCES pending_reports(id)`, `note`.
 - [x] Documented the three new tables in `server/README.md`'s Database table.
 
-## 2. Server (`server/api`)
+## 2. Server (`server/api`) — done
 
-- [ ] `report.ts` — `POST` only:
+- [x] `report.ts` — `POST` only:
   - `applyCors`, `requireFeatureFlag(res, "REPORTING_ENABLED")`, `requireClientAuth`, `requireDb`.
   - Validate `reportType` against the enum allow-list, require `reportedUserId` + `reporterUserId` (Sniffies ids), trim + length-cap optional `message`.
   - Look up `reporterUserId` in `blocked_reporters` **first**. If present: return `{ ok: true }` (200) and do nothing else — no insert, no log line that could leak into server logs/monitoring in a way that tips off the abuser.
@@ -74,12 +74,13 @@ Decisions locked in from discussion:
     ```
     (First insert seeds `reporting_user_ids` with the single new reporter id, so `EXCLUDED.reporting_user_ids` is always just that one id — the dedupe check works whether the row is new or existing.)
   - Same reporter reporting the same profile twice is a no-op (already covered by the `LIKE` dedupe check) rather than inflating the count.
-- [ ] `blocked-bots.ts` — `GET` only:
+- [x] `blocked-bots.ts` — `GET` only:
   - `applyCors`, `requireClientAuth`, `requireDb`.
   - `SELECT reported_user_id FROM validated_reports`, return `{ ok: true, userIds: [...] }`.
-- [ ] Add `REPORTING_ENABLED` to `server/.env.example`.
-- [ ] Tests: `server/tests/report.test.ts` (including the blocked-reporter silent-drop path and the consolidation/dedupe path) and `server/tests/blocked-bots.test.ts`, mirroring `favorites.test.ts` / `watched-users.test.ts`.
-- [ ] Managing `blocked_reporters` and promoting `pending_reports` → `validated_reports` stays manual (direct DB access) — no admin UI in scope. Note the workflow in `server/README.md`.
+- [x] Add `REPORTING_ENABLED` to `server/.env.example`.
+- [x] Tests: `server/tests/report.test.ts` (including the blocked-reporter silent-drop path and the consolidation/dedupe path) and `server/tests/blocked-bots.test.ts`, mirroring `favorites.test.ts` / `watched-users.test.ts`. (25 new tests, 104 total passing.)
+- [x] Managing `blocked_reporters` and promoting `pending_reports` → `validated_reports` stays manual (direct DB access) — no admin UI in scope. Documented as a "Manual review workflow" section in `server/README.md`.
+  - Note: `blocked-bots.ts` is intentionally **not** gated behind `REPORTING_ENABLED` (per this TODO's own spec, which lists only `applyCors`/`requireClientAuth`/`requireDb` for it) — the client already gates fetching it behind the flag, and the endpoint itself has no abuse surface (read-only, no PII beyond ids already public on the map).
 
 ## 3. Core (`core/src`) — done
 
@@ -95,8 +96,18 @@ Decisions locked in from discussion:
       with trimmed message, pending/success/error states).
 - [x] `bot-block-hook.ts` — done, see section 5 below.
 
-## 4. Client (`client/src`) — done except userscript mirroring
+## 4. Client (`client/src`) — done
 
+- [x] **Fetch the blocked-bots list on init**, not just as a side effect of using the report button —
+      this is the mechanism that keeps a returning user's block list warm without them ever touching
+      the report flow. Both consumers call the same `fetchBlockedBots` (network call to
+      `GET /api/blocked-bots`, writes the result + a fresh `blockedBotsFetchedAt` to storage) /
+      `refreshBlockedBotsIfStale` (only calls the above when `Date.now() - blockedBotsFetchedAt >
+      24h`) pair, gated on `REPORTING_ENABLED`:
+  - Chrome extension: `content/sniffies-profile-id.ts`'s init block (`void getLocalSettings().then(...)`
+    near the bottom of the file) calls `refreshBlockedBotsIfStale(blockedBotsFetchedAt)`.
+  - Userscript: `userscript.ts`'s `installHooks()` calls `refreshBlockedBotsIfStale(reportState)`
+    right after `installReportFeature()` (see the "Userscript mirror" entry below).
 - [x] `shared/settings.ts`: added `blockedBots`, `blockedBotsFetchedAt`, `botBlockingEnabled`
       (default `true`), `botBlockingSectionOpen`, plus `setBlockedBots` / `setBotBlockingEnabled`.
 - [x] `shared/env.ts` + `scripts/build.mjs` + `scripts/build-prod.mjs`: added `REPORTING_ENABLED`
@@ -138,9 +149,7 @@ Decisions locked in from discussion:
     `sniffies-profile-id.ts`. No test coverage (this file has none, like the other content scripts —
     DOM-heavy IIFE-style side effects at import time); needs manual verification: click through
     several profiles in a row with the panel already open and confirm the flag shows on the
-    *incoming* profile once its animation settles, not the outgoing one. There's also a
-    stray `console.log("tryInjectIntoScreen", ...)` at the top of that function that isn't from this
-    work — left in place rather than silently removed, in case it's intentional debug scaffolding.
+    *incoming* profile once its animation settles, not the outgoing one.
   - **Deep-link injection.** Landing directly on `https://sniffies.com/profile/<id>` (hard
     refresh, direct link) shows that profile's panel without any marker click ever firing, so
     nothing set `lastSelection` for the observer/injection logic to act on. Added
@@ -192,13 +201,88 @@ Decisions locked in from discussion:
       `chrome.storage.onChanged` and forwards to the MAIN-world hook.
 - [x] Tests: extended `popup.test.ts` with a "bot blocking" describe block (gated-state assertions
       + section-open persistence), mirroring the favorites tests.
-- [ ] Mirror the report button into `userscript/src/userscript.ts` — still unstarted, scope
-      unconfirmed.
-- [ ] The actual POST to `/api/report` and GET from `/api/blocked-bots` can't be exercised
-      end-to-end yet since section 2 (the server endpoints) isn't built — client code was written
-      against the contract agreed in section 2's TODO, not verified against a live server.
+- [x] The actual POST to `/api/report` and GET from `/api/blocked-bots` — verified manually against
+      a local server + real Neon DB this session (see the report/consolidation/dedupe walkthrough
+      in this conversation): submitted reports land in `pending_reports` with the right
+      `reporting_user_ids`/`messages`/`report_count` semantics, including the blocked-reporter
+      silent-drop path and the same-reporter no-op path. Not yet exercised through the actual
+      client/userscript UI end-to-end (only via direct API calls), so still worth a real
+      click-through before shipping.
+- [x] **Userscript mirror**, scope resolved as full parity with the Chrome client's bot-report/block
+      feature (not the pre-existing, unrelated favorites feature, which the userscript still doesn't
+      have). The userscript's architecture differs enough from the client that this wasn't a
+      copy-paste: it runs single-world (no MAIN/isolated split, no `postMessage` relay — hooks
+      install directly, mirroring how `installGeoHook`/`installProfileBorderRedirect` already work
+      there) and has no popup/settings pages, just one floating panel, so the client's popup toggle
+      became the userscript's "Block Bot Accounts" panel section — toggle + 24h-blocked-count stat
+      only (originally a local `wireBotBlockForm`, later moved into core — see the "Core
+      consolidation" entry below, which is where this now actually lives). Initially also ported the
+      settings page's manual blocked-id-editing textarea, but dropped it after user feedback that a
+      big freeform textarea broke the pattern of the userscript's other sections (all toggle/field,
+      no manual list editing). The server-fetched list (`fetchBlockedBots`/`refreshBlockedBotsIfStale`
+      in `report.ts`) remains the only way `blockedBots` gets populated here.
+  - `user-id-logger.ts`: `installUserIdLogging` now takes an optional `onUserId` callback (in
+    addition to its existing init-telemetry behavior) — needed since `installUserIdHook` patches a
+    global and can only be installed once, so the reporter id has to piggyback on the existing
+    install rather than getting a second one.
+  - `report.ts` (new): MAIN-world port of the client's `sniffies-profile-id.ts` report-button half
+    (favorites/star injection excluded) + `sniffies-bot-block-hook.ts`. `installReportFeature()`
+    always installs the bot-block XHR/WS hook (matching the client's MAIN-world hook, which is also
+    unconditional — the flag only gates whether `blockedBots` ever gets populated), and additionally
+    wires the report-button injection/observer/deep-link/no-photo-fix machinery when
+    `REPORTING_ENABLED`. Ported the click-capture-phase/panel-switch race handling verbatim from the
+    client rather than re-deriving it — see this file's section above for the debugging history
+    behind `scheduleReinjectionRetries`, the URL-as-authority fix, etc. Returns a mutable
+    `ReportFeatureState` (`currentSniffiesUserId`, `botBlockState`) that `userscript.ts` wires
+    `installUserIdLogging`'s callback into, and that the panel's bot-blocking section mutates
+    directly on toggle/save (no `chrome.storage.onChanged`-style relay needed — same process).
+  - `shared/settings.ts`: added `localStorage`-backed getters/setters for `blockedBots`,
+    `blockedBotsFetchedAt`, `botBlockingEnabled` (default `true`), `botBlockingSectionOpen`, and
+    `blockedBotEventsByDay` (via core's `recordBlockedBotIds`), following this file's existing
+    per-key convention (own `sniffies-*` localStorage keys) rather than switching to core's
+    chrome-extension-shaped `SETTINGS_KEYS`/`getLocalSettings()`.
+  - `shared/env.ts` + `scripts/build.mjs`: added `REPORTING_ENABLED`, same
+    `String(!prod && process.env.REPORTING_ENABLED !== "false")` convention as the client.
+  - `tsconfig.json`: added `DOM.Iterable` to `lib` (was missing; needed for `for..of NodeList`,
+    which the ported observer code uses — the client's tsconfig already had it).
+  - Tests: `report.test.ts` (6 — state seeding from persisted settings, `refreshBlockedBotsIfStale`'s
+    staleness check and persistence), `shared/settings.test.ts` (10), plus one added to
+    `user-id-logger.test.ts` for the new `onUserId` callback. Same scope limit as the client's
+    identical logic: the DOM injection/observer/retry machinery itself has no test coverage (matches
+    the established precedent for this kind of DOM-heavy code in this repo) and needs manual
+    verification in Safari — click through several profiles (including a no-photo one) and a direct
+    profile deep-link, confirm the 🚩 button attributes to the right account, and confirm the "Block
+    Bot Accounts" panel section blocks/unblocks live.
+- [x] **Core consolidation.** User feedback after the first pass: the userscript's bot-blocking panel
+  (by then just toggle + stat, manual editing already dropped per the note above) was structurally
+  identical to the client popup's `#bot-blocking-details` section, which was hand-rolled directly in
+  `popup.html`/`popup.ts` rather than sourced from core — unlike geo-override and profile-border,
+  which both consumers already share via core. That asymmetry wasn't intentional, just a byproduct of
+  the userscript's version briefly having a manual-edit textarea the popup's never had. Fixed by
+  extracting the shared piece into core, matching the `wireProfileBorderForm` pattern exactly:
+  - `core/src/bot-block.html` / `bot-block.css` / `bot-block-form-contract.ts` / `bot-block-ui.ts`
+    (`wireBotBlockForm`) — toggle + 24h-blocked stat + "Coming soon!" gating, scoped under
+    `#snp-bot-block-root` like the other two. Exported from `core/src/index.ts`.
+    `bot-block-ui.test.ts` (9 tests) moved into core, mirroring `profile-border-ui.test.ts`.
+  - `userscript/src/userscript.ts` now imports `BOT_BLOCK_HTML`/`BOT_BLOCK_CSS`/`wireBotBlockForm`
+    from `@sniffies-projects/core` instead of local files; deleted the now-redundant
+    `userscript/src/bot-block-panel.html`/`.css`/`bot-block-ui.ts`/`bot-block-ui.test.ts`.
+  - `client/src/popup/popup.html`: replaced the inline `#bot-blocking-details` markup with
+    `<div id="snp-bot-block-root"></div>`, matching the geo/profile-border pattern.
+  - `client/src/popup/popup.ts`: injects `BOT_BLOCK_CSS`, mounts `BOT_BLOCK_HTML` into the new root,
+    and wires it with `wireBotBlockForm` — replacing ~25 lines of manual element lookups and
+    duplicated enable/hint/count/toggle logic that's now in core instead.
+  - `client/src/popup/popup.css`: removed `.stat`/`.stat:empty` — dead after the bot-blocking markup
+    moved out of `popup.html` (nothing else in `popup.html` used `.stat`).
+  - `client/src/popup/popup.test.ts`: updated the HTML fixture and element ids from
+    `bot-blocking-*` to `bot-block-*` (core's naming) — all 5 existing bot-blocking describe blocks
+    kept their assertions, just retargeted at the new ids.
+  - Full suite after consolidation: core 130 (was 121, +9), userscript 23 (was 31, -8 — the moved
+    file), client 57 (unchanged, same tests against the new markup), server 104 (untouched) — 314
+    total, all passing. Both `client/scripts/build.mjs` and `userscript/scripts/build.mjs` builds
+    verified to still produce the expected markup.
 
-## 5. Core + Client: Bot-Block Hook (MAIN world) — filtering Sniffies' own data
+## 5. Core + Client: Bot-Block Hook (MAIN world) — filtering Sniffies' own data — done
 
 This is the part of the feature with the most technical risk and the least existing precedent in
 the codebase, so treat it as a spike first, implementation second.
@@ -289,11 +373,11 @@ the codebase, so treat it as a spike first, implementation second.
     world) listens for it and calls `recordBlockedBotEvent` (`client/src/shared/settings.ts`), which
     reads/merges/writes the `blockedBotEventsByDay` storage key — same MAIN→isolated round-trip
     pattern `sniffies-geo-hook.ts`/`sniffies-geo-relay.ts` already uses for observed positions.
-  - Popup (`bot-blocking-count` element, under the "Block Bot Accounts" header) renders
-    `countDistinctBlockedBotsLast24h(settings.blockedBotEventsByDay)` on open — a static read, not
-    live-updating while the popup is open (popups are short-lived; not worth the
-    `chrome.storage.onChanged` wiring for that). Hidden (empty text, `.stat:empty` CSS) when the
-    count is 0 or `REPORTING_ENABLED` is false.
+  - Popup renders `countDistinctBlockedBotsLast24h(settings.blockedBotEventsByDay)` on open — a
+    static read, not live-updating while the popup is open (popups are short-lived; not worth the
+    `chrome.storage.onChanged` wiring for that). Hidden when the count is 0 or `REPORTING_ENABLED` is
+    false. (Originally its own `bot-blocking-count` element/`.stat:empty` CSS directly in `popup.ts`;
+    now rendered by core's `wireBotBlockForm` — see section 4's "Core consolidation" entry.)
   - Tests: `core/src/blocked-bot-log.test.ts` (8 tests, pure functions with an injectable `now`),
     2 new `installBotBlockHook` tests for `onFiltered`, 3 new popup tests (the enabled branch needs
     `vi.doMock("../shared/env.js", ...)` since `__REPORTING_ENABLED__` is baked in `false` at the
@@ -340,9 +424,14 @@ Preserve Log on and DevTools open from before reload.
   - Tests: 3 new (`shouldFilterWebSocketFrame` for `newMsg` and `userRemoved`, plus one end-to-end
     `installBotBlockHook` test dispatching a `newMsg` MessageEvent through the WS instance).
 
-## 6. Docs
+## 6. Docs — done
 
-- [ ] `client/README.md` / `server/README.md`: document `REPORTING_ENABLED`, the new endpoints, the manual `blocked_reporters` / `validated_reports` promotion workflow, and the bot-blocking toggle.
+- [x] `server/README.md`: documents `REPORTING_ENABLED`, `POST /api/report`, `GET /api/blocked-bots`,
+      and the manual `blocked_reporters` / `validated_reports` promotion workflow (added this
+      session, alongside section 2). `client/README.md` already listed the feature and its
+      `REPORTING_ENABLED` flag before this session; `userscript/README.md` now documents its own
+      usage (the 🚩 button and the panel's "Block Bot Accounts" toggle) as of the userscript mirror
+      work above.
 
 ---
 
@@ -355,16 +444,20 @@ Preserve Log on and DevTools open from before reload.
   manual DB access.
 - Harden abuse prevention beyond the manual `blocked_reporters` list — e.g. rate limiting, repeat-offender
   auto-detection — if manual blocking turns out to be too slow to react.
-- Background-driven (not page-load-triggered) refresh of the blocked-bots cache using
-  `chrome.alarms`, so it stays fresh even without a Sniffies tab open. Needs a new `alarms`
-  manifest permission.
+- Background-driven (not page-load-triggered) refresh of the blocked-bots cache, so it stays fresh
+  even without a Sniffies tab open. Same limitation in both consumers now, since the userscript
+  mirror (`refreshBlockedBotsIfStale` in `userscript/src/report.ts`) copied the client's
+  page-load-only pattern: `chrome.alarms` (needs a new `alarms` manifest permission) would cover the
+  Chrome extension, but userscripts have no background-execution API at all, so this one would need
+  a different mechanism there — possibly nothing better than "next tab load" is realistically
+  available for the userscript side.
 - Migrate `favorites.ts` off `guid` onto the Sniffies user id for consistency with the rest of the
   identity model — not required for this feature, but the same bad pattern this feature is
   deliberately avoiding.
 - Revisit whether validated reports ever need to be un-blocked / expired (currently a one-way
   promotion with no reversal path beyond manual `DELETE`).
-- As reports scale, I'm curious if I may need to change the way the fetching of suspected bots works. There are 2 kinds of bots, ones that message you from far away and ones that sit on the map always online. The ones that sit on the map could be sent to the user based on proximity. The ones that message you don't live very long, they could be blocked for a week before they're no longer of concern and don't need to be sent to the user.
-
-
-- Shouldn't the client settings file live in core? The structure of the settings should be the same between userscript and client, its just a matter of which set of settings each one picks
-- add this to the userscript too
+- As reports scale, may need to change how fetching suspected bots works. There are 2 kinds of bots:
+  ones that message you from far away, and ones that sit on the map always online. The map-sitting
+  ones could be sent to the user based on proximity. The ones that message you don't live very long —
+  they could be blocked for a week before they're no longer a concern and don't need to be sent to
+  the user at all.
