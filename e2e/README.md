@@ -5,7 +5,8 @@ Two things live here, tracked in the root [`PLAYWRIGHT_TESTING_TODO.md`](../PLAY
 1. **Fixture-based extension/userscript tests** (§0–§11 of the TODO) — harness + a first smoke test
    exist for both the Chrome extension (`extension` project) and the userscript (`userscript`
    project, below); most feature coverage (§1–§11) doesn't yet.
-2. **A drift canary against live sniffies.com** (§0b) — done except the payload/schema half.
+2. **A drift canary against live sniffies.com** (§0b) — done, both the selector half (Playwright,
+   below) and the payload/schema half (`check-har-schema.mjs`, below).
 
 Neither is wired into `yarn test` at the repo root. The fixture suites will be, once they cover more
 than a smoke test; the canary never should be — it depends on a live third-party site and a real
@@ -116,7 +117,7 @@ yarn report               # open the last HTML report (trace/screenshot/video pe
 ```
 
 **If the browser opens to a blank tab and just sits there:** that's not stuck — `--debug` always
-pauses *before the first action of a test* so you can inspect state before anything happens. Look
+pauses _before the first action of a test_ so you can inspect state before anything happens. Look
 for the separate **Playwright Inspector** window (not the browser tab) and click **Resume** (▶) or
 **Step over**. Reloading the browser tab yourself doesn't advance Playwright's own paused state —
 it just puts your manual navigation out of sync with what the script is about to do.
@@ -127,3 +128,27 @@ manual, `page.pause()`-gated login through on every single canary run. Run `yarn
 yourself whenever `.auth/user.json` is missing or stale; `test:canary`/`test:canary:debug` just load
 it. If that file doesn't exist, you'll get a clear `ENOENT` on that path — that's the signal to run
 `auth:capture`, not a bug.
+
+## The payload/schema canary
+
+The selector canary above only checks DOM shape. This checks the _network_ shapes
+`core/src/bot-block-hook.ts` depends on — the four surfaces it filters (`post-authentication`,
+`chat-data`, `messages`, and the live WebSocket) — against a manually-captured HAR file.
+
+```bash
+yarn check-har <path-to-har>
+```
+
+**Capturing a HAR:** DevTools → Network tab → turn on "Preserve log" → browse Sniffies normally
+(view the map, open a chat, send/receive a message) → right-click any request → "Save all as HAR
+with content". WebSocket frames are only included if "Preserve log" was on _before_ the WS connection
+was made, so do that first.
+
+**Never commit a captured HAR to the repo** — it contains another real session's private data
+(profile photos, messages, precise locations). Keep it outside the repo (e.g. `~/Downloads`) and
+point `check-har` at it from there. The script itself only ever prints field-presence booleans and
+array lengths, never raw content, so its own output is safe to share/paste.
+
+Run this whenever the bot-blocking feature's behavior seems off, or periodically as a sanity check —
+same non-gating, manual cadence as the selector canary. See `scripts/check-har-schema.mjs`'s header
+comment for exactly which field paths it checks and why.

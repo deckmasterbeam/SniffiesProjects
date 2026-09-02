@@ -142,6 +142,35 @@ describe("shouldFilterWebSocketFrame", () => {
     ).toBe(false);
   });
 
+  it("filters newConversation (new chat thread) when data.partialUser._id is blocked", () => {
+    expect(
+      shouldFilterWebSocketFrame(
+        JSON.stringify({
+          eventName: "newConversation",
+          data: {
+            conversation: { participants: "blocked1ok", author1: "blocked1" },
+            submittedMessage: { author: "blocked1" },
+            partialUser: { _id: "blocked1" },
+          },
+        }),
+        blocked,
+      ),
+    ).toBe(true);
+    expect(
+      shouldFilterWebSocketFrame(
+        JSON.stringify({
+          eventName: "newConversation",
+          data: {
+            conversation: { participants: "okok2", author1: "ok" },
+            submittedMessage: { author: "ok" },
+            partialUser: { _id: "ok" },
+          },
+        }),
+        blocked,
+      ),
+    ).toBe(false);
+  });
+
   it("passes through unknown event names, unparseable frames, and an empty blocklist", () => {
     expect(
       shouldFilterWebSocketFrame(
@@ -188,7 +217,7 @@ const makeMockWebSocketCtor = (): typeof WebSocket => {
     set onmessage(handler: ((ev: MessageEvent) => unknown) | null) {
       onmessageStore.set(this, handler);
     }
-    dispatchEvent(event: Event): boolean {
+    override dispatchEvent(event: Event): boolean {
       const result = super.dispatchEvent(event);
       if (event instanceof MessageEvent) {
         onmessageStore.get(this)?.(event);
@@ -280,6 +309,36 @@ describe("installBotBlockHook — WebSocket", () => {
     const okMsg = JSON.stringify({
       eventName: "newMsg",
       data: { message: { author: "ok", body: "hi" } },
+    });
+    socket.dispatchEvent(new MessageEvent("message", { data: blockedMsg }));
+    socket.dispatchEvent(new MessageEvent("message", { data: okMsg }));
+
+    expect(received).toEqual([JSON.parse(okMsg)]);
+  });
+
+  it("suppresses a live newConversation frame started by a blocked account", () => {
+    installBotBlockHook(() => state);
+    const socket = new window.WebSocket("wss://prod.ws.sniffies.com/?userId=me");
+    const received: unknown[] = [];
+    socket.addEventListener("message", (event) => {
+      received.push(JSON.parse((event as MessageEvent).data as string));
+    });
+
+    const blockedMsg = JSON.stringify({
+      eventName: "newConversation",
+      data: {
+        conversation: { participants: "blocked1me", author1: "blocked1" },
+        submittedMessage: { author: "blocked1", body: "spam" },
+        partialUser: { _id: "blocked1" },
+      },
+    });
+    const okMsg = JSON.stringify({
+      eventName: "newConversation",
+      data: {
+        conversation: { participants: "okme", author1: "ok" },
+        submittedMessage: { author: "ok", body: "hi" },
+        partialUser: { _id: "ok" },
+      },
     });
     socket.dispatchEvent(new MessageEvent("message", { data: blockedMsg }));
     socket.dispatchEvent(new MessageEvent("message", { data: okMsg }));

@@ -13,11 +13,15 @@
     <div id="map">
       <!-- Within the free radius: a normal click should open the profile
            panel and get the star/report injection. -->
-      <div data-testid="markerUserContainer" data-within-radius="true" id="aaaaaaaaaaaaaaaaaaaaaaaa">
+      <div
+        data-testid="markerUserContainer"
+        data-within-radius="true"
+        id="aaaaaaaaaaaaaaaaaaaaaaaa"
+      >
         <div
           data-testid="cv-marker-avatar-image"
           style="
-            background-image: url('https://cdn.sniffies.test/aaaaaaaaaaaaaaaaaaaaaaaa/photo.jpg');
+            background-image: url(&quot;https://cdn.sniffies.test/aaaaaaaaaaaaaaaaaaaaaaaa/photo.jpg&quot;);
             width: 40px;
             height: 40px;
           "
@@ -25,11 +29,15 @@
       </div>
       <!-- Outside the free radius: profile-border-hook should redirect
            straight to /profile/<id> instead of opening a panel. -->
-      <div data-testid="markerUserContainer" data-within-radius="false" id="bbbbbbbbbbbbbbbbbbbbbbbb">
+      <div
+        data-testid="markerUserContainer"
+        data-within-radius="false"
+        id="bbbbbbbbbbbbbbbbbbbbbbbb"
+      >
         <div
           data-testid="cv-marker-avatar-image"
           style="
-            background-image: url('https://cdn.sniffies.test/bbbbbbbbbbbbbbbbbbbbbbbb/photo.jpg');
+            background-image: url(&quot;https://cdn.sniffies.test/bbbbbbbbbbbbbbbbbbbbbbbb/photo.jpg&quot;);
             width: 40px;
             height: 40px;
           "

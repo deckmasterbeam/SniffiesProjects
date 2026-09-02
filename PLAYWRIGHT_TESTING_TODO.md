@@ -82,11 +82,23 @@ account.
       selector itself in `core/src/sniffies-selectors.ts` so it isn't re-broken by a future test.
       Also fixed a config bug found along the way: `canary`'s `dependencies: ["setup"]` forced the
       manual, `page.pause()`-gated login to re-run on every single invocation — removed.
-- [ ] **Payload/schema canary — not started.** Same idea for the network shapes in
-      `core/src/bot-block-hook.ts` (`nearbyVisitors.visitors[]._id`, `conversationData.conversations[]`,
-      the WS `eventName`/`data` shapes). Either capture real XHR/WS traffic from the same
-      authenticated session (via `page.route`/CDP) and assert field presence, or keep doing what's
-      already worked once — pull a fresh HAR by hand and run a small script against it.
+- [x] **Payload/schema canary — HAR-based, done.** `e2e/scripts/check-har-schema.mjs` — takes a
+      manually-captured HAR (never committed; contains real user data) and checks every field path
+      `core/src/bot-block-hook.ts` reads: `nearbyVisitors.visitors[]._id`, `partialVisitorData[]._id`,
+      `conversationData.conversations[]` (participants/author1/author2), `conversationData.userIds[]`,
+      `messages[].author`, `partialUsers[]._id`, and the 6 filtered WS event shapes. Run via
+      `yarn check-har <path-to-har>`. Validated against 7 real captures — all field-path checks
+      passed (no drift on any of the four known surfaces).
+  - **Real finding, found and fixed:** the live WS event `newConversation` (fires when a brand-new
+    conversation thread starts) carried `conversation.participants`/`.author1`,
+    `submittedMessage.author`, and `partialUser._id` — the same identity fields filtered everywhere
+    else — completely unfiltered. Same class of bug as the `newMsg` leak already found and fixed in
+    `TODO.md` §5c, just for a new thread's first message instead of an ongoing one. Fixed in
+    `parseWsFrame` (`core/src/bot-block-hook.ts`) and `check-har-schema.mjs` updated to expect and
+    validate it — see `TODO.md` §5d for the full writeup and tests. `globalChatMessageDeleted`/
+    `newGlobalMsg`/`activeVisitUpdated` also turned up unfiltered across captures but are the
+    already-documented out-of-scope place-visit/global-chat-wall surfaces (see `TODO.md` §5c's own
+    notes) — not new findings, not touched.
 - [x] Use a dedicated test account, not a personal one — Sniffies has its own anti-bot detection
       (the thing this whole feature filters around), and repeated automated visits risk getting a
       real account flagged.

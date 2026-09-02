@@ -72,7 +72,9 @@ describe("wireBotBlockForm", () => {
         onToggle: () => {},
         onToggleEnabled: vi.fn(),
       });
-      expect(el(container, "bot-block-count").textContent).toBe("3 bots blocked in the last 24 hours");
+      expect(el(container, "bot-block-count").textContent).toBe(
+        "3 bots blocked in the last 24 hours",
+      );
     });
 
     it("uses singular phrasing for a count of 1", () => {
@@ -84,7 +86,9 @@ describe("wireBotBlockForm", () => {
         onToggle: () => {},
         onToggleEnabled: vi.fn(),
       });
-      expect(el(container, "bot-block-count").textContent).toBe("1 bot blocked in the last 24 hours");
+      expect(el(container, "bot-block-count").textContent).toBe(
+        "1 bot blocked in the last 24 hours",
+      );
     });
 
     it("leaves the count empty when zero", () => {

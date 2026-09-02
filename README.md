@@ -10,6 +10,8 @@ A monorepo of tools to recreate and expand functionality for [sniffies.com](http
 
 - **Profile online notification service** *(In progress)* — Favorite profiles and receive an SMS when they come online.
 
+- **Bot reporting/blocking** — Flag a profile as a suspected bot from its profile screen; confirmed reports get hidden from the map, chat, and live updates for everyone with blocking enabled.
+
 ## Packages
 
 ### `client/` — Chrome Extension
@@ -37,9 +39,9 @@ A separate Chrome extension that runs alongside the client. It hooks into the Sn
 Location spoofing packaged as a userscript for the [Userscripts](https://apps.apple.com/us/app/userscripts/id1463298887) iOS app. Preferred path for iOS install, installs once and runs automatically on sniffies.com.
 
 
-**User Install:** Install the [Userscripts](https://apps.apple.com/us/app/userscripts/id1463298887) iOS app. Then TODO: set up release pipeline for userscript and put that info here
+**User Install:** Install the [Userscripts](https://apps.apple.com/us/app/userscripts/id1463298887) iOS app, then open the `dist/sniffies-tools.user.js` file from the most recent `userscript-*` entry on the [releases page](https://github.com/deckmasterbeam/SniffiesProjects/releases) directly in Safari (not as a downloaded file — see `userscript/README.md` for the exact URL and why that distinction matters) to trigger the install prompt.
 
-**Dev Install:** Build with `npm run build:prod`, then copy `dist/sniffies-tools.user.js` to **iCloud Drive → Userscripts**. See `userscript/README.md` for details.
+**Dev Install:** See `userscript/README.md` for build instructions.
 
 ---
 

@@ -48,8 +48,11 @@ Decisions locked in from discussion:
 
 - [x] `report.ts` — `POST` only:
   - `applyCors`, `requireFeatureFlag(res, "REPORTING_ENABLED")`, `requireClientAuth`, `requireDb`.
-  - Validate `reportType` against the enum allow-list, require `reportedUserId` + `reporterUserId` (Sniffies ids), trim + length-cap optional `message`.
-  - Look up `reporterUserId` in `blocked_reporters` **first**. If present: return `{ ok: true }` (200) and do nothing else — no insert, no log line that could leak into server logs/monitoring in a way that tips off the abuser.
+  - Validate `reportType` against the enum allow-list, require `reportedUserId` + `reporterUserId`
+    (Sniffies ids), trim + length-cap optional `message`.
+  - Look up `reporterUserId` in `blocked_reporters` **first**. If present: return `{ ok: true }`
+    (200) and do nothing else — no insert, no log line that could leak into server logs/monitoring
+    in a way that tips off the abuser.
   - Otherwise, upsert into `pending_reports`:
     ```sql
     INSERT INTO pending_reports (report_type, reported_user_id, reporting_user_ids, messages, report_count)
@@ -72,15 +75,25 @@ Decisions locked in from discussion:
       END,
       last_reported_at = NOW()
     ```
-    (First insert seeds `reporting_user_ids` with the single new reporter id, so `EXCLUDED.reporting_user_ids` is always just that one id — the dedupe check works whether the row is new or existing.)
-  - Same reporter reporting the same profile twice is a no-op (already covered by the `LIKE` dedupe check) rather than inflating the count.
+    (First insert seeds `reporting_user_ids` with the single new reporter id, so
+    `EXCLUDED.reporting_user_ids` is always just that one id — the dedupe check works whether the
+    row is new or existing.)
+  - Same reporter reporting the same profile twice is a no-op (already covered by the `LIKE` dedupe
+    check) rather than inflating the count.
 - [x] `blocked-bots.ts` — `GET` only:
   - `applyCors`, `requireClientAuth`, `requireDb`.
   - `SELECT reported_user_id FROM validated_reports`, return `{ ok: true, userIds: [...] }`.
 - [x] Add `REPORTING_ENABLED` to `server/.env.example`.
-- [x] Tests: `server/tests/report.test.ts` (including the blocked-reporter silent-drop path and the consolidation/dedupe path) and `server/tests/blocked-bots.test.ts`, mirroring `favorites.test.ts` / `watched-users.test.ts`. (25 new tests, 104 total passing.)
-- [x] Managing `blocked_reporters` and promoting `pending_reports` → `validated_reports` stays manual (direct DB access) — no admin UI in scope. Documented as a "Manual review workflow" section in `server/README.md`.
-  - Note: `blocked-bots.ts` is intentionally **not** gated behind `REPORTING_ENABLED` (per this TODO's own spec, which lists only `applyCors`/`requireClientAuth`/`requireDb` for it) — the client already gates fetching it behind the flag, and the endpoint itself has no abuse surface (read-only, no PII beyond ids already public on the map).
+- [x] Tests: `server/tests/report.test.ts` (including the blocked-reporter silent-drop path and the
+      consolidation/dedupe path) and `server/tests/blocked-bots.test.ts`, mirroring
+      `favorites.test.ts` / `watched-users.test.ts`. (25 new tests, 104 total passing.)
+- [x] Managing `blocked_reporters` and promoting `pending_reports` → `validated_reports` stays
+      manual (direct DB access) — no admin UI in scope. Documented as a "Manual review workflow"
+      section in `server/README.md`.
+  - Note: `blocked-bots.ts` is intentionally **not** gated behind `REPORTING_ENABLED` (per this
+    TODO's own spec, which lists only `applyCors`/`requireClientAuth`/`requireDb` for it) — the
+    client already gates fetching it behind the flag, and the endpoint itself has no abuse surface
+    (read-only, no PII beyond ids already public on the map).
 
 ## 3. Core (`core/src`) — done
 
@@ -287,7 +300,8 @@ Decisions locked in from discussion:
 This is the part of the feature with the most technical risk and the least existing precedent in
 the codebase, so treat it as a spike first, implementation second.
 
-- [x] **Investigate before building anything:** (findings from a HAR capture of page load + live session, 2026-08-31)
+- [x] **Investigate before building anything:** (findings from a HAR capture of page load + live
+      session, 2026-08-31)
   - Map init: `POST https://uswapi2.sniffies.com/api/post-authentication` — one large JSON response.
     User ids to filter live at `nearbyVisitors.visitors[]._id` (the map pins; each entry is
     `{ _id, data: { location, profile, ... }, initialTTLSeconds, distance, activeVisits }`), and
@@ -331,12 +345,22 @@ the codebase, so treat it as a spike first, implementation second.
     `shouldFilterWebSocketFrame`) are unit tested in `bot-block-hook.test.ts` (17 tests), including
     end-to-end instance-level XHR/WS filtering against mock constructors mirroring
     `user-id-hook.test.ts`'s pattern.
-- [x] `client/src/content/sniffies-bot-block-hook.ts` (MAIN world, `document_start`) — installs the hook, mirrors `sniffies-user-id-hook.ts`.
-- [x] `client/src/content/sniffies-bot-block-relay.ts` (isolated world, `document_start`) — reads `blockedBots` + `botBlockingEnabled` from storage, posts them to the MAIN-world hook on load and on `chrome.storage.onChanged`, mirrors `sniffies-geo-relay.ts`.
-- [x] Registered both in `client/manifest.json` alongside the existing MAIN/isolated pairs, and added both entry points to `client/scripts/build.mjs`'s `tsEntries`.
-- [x] Fragility noted in a header comment on both `core/src/bot-block-hook.ts` and `client/src/content/sniffies-bot-block-hook.ts` — not yet in a README.
-- [x] The pure filter/decision functions and the instance-level XHR/WS wiring have unit test coverage (above). What's still unverified: the hook's actual behavior against **live** Sniffies traffic — that needs manual testing in the browser (load the extension, report/add a test account to `blockedBots`, confirm it disappears from the map, chat list, and live WS updates) before shipping.
-- [x] **Real-world regression found and fixed** (from a second HAR capture, ~1hr after the first, while manually testing with `blockedBots` seeded via `chrome.storage.local`):
+- [x] `client/src/content/sniffies-bot-block-hook.ts` (MAIN world, `document_start`) — installs the
+      hook, mirrors `sniffies-user-id-hook.ts`.
+- [x] `client/src/content/sniffies-bot-block-relay.ts` (isolated world, `document_start`) — reads
+      `blockedBots` + `botBlockingEnabled` from storage, posts them to the MAIN-world hook on load
+      and on `chrome.storage.onChanged`, mirrors `sniffies-geo-relay.ts`.
+- [x] Registered both in `client/manifest.json` alongside the existing MAIN/isolated pairs, and
+      added both entry points to `client/scripts/build.mjs`'s `tsEntries`.
+- [x] Fragility noted in a header comment on both `core/src/bot-block-hook.ts` and
+      `client/src/content/sniffies-bot-block-hook.ts` — not yet in a README.
+- [x] The pure filter/decision functions and the instance-level XHR/WS wiring have unit test
+      coverage (above). What's still unverified: the hook's actual behavior against **live**
+      Sniffies traffic — that needs manual testing in the browser (load the extension, report/add a
+      test account to `blockedBots`, confirm it disappears from the map, chat list, and live WS
+      updates) before shipping.
+- [x] **Real-world regression found and fixed** (from a second HAR capture, ~1hr after the first,
+      while manually testing with `blockedBots` seeded via `chrome.storage.local`):
   - The blocked chat account was still showing up. Root cause: every `/api/*` call had moved hosts
     between the two captures — `uswapi2.sniffies.com` → `usw.api.sniffies.com` — and XHR matching
     was hardcoded to the first hostname, so `classifyXhrUrl` silently returned `null` for
@@ -424,6 +448,31 @@ Preserve Log on and DevTools open from before reload.
   - Tests: 3 new (`shouldFilterWebSocketFrame` for `newMsg` and `userRemoved`, plus one end-to-end
     `installBotBlockHook` test dispatching a `newMsg` MessageEvent through the WS instance).
 
+## 5d. New-conversation leak — found and fixed
+
+Found via the new `e2e/scripts/check-har-schema.mjs` payload/schema canary (see
+`PLAYWRIGHT_TESTING_TODO.md` §0b), run against 7 real HAR captures — not a user report this time,
+the tool caught it directly by census-ing every WS `eventName` seen and flagging ones our filter
+doesn't recognize.
+
+- [x] **Root cause: the `newConversation` WebSocket event was completely unfiltered.** Same class of
+  bug as the `newMsg` leak in §5c, just for the *first* message of a brand-new thread instead of one
+  in an existing conversation: `{"eventName":"newConversation","data":{"conversation":{_id,
+  participants,author1,...},"submittedMessage":{_id,author,body,conversationId,userIdFrom,userIdTo,
+  ...},"partialUser":{_id,data}}}`. `data.partialUser._id` is the counterpart's id (same shape as
+  `partialVisitorData`/`partialUsers` elsewhere) — used as the definitive id rather than parsing
+  `conversation.participants`/`.author1`, since it doesn't require knowing which side of the
+  conversation the blocked account is on.
+  - Fixed in `parseWsFrame` (`core/src/bot-block-hook.ts`): added `newConversation`, extracting
+    `data.partialUser._id`, alongside the existing event types.
+  - `check-har-schema.mjs` updated to expect `newConversation` and validate its shape too, instead of
+    flagging it as an unknown event — re-verified against the same 7 HAR captures, all passing.
+  - `activeVisitUpdated`/`globalChatMessageDeleted`/`newGlobalMsg` still turn up unfiltered across
+    captures — same already-noted-out-of-scope place-visit/global-chat-wall surfaces from §5c, not
+    new findings, not touched.
+  - Tests: 2 new (`shouldFilterWebSocketFrame` for `newConversation`, plus one end-to-end
+    `installBotBlockHook` test dispatching a `newConversation` MessageEvent through the WS instance).
+
 ## 6. Docs — done
 
 - [x] `server/README.md`: documents `REPORTING_ENABLED`, `POST /api/report`, `GET /api/blocked-bots`,
@@ -442,8 +491,8 @@ Preserve Log on and DevTools open from before reload.
   version painful to query.
 - Build an actual admin review UI for promoting `pending_reports` → `validated_reports` instead of
   manual DB access.
-- Harden abuse prevention beyond the manual `blocked_reporters` list — e.g. rate limiting, repeat-offender
-  auto-detection — if manual blocking turns out to be too slow to react.
+- Harden abuse prevention beyond the manual `blocked_reporters` list — e.g. rate limiting,
+  repeat-offender auto-detection — if manual blocking turns out to be too slow to react.
 - Background-driven (not page-load-triggered) refresh of the blocked-bots cache, so it stays fresh
   even without a Sniffies tab open. Same limitation in both consumers now, since the userscript
   mirror (`refreshBlockedBotsIfStale` in `userscript/src/report.ts`) copied the client's

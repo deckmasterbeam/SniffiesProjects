@@ -28,7 +28,9 @@ test("extension loads and injects on the fixture page", async ({ context, extens
   // sniffies-profile-id.ts does target.closest(MARKER_AVATAR_SELECTOR), which
   // only matches the image or its descendants, not an ancestor container.
   await page
-    .locator('[data-testid="markerUserContainer"][data-within-radius="true"] [data-testid="cv-marker-avatar-image"]')
+    .locator(
+      '[data-testid="markerUserContainer"][data-within-radius="true"] [data-testid="cv-marker-avatar-image"]',
+    )
     .click();
 
   const nameLabel = page.locator('[data-testid="cruiserNameLabel"]');
@@ -45,9 +47,7 @@ test("extension loads and injects on the fixture page", async ({ context, extens
   await expect(modalStatus).toHaveText("Reported. Thanks.", { timeout: 5_000 });
 });
 
-test("marker outside the free radius redirects instead of opening a panel", async ({
-  context,
-}) => {
+test("marker outside the free radius redirects instead of opening a panel", async ({ context }) => {
   // profile-border-hook.ts's handler bails immediately unless
   // settings.enabled — and DEFAULT_PROFILE_BORDER_OPEN.enabled is false, so
   // this has to be turned on explicitly. openInNewTab: false keeps the

@@ -6,8 +6,9 @@ import { createLogger, type Logger } from "./log.js";
 //   - POST .../api/post-authentication (map init)
 //   - GET  .../api/v2/post-authentication/chat-data (chat init)
 //   - GET  .../api/messages?conversationId=... (an opened chat thread)
-//   - wss://prod.ws.sniffies.com/ (live presence events, and live 1:1 chat
-//     messages via a "newMsg" frame — confirmed by HAR, see below)
+//   - wss://prod.ws.sniffies.com/ (live presence events, live 1:1 chat
+//     messages via a "newMsg" frame, and new conversation threads via a
+//     "newConversation" frame — confirmed by HAR, see below)
 // The API host itself isn't stable: a second capture, taken minutes after the
 // first, saw every /api/* call move from uswapi2.sniffies.com to
 // usw.api.sniffies.com — so XHR matching is done by *path* against any
@@ -231,6 +232,16 @@ const parseWsFrame = (raw: string): WsFrameInfo | null => {
     // request that never gets sent.
     const author = (obj.data as { message?: { author?: unknown } } | undefined)?.message?.author;
     return { eventName: obj.eventName, id: typeof author === "string" ? author : null };
+  }
+  if (obj.eventName === "newConversation") {
+    // Fires when a brand-new conversation thread starts — same leak as
+    // newMsg above, just for a first message instead of one in an existing
+    // thread. Confirmed via HAR: data.partialUser is the counterpart's
+    // lightweight profile, the same {_id, ...} shape as partialVisitorData/
+    // partialUsers elsewhere, so it's the definitive id regardless of
+    // whether the blocked account is data.conversation's author1 or author2.
+    const id = (obj.data as { partialUser?: { _id?: unknown } } | undefined)?.partialUser?._id;
+    return { eventName: obj.eventName, id: typeof id === "string" ? id : null };
   }
   return { eventName: obj.eventName, id: null };
 };

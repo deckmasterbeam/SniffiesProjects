@@ -45,9 +45,7 @@ export const installUserIdHook = (onUserId: (userId: string) => void): boolean =
       log("observed userId on WebSocket connect", userId);
       onUserId(userId);
     }
-    return protocols === undefined
-      ? new NativeWebSocket(url)
-      : new NativeWebSocket(url, protocols);
+    return protocols === undefined ? new NativeWebSocket(url) : new NativeWebSocket(url, protocols);
   } as unknown as PatchedWebSocketCtor;
 
   // TODO: I hate this

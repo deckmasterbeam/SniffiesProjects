@@ -14,9 +14,13 @@
     "test:userscript": "playwright test --project=userscript",
     "test:userscript:debug": "playwright test --project=userscript --debug",
     "test:all": "playwright test --project=canary --project=extension --project=userscript",
-    "report": "playwright show-report"
+    "report": "playwright show-report",
+    "check-har": "node scripts/check-har-schema.mjs",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "devDependencies": {
+    "prettier": "^3.8.3",
     "@playwright/test": "^1.48.0",
     "@types/chrome": "^0.2.8",
     "@types/node": "^26.4.1",

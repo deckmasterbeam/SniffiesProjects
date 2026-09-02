@@ -28,7 +28,8 @@ export const wireBotBlockForm = (container: Element, options: BotBlockFormContra
   }
 
   enabledCheckbox.checked = options.initialEnabled;
-  hintEl.textContent = "Hide profiles that have been confirmed as bots from the map and live updates.";
+  hintEl.textContent =
+    "Hide profiles that have been confirmed as bots from the map and live updates.";
   countEl.textContent =
     options.initialCount > 0
       ? `${options.initialCount} bot${options.initialCount === 1 ? "" : "s"} blocked in the last 24 hours`

@@ -17,7 +17,8 @@ interface SelectorMeta {
 
 const SELECTOR_METADATA: Record<SniffiesSelectorName, SelectorMeta> = {
   MARKER_CONTAINER_SELECTOR: {
-    description: "Marker container carrying data-within-radius, used by the profile-border redirect",
+    description:
+      "Marker container carrying data-within-radius, used by the profile-border redirect",
     source: "core/src/profile-border-hook.ts",
   },
   MARKER_AVATAR_SELECTOR: {
