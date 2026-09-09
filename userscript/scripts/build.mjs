@@ -40,7 +40,7 @@ const buildLocation = process.env.GITHUB_ACTIONS === "true" ? "remote" : "local"
 
 const METADATA = `\
 // ==UserScript==
-// @name         Sniffies Tools Userscript
+// @name         (dev) Sniffies Tools Userscript
 // @namespace    https://sniffies.com
 // @author       Beam
 // @version      ${pkg.version}
@@ -79,6 +79,7 @@ const buildOptions = {
     __SERVER_BASE__: JSON.stringify(process.env.SERVER_BASE ?? ""),
     __CLIENT_SECRET__: JSON.stringify(process.env.CLIENT_SECRET ?? ""),
     __VERSION__: JSON.stringify(pkg.version),
+    __REPORTING_ENABLED__: String(!prod && process.env.REPORTING_ENABLED !== "false"),
   },
 };
 

@@ -29,7 +29,7 @@ jobs:
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
 
       - name: Zip dist
-        run: zip -r sniffies-chrome.zip dist/
+        run: cd dist && zip -r ../sniffies-chrome.zip . && cd ..
         working-directory: client
 
       - name: Publish release

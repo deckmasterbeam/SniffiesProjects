@@ -4,35 +4,46 @@
 // build script; this file contains only the runtime logic.
 
 import {
-  installGeoHook,
-  type GeoOverride,
-  DEFAULT_GEO_OVERRIDE,
-  GEO_OVERRIDE_HTML,
-  GEO_OVERRIDE_CSS,
-  wireGeoOverrideForm,
-  VERSION_BADGE_CSS,
-  wireVersionBadge,
-  installProfileBorderRedirect,
-  type ProfileBorderOpen,
-  DEFAULT_PROFILE_BORDER_OPEN,
-  PROFILE_BORDER_HTML,
-  PROFILE_BORDER_CSS,
-  wireProfileBorderForm,
+  BOT_BLOCK_CSS,
+  BOT_BLOCK_HTML,
+  countDistinctBlockedBotsLast24h,
   createLogger,
-  UPDATE_BANNER_HTML,
+  DEFAULT_GEO_OVERRIDE,
+  DEFAULT_PROFILE_BORDER_OPEN,
+  GEO_OVERRIDE_CSS,
+  GEO_OVERRIDE_HTML,
+  installGeoHook,
+  installProfileBorderRedirect,
+  PROFILE_BORDER_CSS,
+  PROFILE_BORDER_HTML,
+  SITELINKS_NAV_SELECTOR,
   UPDATE_BANNER_CSS,
+  UPDATE_BANNER_HTML,
+  VERSION_BADGE_CSS,
+  wireBotBlockForm,
+  wireGeoOverrideForm,
+  wireProfileBorderForm,
   wireUpdateBanner,
+  wireVersionBadge,
+  type GeoOverride,
+  type ProfileBorderOpen,
 } from "@sniffies-projects/core";
 import PANEL_CSS from "./panel.css";
 import PANEL_HTML from "./panel.html";
+import { installReportFeature, refreshBlockedBotsIfStale, type ReportFeatureState } from "./report.js";
+import { REPORTING_ENABLED, VERSION } from "./shared/env.js";
 import {
+  getBlockedBotEventsByDay,
+  getBotBlockingEnabled,
+  getBotBlockingSectionOpen,
   getGeoOverride,
-  setGeoOverride,
   getProfileBorderOpen,
+  setBotBlockingEnabled,
+  setBotBlockingSectionOpen,
+  setGeoOverride,
   setProfileBorderOpen,
 } from "./shared/settings.js";
 import { installUserIdLogging } from "./user-id-logger.js";
-import { VERSION } from "./shared/env.js";
 
 const log = createLogger("tools");
 
@@ -46,7 +57,7 @@ declare global {
 
 const mountFab = (fab: HTMLButtonElement): void => {
   const tryInsert = (): boolean => {
-    const navTarget = document.querySelector<HTMLElement>('[title="Sitelinks"]');
+    const navTarget = document.querySelector<HTMLElement>(SITELINKS_NAV_SELECTOR);
     if (navTarget?.parentElement) {
       navTarget.parentElement.insertBefore(fab, navTarget.nextSibling);
       return true;
@@ -71,10 +82,15 @@ interface HookState {
   sendLocationUpdate: (override: GeoOverride) => void;
   currentProfileBorderOpen: ProfileBorderOpen;
   updateProfileBorderOpen: (next: ProfileBorderOpen) => void;
+  reportState: ReportFeatureState;
 }
 
 function installHooks(): HookState {
-  installUserIdLogging();
+  const reportState = installReportFeature();
+  installUserIdLogging((userId) => {
+    reportState.currentSniffiesUserId = userId;
+  });
+  refreshBlockedBotsIfStale(reportState);
 
   let currentOverride: GeoOverride = getGeoOverride();
   const hook = installGeoHook(() => currentOverride);
@@ -160,6 +176,7 @@ function installHooks(): HookState {
     sendLocationUpdate,
     currentProfileBorderOpen,
     updateProfileBorderOpen,
+    reportState,
   };
 }
 
@@ -178,6 +195,10 @@ export function mountUI(state: HookState | null): void {
   const currentProfileBorderOpen = state?.currentProfileBorderOpen ?? {
     ...DEFAULT_PROFILE_BORDER_OPEN,
   };
+  const reportState = state?.reportState ?? {
+    currentSniffiesUserId: "",
+    botBlockState: { blockedIds: new Set<string>(), enabled: true },
+  };
 
   const shellStyle = document.createElement("style");
   shellStyle.textContent = PANEL_CSS;
@@ -190,6 +211,10 @@ export function mountUI(state: HookState | null): void {
   const profileBorderStyle = document.createElement("style");
   profileBorderStyle.textContent = PROFILE_BORDER_CSS;
   document.head.appendChild(profileBorderStyle);
+
+  const botBlockStyle = document.createElement("style");
+  botBlockStyle.textContent = BOT_BLOCK_CSS;
+  document.head.appendChild(botBlockStyle);
 
   const versionStyle = document.createElement("style");
   versionStyle.textContent = VERSION_BADGE_CSS;
@@ -246,6 +271,21 @@ export function mountUI(state: HookState | null): void {
     },
     initialOpen: false,
     onToggle: () => {},
+  });
+
+  const botBlockRoot = panel.querySelector<HTMLElement>("#snp-bot-block-root")!;
+  botBlockRoot.innerHTML = BOT_BLOCK_HTML;
+
+  wireBotBlockForm(botBlockRoot, {
+    reportingEnabled: REPORTING_ENABLED,
+    initialEnabled: getBotBlockingEnabled(),
+    initialCount: countDistinctBlockedBotsLast24h(getBlockedBotEventsByDay()),
+    initialOpen: getBotBlockingSectionOpen(),
+    onToggle: setBotBlockingSectionOpen,
+    onToggleEnabled: (enabled) => {
+      setBotBlockingEnabled(enabled);
+      reportState.botBlockState = { ...reportState.botBlockState, enabled };
+    },
   });
 
   const closeBtn = panel.querySelector<HTMLButtonElement>("#snp-close")!;

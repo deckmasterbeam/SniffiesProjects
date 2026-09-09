@@ -239,8 +239,29 @@ describe("wireGeoOverrideForm", () => {
       capturedSuccess!({
         coords: { latitude: 51.5, longitude: -0.1, accuracy: 10 },
       } as GeolocationPosition);
-      expect(onSave).not.toHaveBeenCalled();
+      // Disabling saved once immediately (enabled: false, stale coords); the
+      // late position response must not trigger a second save.
+      expect(onSave).toHaveBeenCalledOnce();
       expect(el<HTMLInputElement>(container, "geo-lat").value).toBe("47.6"); // unchanged
+    });
+
+    it("persists enabled: false immediately, before the position fetch resolves", () => {
+      const onSave = vi.fn();
+      const getNativePosition = vi.fn(() => {
+        // never calls success/error — simulates a stalled permission prompt
+        // or a popup closed before geolocation responds.
+      });
+      wireGeoOverrideForm(container, {
+        initial: ENABLED,
+        onSave,
+        getNativePosition,
+        initialOpen: false,
+        onToggle: () => {},
+      });
+      const checkbox = el<HTMLInputElement>(container, "geo-enabled");
+      checkbox.checked = false;
+      change(checkbox);
+      expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ enabled: false }));
     });
 
     it("shows 'Saved.' after real location is fetched and saved on uncheck", async () => {

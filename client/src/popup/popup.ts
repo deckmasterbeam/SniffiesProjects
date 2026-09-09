@@ -1,31 +1,36 @@
 import {
+  BOT_BLOCK_CSS,
+  BOT_BLOCK_HTML,
+  countDistinctBlockedBotsLast24h,
+  createLogger,
   DEFAULT_GEO_OVERRIDE,
   DEFAULT_PROFILE_BORDER_OPEN,
   GEO_OVERRIDE_CSS,
   GEO_OVERRIDE_HTML,
   PROFILE_BORDER_CSS,
   PROFILE_BORDER_HTML,
-  wireGeoOverrideForm,
-  VERSION_BADGE_CSS,
-  wireVersionBadge,
-  wireProfileBorderForm,
-  createLogger,
-  UPDATE_BANNER_HTML,
   UPDATE_BANNER_CSS,
+  UPDATE_BANNER_HTML,
+  VERSION_BADGE_CSS,
+  wireBotBlockForm,
+  wireGeoOverrideForm,
+  wireProfileBorderForm,
   wireUpdateBanner,
+  wireVersionBadge,
 } from "@sniffies-projects/core";
-import { FAVORITES_NOTIFICATIONS_ENABLED } from "../shared/env.js";
+import { FAVORITES_NOTIFICATIONS_ENABLED, REPORTING_ENABLED } from "../shared/env.js";
 import {
-  SETTINGS_KEYS,
   getLocalSettings,
+  setBotBlockingEnabled,
   setFavoritesEnabled,
   setGeoOverride,
   setProfileBorderOpen,
+  SETTINGS_KEYS,
 } from "../shared/settings.js";
 
 const log = createLogger("popup");
 
-// Inject geo form, profile border form, and version badge styles from core
+// Inject geo form, profile border form, bot-block form, and version badge styles from core
 const geoStyle = document.createElement("style");
 geoStyle.textContent = GEO_OVERRIDE_CSS;
 document.head.appendChild(geoStyle);
@@ -33,6 +38,10 @@ document.head.appendChild(geoStyle);
 const profileBorderStyle = document.createElement("style");
 profileBorderStyle.textContent = PROFILE_BORDER_CSS;
 document.head.appendChild(profileBorderStyle);
+
+const botBlockStyle = document.createElement("style");
+botBlockStyle.textContent = BOT_BLOCK_CSS;
+document.head.appendChild(botBlockStyle);
 
 const versionStyle = document.createElement("style");
 versionStyle.textContent = VERSION_BADGE_CSS;
@@ -104,6 +113,20 @@ const init = async (): Promise<void> => {
   } else {
     favoritesEnabledCheckbox.checked = settings.favoritesEnabled;
   }
+
+  // Bot blocking form — inject HTML from core and wire up logic
+  const botBlockRoot = document.getElementById("snp-bot-block-root")!;
+  botBlockRoot.innerHTML = BOT_BLOCK_HTML;
+  wireBotBlockForm(botBlockRoot, {
+    reportingEnabled: REPORTING_ENABLED,
+    initialEnabled: settings.botBlockingEnabled,
+    initialCount: countDistinctBlockedBotsLast24h(settings.blockedBotEventsByDay),
+    initialOpen: settings.botBlockingSectionOpen,
+    onToggle: (open) => {
+      void chrome.storage.local.set({ [SETTINGS_KEYS.botBlockingSectionOpen]: open });
+    },
+    onToggleEnabled: setBotBlockingEnabled,
+  });
 };
 
 // ── Event listeners ───────────────────────────────────────────────────────────

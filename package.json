@@ -3,6 +3,8 @@
   "scripts": {
     "build": "node scripts/build.mjs",
     "test": "node scripts/test-all.mjs",
+    "install:all": "node scripts/install-all.mjs",
+    "audit:all": "node scripts/audit-all.mjs",
     "db:check": "yarn --cwd server db:check"
   }
 }
