@@ -23,19 +23,19 @@ const SELECTOR_METADATA: Record<SniffiesSelectorName, SelectorMeta> = {
   },
   MARKER_AVATAR_SELECTOR: {
     description: "Map marker avatar image — click target that resolves a profile's user id",
-    source: "client/src/content/sniffies-profile-id.ts",
+    source: "core/src/report-button-hook.ts",
   },
   APP_SCREEN_SELECTOR: {
     description: "Profile panel root, hosts the name label and pin button",
-    source: "client/src/content/sniffies-profile-id.ts",
+    source: "core/src/report-button-hook.ts, client/src/content/sniffies-profile-id.ts",
   },
   NAME_LABEL_SELECTOR: {
     description: "Cruiser name label inside the open profile panel",
-    source: "client/src/content/sniffies-profile-id.ts",
+    source: "core/src/report-button-hook.ts, client/src/content/sniffies-profile-id.ts",
   },
   PIN_BUTTON_SELECTOR: {
     description: "Pin-user button — the report button is anchored to its parent",
-    source: "client/src/content/sniffies-profile-id.ts",
+    source: "core/src/report-button-hook.ts",
   },
   SITELINKS_NAV_SELECTOR: {
     description: "Sidebar nav link used as the FAB's mount anchor (userscript/bookmarklet only)",

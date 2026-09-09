@@ -598,4 +598,38 @@ describe("installBotBlockHook — XHR", () => {
     expect(onFiltered).toHaveBeenCalledTimes(1);
     expect(onFiltered).toHaveBeenCalledWith(["blocked1"]);
   });
+
+  it("does not JSON.parse the response body when disabled (nothing to filter)", () => {
+    const parseSpy = vi.spyOn(JSON, "parse");
+    installBotBlockHook(() => ({ blockedIds: new Set(["blocked1"]), enabled: false }));
+    const xhr = new window.XMLHttpRequest() as XMLHttpRequest & {
+      __setRawResponse: (t: string) => void;
+    };
+    xhr.open("POST", "https://uswapi2.sniffies.com/api/post-authentication");
+    const raw = JSON.stringify({ nearbyVisitors: { visitors: [{ _id: "blocked1" }] } });
+    xhr.__setRawResponse(raw);
+    parseSpy.mockClear(); // ignore the JSON.stringify/parse round trip used to build `raw` above
+    xhr.send();
+
+    expect(xhr.responseText).toBe(raw);
+    expect(parseSpy).not.toHaveBeenCalled();
+    parseSpy.mockRestore();
+  });
+
+  it("does not JSON.parse the response body when the blocklist is empty", () => {
+    const parseSpy = vi.spyOn(JSON, "parse");
+    installBotBlockHook(() => ({ blockedIds: new Set(), enabled: true }));
+    const xhr = new window.XMLHttpRequest() as XMLHttpRequest & {
+      __setRawResponse: (t: string) => void;
+    };
+    xhr.open("POST", "https://uswapi2.sniffies.com/api/post-authentication");
+    const raw = JSON.stringify({ nearbyVisitors: { visitors: [{ _id: "blocked1" }] } });
+    xhr.__setRawResponse(raw);
+    parseSpy.mockClear();
+    xhr.send();
+
+    expect(xhr.responseText).toBe(raw);
+    expect(parseSpy).not.toHaveBeenCalled();
+    parseSpy.mockRestore();
+  });
 });

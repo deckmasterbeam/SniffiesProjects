@@ -482,6 +482,133 @@ doesn't recognize.
       usage (the 🚩 button and the panel's "Block Bot Accounts" toggle) as of the userscript mirror
       work above.
 
+## 7. Code review follow-ups (PR #17) — done
+
+Findings from a review pass over this PR's diff. Ranked most-severe first within each group.
+
+### Correctness — done
+
+- [x] `server/api/report.ts` (~line 47-57): validate `reportedUserId`/`reporterUserId` against
+      `SNIFFIES_USER_ID_REGEX` (`core/src/settings.ts`) instead of only checking non-empty.
+      `CLIENT_SECRET` is baked into the public extension/userscript bundle (not a real per-user
+      secret — see `server/api/_shared.ts`), so today anyone can POST fabricated `reporterUserId`
+      values straight to the endpoint and inflate `report_count`/`reporting_user_ids` for any
+      target without any real distinct reporters involved, making report-brigading trivial.
+      Fixed: added the regex check (`server/api/report.ts`), which as a side effect also closes the
+      LIKE-pattern injection below (hex-only ids can't contain `,`/`%`/`_`). Deeper abuse hardening
+      (rate limiting, repeat-offender detection) is still explicitly out of scope — see Future TODO.
+      Tests: 2 new in `server/tests/report.test.ts`.
+- [x] `server/api/report.ts` (~line 80): the dedupe `LIKE` pattern
+      (`(',' || reporting_user_ids || ',') LIKE ('%,' || EXCLUDED.reporting_user_ids || ',%')`) is
+      built from the raw, unescaped `reporterUserId`. A comma in the id corrupts the
+      comma-delimited list (breaks a later legitimate report from the split-off id); a `%` turns it
+      into a wildcard that spuriously matches existing lists. Fixed by the regex validation above —
+      not touching the `TEXT`/comma-list schema itself given the migration script only supports
+      idempotent `CREATE TABLE IF NOT EXISTS` statements (see `scripts/migrate.mjs`'s header
+      comment); a column-type change would need real `ALTER TABLE` migration support this repo
+      doesn't have yet, so left as-is rather than risking a one-way schema change for a stylistic win.
+- [x] `core/src/report-ui.ts` (`wireReportModal`, ~line 62-74): the submit handler has no
+      request-generation guard, but `ensureReportModal()` in both `client/src/content/
+      sniffies-profile-id.ts` and `userscript/src/report.ts` memoizes one shared modal instance
+      reused across every profile. Submit for profile A, cancel before the fetch resolves, open the
+      modal for profile B — A's stale response then closes/clears B's modal with a false "Reported.
+      Thanks." Fixed: `wireReportModal` now bumps a `generation` counter on every `open()` and
+      ignores a stale `.then()`/`.catch()` whose generation has moved on. Tests: 2 new in
+      `core/src/report-ui.test.ts`.
+- [x] `core/src/geo-override-ui.ts` (~line 99-114): unchecking "spoof location" used to call
+      `commitSave()` synchronously before also fetching the real position; that immediate save was
+      dropped, so disabling now only persists once the async geolocation call resolves (success or
+      the ~10s timeout). Closing the popup in that window leaves spoofing enabled in storage even
+      though the UI showed it unchecked. Fixed: restored the immediate `commitSave()` call before
+      `fillWithCurrentPosition`. Found in the process: `geo-override-ui.test.ts`'s "cancels pending
+      location fetch when re-enabled" test predates this PR and was already asserting the wrong
+      thing (`onSave` never called) — confirmed it already failed against `origin/main`'s version of
+      the source too, so it wasn't this PR's regression, just a stale assertion. Corrected it to
+      expect one call (the immediate disable-time save) and no second call from the aborted late
+      response, and added a new test for the actual bug (save fires even if the position fetch never
+      resolves).
+- [x] `client/src/shared/settings.ts` (`recordBlockedBotEvent`, ~line 54): non-atomic
+      read-modify-write against `chrome.storage.local` (get → compute → set). `onFiltered` can fire
+      more than once in quick succession (e.g. map-init and chat-init responses resolving close
+      together), and concurrent calls race — last write wins, silently dropping ids from that day's
+      blocked-bot log that feeds the popup's "N blocked in the last 24h" stat. Fixed by chaining
+      calls through a module-level promise so each call's read waits for the previous call's write.
+      New test file `client/src/shared/settings.test.ts` (this module had no test coverage before);
+      confirmed the added "merges ids from overlapping concurrent calls" test actually fails against
+      the pre-fix code (lost update reproduced) before verifying it passes against the fix.
+
+### Reuse / architecture — done
+
+- [x] `userscript/src/report.ts` vs `client/src/content/sniffies-profile-id.ts`: ~250 lines of
+      report-button DOM injection (id extraction, button building, the panel-switch race handling
+      via a generation counter, `MutationObserver` + retry scheduling) is duplicated near-verbatim
+      instead of living in `core/`, unlike every other hook in this feature (`installBotBlockHook`,
+      `installGeoHook`, `installProfileBorderRedirect` all live in core and are thinly wired by each
+      consumer). The panel-switch race fix documented in §4 above lives in two files with no shared
+      test coverage — a future timing fix applied to one and forgotten in the other silently
+      reintroduces the mis-attributed-report-button bug in only one client. Fixed: extracted
+      `installReportButtonInjection` into new `core/src/report-button-hook.ts` — id extraction
+      (`extractUserIdFromUrl`/`extractUserIdFromProfilePath`/marker parsing), the report modal
+      wiring (`ensureReportModal`/`submitReport`), the button itself, and the full panel-switch
+      race/retry/deep-link/no-photo machinery now live in exactly one place. The one real
+      difference (the client's favorites star, which shares the same panel-resolution/retry
+      machinery independent of `REPORTING_ENABLED`) is handled via two callbacks:
+      `onProfileResolved(screen, userId)` (fires whenever the current panel is (re-)resolved, so a
+      consumer can inject additional per-profile UI into it) and `onMarkerClick(marker, selection)`
+      (fires on every marker click with the already-parsed `{userId, profilePicUrl}`, so a consumer
+      can use data the shared hook itself doesn't need — the client uses `profilePicUrl` for the
+      favorite payload). `client/src/content/sniffies-profile-id.ts` now only keeps the
+      favorites-specific code (`buildInjection`/star, `injectIntoNameLabel`, `fetchFavorites`);
+      `userscript/src/report.ts` is now a thin `installReportFeature`/`refreshBlockedBotsIfStale`
+      wrapper around the core hook and `installBotBlockHook`.
+  - Same root cause, smaller scope: `fetchBlockedBots`/`refreshBlockedBotsIfStale` (the 24h
+    staleness check + `GET /api/blocked-bots` fetch) is also duplicated line-for-line between the
+    two files, differing only in the storage backend (`chrome.storage` vs the userscript's local
+    state). Fixed: folded into the same core module as `fetchBlockedBots`/`refreshBlockedBotsIfStale`,
+    parameterized by an `onResult(userIds, fetchedAt)` callback — the client's callback just calls
+    `setBlockedBots`; the userscript's also updates its in-memory `ReportFeatureState.botBlockState`
+    (its bot-block hook has no separate relay to pick up a storage write, unlike the client).
+  - Verification: full monorepo unit suite (`node scripts/test-all.mjs`, 329 tests across core/
+    client/bookmarklet/userscript/server) passes; `yarn typecheck` and `yarn build` pass in both
+    `client/` and `userscript/`; and — since this is exactly the DOM-injection code path noted
+    throughout this TODO as having no unit coverage and needing manual verification — ran the real
+    Playwright e2e suites against the actual built extension and userscript
+    (`e2e/tests/extension/smoke.spec.ts`, `e2e/tests/userscript/smoke.spec.ts`, both marker-click →
+    report-button-injection and the profile-border redirect), all 4 passing.
+
+### Simplification / efficiency — done
+
+- [x] `core/src/bot-block-hook.ts` (`collectBlockedIdsPresent` + `applyFilter`, ~line 147-197 /
+      352-357): every filtered response is traversed twice — once to find which blocked ids are
+      present (for the log line), once to actually remove them — with the three payload shapes'
+      structure duplicated across both functions. Fixed: kept the `filter*Payload` functions'
+      existing return shape (still just the filtered payload — they're part of core's public API
+      and their tests assert on that return value directly) but gave `filterById` and the three
+      `filter*Payload` functions an optional `removed?: Set<string>` accumulator they populate as
+      they filter, in the same pass. `installXhrFilter` now calls `applyFilter` once with a fresh
+      `Set`, and `collectBlockedIdsPresent` is deleted entirely. Tests: existing 30
+      `bot-block-hook.test.ts` cases unaffected (the optional param defaults to unused).
+- [ ] `server/schema.sql` (`pending_reports.reporting_user_ids`) + `server/api/report.ts` (~line
+      79-93): the reporter set is a comma-joined `TEXT` column with the same LIKE-based
+      "already reported?" check repeated across three independent `CASE` branches
+      (`reporting_user_ids`/`messages`/`report_count`), and `report_count` is a separate counter
+      that's fully derivable from `reporting_user_ids`. Not done: the LIKE-injection half of this
+      (a comma/`%`/`_` in `reporterUserId` corrupting the check) is already closed by the id-format
+      validation added above, since a validated 24-char hex id structurally can't contain those
+      characters — so the remaining ask here is purely stylistic (a `TEXT[]` column instead of
+      triplicated `CASE` branches), and `scripts/migrate.mjs` only supports idempotent
+      `CREATE TABLE IF NOT EXISTS` statements re-run on every deploy, not `ALTER TABLE` column-type
+      changes — doing this safely needs real migration tooling this repo doesn't have yet. Left as a
+      style-only cleanup, not worth a one-way schema change to chase.
+- [x] `core/src/bot-block-hook.ts` (~line 328-365, the XHR `send` patch): `JSON.parse` of text-mode
+      response bodies runs unconditionally to compute the cached `json` value, even though the
+      filtering step that uses it is gated behind `state.enabled && state.blockedIds.size > 0`.
+      When bot-blocking is disabled or the blocklist is empty, every intercepted response still
+      pays a parse it wouldn't otherwise incur, for a result that's immediately discarded. Fixed:
+      the parse (and the filter pass) are now both gated on a single `shouldFilter` check computed
+      up front. Tests: 2 new, spying on `JSON.parse` to confirm it's not called when disabled or
+      when the blocklist is empty.
+
 ---
 
 ## Future TODO (explicitly out of scope for now)

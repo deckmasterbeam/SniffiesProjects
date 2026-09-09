@@ -40,7 +40,7 @@ const buildLocation = process.env.GITHUB_ACTIONS === "true" ? "remote" : "local"
 
 const METADATA = `\
 // ==UserScript==
-// @name         Sniffies Tools Userscript
+// @name         (dev) Sniffies Tools Userscript
 // @namespace    https://sniffies.com
 // @author       Beam
 // @version      ${pkg.version}

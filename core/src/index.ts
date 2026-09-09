@@ -21,6 +21,12 @@ export type { GeoOverrideFormContract } from "./geo-override-form-contract.js";
 export { REPORT_MODAL_HTML, REPORT_MODAL_CSS, wireReportModal } from "./report-ui.js";
 export type { ReportFormContract } from "./report-form-contract.js";
 export type { ReportModalHandle } from "./report-ui.js";
+export type { MarkerSelection, ReportButtonInjectionOptions } from "./report-button-hook.js";
+export {
+  installReportButtonInjection,
+  fetchBlockedBots,
+  refreshBlockedBotsIfStale,
+} from "./report-button-hook.js";
 export {
   PROFILE_BORDER_HTML,
   PROFILE_BORDER_CSS,

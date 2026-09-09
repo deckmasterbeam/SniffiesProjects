@@ -106,6 +106,11 @@ export const wireGeoOverrideForm = (container: Element, options: GeoOverrideForm
         setStatus("");
       }
     } else {
+      // Persist enabled: false immediately, independent of the position
+      // fetch below — that fetch can take up to 10s (or hang on a stalled
+      // permission prompt), and closing the popup before it resolves must
+      // not leave the previous enabled: true state persisted.
+      void commitSave();
       fillWithCurrentPosition(
         () => void commitSave(),
         () => void commitSave(),

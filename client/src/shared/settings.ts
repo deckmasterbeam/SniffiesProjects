@@ -51,8 +51,18 @@ export const setBotBlockingEnabled = async (enabled: boolean): Promise<void> => 
   await chrome.storage.local.set({ [SETTINGS_KEYS.botBlockingEnabled]: enabled });
 };
 
-export const recordBlockedBotEvent = async (ids: string[]): Promise<void> => {
-  const { blockedBotEventsByDay } = await getLocalSettings();
-  const next = recordBlockedBotIds(blockedBotEventsByDay, ids);
-  await chrome.storage.local.set({ [SETTINGS_KEYS.blockedBotEventsByDay]: next });
+// Chains calls so concurrent invocations (bot-block filtering can fire
+// onFiltered more than once in quick succession) don't race on the
+// read-modify-write against chrome.storage.local — each call's read only
+// starts once the previous call's write has finished.
+let recordBlockedBotEventChain: Promise<void> = Promise.resolve();
+
+export const recordBlockedBotEvent = (ids: string[]): Promise<void> => {
+  const result = recordBlockedBotEventChain.then(async () => {
+    const { blockedBotEventsByDay } = await getLocalSettings();
+    const next = recordBlockedBotIds(blockedBotEventsByDay, ids);
+    await chrome.storage.local.set({ [SETTINGS_KEYS.blockedBotEventsByDay]: next });
+  });
+  recordBlockedBotEventChain = result.catch(() => {});
+  return result;
 };

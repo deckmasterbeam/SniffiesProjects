@@ -149,6 +149,26 @@ describe("validation", () => {
     expect(status).toBe(400);
     expect(body.error).toBe("reportedUserId_and_reporterUserId_required");
   });
+
+  it("returns 400 when reportedUserId is not a 24-char hex id", async () => {
+    const { status, body } = await callPost({
+      reportType: "bot_suspected",
+      reportedUserId: "not-a-valid-id",
+      reporterUserId: REPORTER_USER_ID,
+    });
+    expect(status).toBe(400);
+    expect(body.error).toBe("invalid_user_id");
+  });
+
+  it("returns 400 when reporterUserId is not a 24-char hex id", async () => {
+    const { status, body } = await callPost({
+      reportType: "bot_suspected",
+      reportedUserId: REPORTED_USER_ID,
+      reporterUserId: "x,y",
+    });
+    expect(status).toBe(400);
+    expect(body.error).toBe("invalid_user_id");
+  });
 });
 
 describe("blocked reporter", () => {

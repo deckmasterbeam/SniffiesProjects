@@ -134,5 +134,54 @@ describe("wireReportModal", () => {
       });
       expect(el<HTMLButtonElement>(container, "snp-report-submit").disabled).toBe(false);
     });
+
+    it("ignores a stale submit's success after the modal was reopened for a new target", async () => {
+      let resolveFirst: () => void = () => {};
+      const onSubmit = vi
+        .fn()
+        .mockImplementationOnce(() => new Promise<void>((resolve) => (resolveFirst = resolve)))
+        .mockImplementationOnce(() => new Promise<void>(() => {}));
+      const handle = wireReportModal(container, { onSubmit });
+
+      handle.open();
+      click(el(container, "snp-report-submit"));
+
+      handle.open();
+      el<HTMLTextAreaElement>(container, "snp-report-message").value = "second profile's report";
+
+      resolveFirst();
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(el(container, "snp-report-status").textContent).not.toBe("Reported. Thanks.");
+      expect(el<HTMLTextAreaElement>(container, "snp-report-message").value).toBe(
+        "second profile's report",
+      );
+      expect(el(container, "snp-report-backdrop").style.display).toBe("flex");
+    });
+
+    it("ignores a stale submit's failure after the modal was reopened for a new target", async () => {
+      let rejectFirst: () => void = () => {};
+      const onSubmit = vi
+        .fn()
+        .mockImplementationOnce(
+          () => new Promise<void>((_, reject) => (rejectFirst = () => reject(new Error("network")))),
+        )
+        .mockImplementationOnce(() => new Promise<void>(() => {}));
+      const handle = wireReportModal(container, { onSubmit });
+
+      handle.open();
+      click(el(container, "snp-report-submit"));
+
+      handle.open();
+
+      rejectFirst();
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(el(container, "snp-report-status").textContent).not.toBe(
+        "Failed to submit report. Try again.",
+      );
+    });
   });
 });

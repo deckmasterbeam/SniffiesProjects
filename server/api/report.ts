@@ -9,6 +9,12 @@ const isReportType = (value: string): value is ReportType =>
 
 const MESSAGE_MAX_LENGTH = 500;
 
+// Mirrors core/src/settings.ts's SNIFFIES_USER_ID_REGEX (24-char hex Mongo
+// ObjectId). Enforcing this server-side also rules out reporterUserId
+// containing the "," delimiter or "%"/"_" LIKE wildcards, which the dedupe
+// check below depends on.
+const SNIFFIES_USER_ID_REGEX = /^[a-f0-9]{24}$/i;
+
 interface ReportBody {
   reportType?: unknown;
   reportedUserId?: unknown;
@@ -56,6 +62,11 @@ const handler = async (req: VercelRequest, res: VercelResponse): Promise<void> =
 
   if (!reportedUserId || !reporterUserId) {
     json(res, 400, { error: "reportedUserId_and_reporterUserId_required" });
+    return;
+  }
+
+  if (!SNIFFIES_USER_ID_REGEX.test(reportedUserId) || !SNIFFIES_USER_ID_REGEX.test(reporterUserId)) {
+    json(res, 400, { error: "invalid_user_id" });
     return;
   }
 

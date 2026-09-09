@@ -79,21 +79,39 @@ interface MessagesPayload {
 const filterById = <T extends WithId>(
   items: T[] | undefined,
   blockedIds: ReadonlySet<string>,
-): T[] | undefined => items?.filter((item) => !blockedIds.has(item._id));
+  removed?: Set<string>,
+): T[] | undefined =>
+  items?.filter((item) => {
+    if (!blockedIds.has(item._id)) {
+      return true;
+    }
+    removed?.add(item._id);
+    return false;
+  });
 
-/** Removes blocked accounts from the map init payload's visitor lists. */
+/**
+ * Removes blocked accounts from the map init payload's visitor lists. If
+ * `removed` is passed, every stripped id is added to it as filtering happens
+ * — a single pass, rather than a separate pre-scan to find which ids were
+ * present.
+ */
 export const filterPostAuthenticationPayload = (
   payload: NearbyVisitorsPayload,
   blockedIds: ReadonlySet<string>,
+  removed?: Set<string>,
 ): NearbyVisitorsPayload => {
   if (blockedIds.size === 0) {
     return payload;
   }
   if (payload.nearbyVisitors?.visitors) {
-    payload.nearbyVisitors.visitors = filterById(payload.nearbyVisitors.visitors, blockedIds);
+    payload.nearbyVisitors.visitors = filterById(
+      payload.nearbyVisitors.visitors,
+      blockedIds,
+      removed,
+    );
   }
   if (payload.partialVisitorData) {
-    payload.partialVisitorData = filterById(payload.partialVisitorData, blockedIds);
+    payload.partialVisitorData = filterById(payload.partialVisitorData, blockedIds, removed);
   }
   return payload;
 };
@@ -102,14 +120,21 @@ export const filterPostAuthenticationPayload = (
 export const filterChatDataPayload = (
   payload: ChatDataPayload,
   blockedIds: ReadonlySet<string>,
+  removed?: Set<string>,
 ): ChatDataPayload => {
   if (blockedIds.size === 0) {
     return payload;
   }
-  const isBlockedConversation = (c: Conversation): boolean =>
-    (!!c.participants && blockedIds.has(c.participants)) ||
-    (!!c.author1 && blockedIds.has(c.author1)) ||
-    (!!c.author2 && blockedIds.has(c.author2));
+  const isBlockedConversation = (c: Conversation): boolean => {
+    let blocked = false;
+    for (const id of [c.participants, c.author1, c.author2]) {
+      if (id && blockedIds.has(id)) {
+        removed?.add(id);
+        blocked = true;
+      }
+    }
+    return blocked;
+  };
 
   if (payload.conversationData?.conversations) {
     payload.conversationData.conversations = payload.conversationData.conversations.filter(
@@ -117,12 +142,16 @@ export const filterChatDataPayload = (
     );
   }
   if (payload.conversationData?.userIds) {
-    payload.conversationData.userIds = payload.conversationData.userIds.filter(
-      (id) => !blockedIds.has(id),
-    );
+    payload.conversationData.userIds = payload.conversationData.userIds.filter((id) => {
+      if (!blockedIds.has(id)) {
+        return true;
+      }
+      removed?.add(id);
+      return false;
+    });
   }
   if (payload.partialVisitorData) {
-    payload.partialVisitorData = filterById(payload.partialVisitorData, blockedIds);
+    payload.partialVisitorData = filterById(payload.partialVisitorData, blockedIds, removed);
   }
   return payload;
 };
@@ -131,15 +160,22 @@ export const filterChatDataPayload = (
 export const filterMessagesPayload = (
   payload: MessagesPayload,
   blockedIds: ReadonlySet<string>,
+  removed?: Set<string>,
 ): MessagesPayload => {
   if (blockedIds.size === 0) {
     return payload;
   }
   if (payload.messages) {
-    payload.messages = payload.messages.filter((m) => !(m.author && blockedIds.has(m.author)));
+    payload.messages = payload.messages.filter((m) => {
+      if (!(m.author && blockedIds.has(m.author))) {
+        return true;
+      }
+      removed?.add(m.author);
+      return false;
+    });
   }
   if (payload.partialUsers) {
-    payload.partialUsers = filterById(payload.partialUsers, blockedIds);
+    payload.partialUsers = filterById(payload.partialUsers, blockedIds, removed);
   }
   return payload;
 };
@@ -148,52 +184,16 @@ const applyFilter = (
   kind: FilterKind,
   payload: unknown,
   blockedIds: ReadonlySet<string>,
+  removed?: Set<string>,
 ): unknown => {
   switch (kind) {
     case "post-authentication":
-      return filterPostAuthenticationPayload(payload as NearbyVisitorsPayload, blockedIds);
+      return filterPostAuthenticationPayload(payload as NearbyVisitorsPayload, blockedIds, removed);
     case "chat-data":
-      return filterChatDataPayload(payload as ChatDataPayload, blockedIds);
+      return filterChatDataPayload(payload as ChatDataPayload, blockedIds, removed);
     case "messages":
-      return filterMessagesPayload(payload as MessagesPayload, blockedIds);
+      return filterMessagesPayload(payload as MessagesPayload, blockedIds, removed);
   }
-};
-
-/**
- * Finds which blocked ids are actually present in a payload, for logging —
- * called *before* applyFilter (which removes them) so the log line can name
- * exactly who got filtered out.
- */
-const collectBlockedIdsPresent = (
-  kind: FilterKind,
-  payload: unknown,
-  blockedIds: ReadonlySet<string>,
-): string[] => {
-  const found = new Set<string>();
-  const mark = (id: unknown): void => {
-    if (typeof id === "string" && blockedIds.has(id)) {
-      found.add(id);
-    }
-  };
-  if (kind === "post-authentication") {
-    const p = payload as NearbyVisitorsPayload;
-    p.nearbyVisitors?.visitors?.forEach((v) => mark(v._id));
-    p.partialVisitorData?.forEach((v) => mark(v._id));
-  } else if (kind === "chat-data") {
-    const p = payload as ChatDataPayload;
-    p.conversationData?.conversations?.forEach((c) => {
-      mark(c.participants);
-      mark(c.author1);
-      mark(c.author2);
-    });
-    p.conversationData?.userIds?.forEach(mark);
-    p.partialVisitorData?.forEach((v) => mark(v._id));
-  } else if (kind === "messages") {
-    const p = payload as MessagesPayload;
-    p.messages?.forEach((m) => mark(m.author));
-    p.partialUsers?.forEach((v) => mark(v._id));
-  }
-  return [...found];
 };
 
 interface WsFrameInfo {
@@ -336,23 +336,30 @@ const installXhrFilter = (
             return cached;
           }
           const state = getState();
+          const shouldFilter = state.enabled && state.blockedIds.size > 0;
           let json: unknown;
           let text = "";
           if (responseType === "json") {
             json = responseDescriptor.get!.call(this);
           } else {
             text = responseTextDescriptor.get!.call(this) as string;
-            try {
-              json = JSON.parse(text);
-            } catch {
-              cached = { text, json: undefined };
-              return cached;
+            // Only parse when we're actually going to filter — an unfiltered
+            // (disabled, or empty blocklist) response just passes the raw
+            // text through untouched below.
+            if (shouldFilter) {
+              try {
+                json = JSON.parse(text);
+              } catch {
+                cached = { text, json: undefined };
+                return cached;
+              }
             }
           }
-          if (state.enabled && state.blockedIds.size > 0) {
-            const matchedIds = collectBlockedIdsPresent(kind, json, state.blockedIds);
-            json = applyFilter(kind, json, state.blockedIds);
-            if (matchedIds.length > 0) {
+          if (shouldFilter) {
+            const removed = new Set<string>();
+            json = applyFilter(kind, json, state.blockedIds, removed);
+            if (removed.size > 0) {
+              const matchedIds = [...removed];
               log.warn(`filtered blocked account(s) from ${kind} response:`, matchedIds);
               onFiltered?.(matchedIds);
             }

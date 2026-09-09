@@ -33,6 +33,11 @@ export const wireReportModal = (
     statusEl.textContent = text;
   };
 
+  // Bumped on every open() so a submit's async result can tell whether the
+  // modal has since been reopened (e.g. for a different profile) and, if so,
+  // skip updating status/closing — this instance is reused across opens.
+  let generation = 0;
+
   const close = (): void => {
     backdrop.style.display = "none";
     messageField.value = "";
@@ -41,6 +46,7 @@ export const wireReportModal = (
   };
 
   const open = (): void => {
+    generation += 1;
     backdrop.style.display = "flex";
     setStatus("");
     submitBtn.disabled = false;
@@ -60,14 +66,21 @@ export const wireReportModal = (
   });
 
   submitBtn.addEventListener("click", () => {
+    const submittedGeneration = generation;
     submitBtn.disabled = true;
     setStatus("Submitting…");
     Promise.resolve(options.onSubmit(messageField.value.trim()))
       .then(() => {
+        if (generation !== submittedGeneration) {
+          return;
+        }
         setStatus("Reported. Thanks.");
         setTimeout(close, 1200);
       })
       .catch(() => {
+        if (generation !== submittedGeneration) {
+          return;
+        }
         setStatus("Failed to submit report. Try again.");
         submitBtn.disabled = false;
       });
