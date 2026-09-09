@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Sniffies mock</title>
+  </head>
+  <body>
+    <!-- FAB mount anchor for userscript/bookmarklet — see SITELINKS_NAV_SELECTOR. -->
+    <nav>
+      <a title="Sitelinks" href="#">Sitelinks</a>
+    </nav>
+
+    <div id="map">
+      <!-- Within the free radius: a normal click should open the profile
+           panel and get the star/report injection. -->
+      <div
+        data-testid="markerUserContainer"
+        data-within-radius="true"
+        id="aaaaaaaaaaaaaaaaaaaaaaaa"
+      >
+        <div
+          data-testid="cv-marker-avatar-image"
+          style="
+            background-image: url(&quot;https://cdn.sniffies.test/aaaaaaaaaaaaaaaaaaaaaaaa/photo.jpg&quot;);
+            width: 40px;
+            height: 40px;
+          "
+        ></div>
+      </div>
+      <!-- Outside the free radius: profile-border-hook should redirect
+           straight to /profile/<id> instead of opening a panel. -->
+      <div
+        data-testid="markerUserContainer"
+        data-within-radius="false"
+        id="bbbbbbbbbbbbbbbbbbbbbbbb"
+      >
+        <div
+          data-testid="cv-marker-avatar-image"
+          style="
+            background-image: url(&quot;https://cdn.sniffies.test/bbbbbbbbbbbbbbbbbbbbbbbb/photo.jpg&quot;);
+            width: 40px;
+            height: 40px;
+          "
+        ></div>
+      </div>
+    </div>
+
+    <div id="app-screen"></div>
+
+    <script>
+      // Minimal stand-in for Sniffies' own app JS. On a within-radius marker
+      // click, "opens" a profile panel by rendering the name label + pin
+      // button into #app-screen after a short async delay — deliberately
+      // async to mirror the real app's animated panel-switch, which is
+      // exactly what sniffies-profile-id.ts's retry/poll logic
+      // (scheduleReinjectionRetries) exists to survive.
+      document.querySelectorAll('[data-testid="markerUserContainer"]').forEach((marker) => {
+        marker.addEventListener("click", () => {
+          if (marker.dataset.withinRadius === "false") {
+            // The extension's capture-phase profile-border redirect should
+            // already have claimed this click via stopImmediatePropagation
+            // before this bubble-phase listener ever runs.
+            return;
+          }
+          const id = marker.id;
+          setTimeout(() => {
+            document.getElementById("app-screen").innerHTML = `
+              <span data-testid="cruiserNameLabel">Mock User ${id}</span>
+              <button data-testid="pinUserButton" type="button">Pin</button>
+            `;
+          }, 200);
+        });
+      });
+    </script>
+  </body>
+</html>

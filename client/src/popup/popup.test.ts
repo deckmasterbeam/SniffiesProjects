@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const POPUP_HTML = `
   <button id="open-settings"></button>
@@ -18,6 +18,7 @@ const POPUP_HTML = `
   </details>
   <div id="snp-geo-root"></div>
   <div id="snp-profile-border-root"></div>
+  <div id="snp-bot-block-root"></div>
 `;
 
 const flushPromises = () => new Promise<void>((r) => setTimeout(r, 0));
@@ -28,6 +29,11 @@ const getElements = () => ({
   favoritesDetails: document.getElementById("favorites-details") as HTMLDetailsElement,
   favoritesHint: document.getElementById("favorites-hint") as HTMLElement,
   favoritesEnableLabel: document.getElementById("favorites-enable-label") as HTMLElement,
+  botBlockingEnabled: document.getElementById("bot-block-enabled") as HTMLInputElement,
+  botBlockingDetails: document.getElementById("bot-block-details") as HTMLDetailsElement,
+  botBlockingHint: document.getElementById("bot-block-hint") as HTMLElement,
+  botBlockingEnableLabel: document.getElementById("bot-block-enable-label") as HTMLElement,
+  botBlockingCount: document.getElementById("bot-block-count") as HTMLElement,
   geoFields: document.getElementById("geo-fields") as HTMLElement,
   geoEnabled: document.getElementById("geo-enabled") as HTMLInputElement,
   geoLat: document.getElementById("geo-lat") as HTMLInputElement,
@@ -55,6 +61,24 @@ const loadModule = async () => {
   await flushPromises();
 };
 
+// __REPORTING_ENABLED__ is baked in false at the vitest.config.ts level, so
+// the only way to exercise the enabled branch is mocking the env module.
+const loadModuleWithReportingEnabled = async () => {
+  vi.resetModules();
+  vi.doMock("../shared/env.js", async () => {
+    const actual = await vi.importActual<typeof import("../shared/env.js")>("../shared/env.js");
+    return { ...actual, REPORTING_ENABLED: true };
+  });
+  document.body.innerHTML = POPUP_HTML;
+  Object.defineProperty(navigator, "geolocation", {
+    value: { getCurrentPosition: vi.fn() },
+    writable: true,
+    configurable: true,
+  });
+  await import("./popup.js");
+  await flushPromises();
+};
+
 describe("popup — version badge", () => {
   beforeEach(loadModule);
 
@@ -64,7 +88,9 @@ describe("popup — version badge", () => {
   });
 
   it("renders a different version when the manifest reports one", async () => {
-    (chrome.runtime.getManifest as ReturnType<typeof vi.fn>).mockReturnValueOnce({ version: "2.3.4" });
+    (chrome.runtime.getManifest as ReturnType<typeof vi.fn>).mockReturnValueOnce({
+      version: "2.3.4",
+    });
     await loadModule();
     const { version } = getElements();
     expect(version.textContent).toBe("v2.3.4");
@@ -227,6 +253,70 @@ describe("popup — favorites", () => {
     favoritesDetails.open = true;
     favoritesDetails.dispatchEvent(new Event("toggle"));
     expect(chrome.storage.local.set).toHaveBeenCalledWith({ favoritesSectionOpen: true });
+  });
+});
+
+describe("popup — bot blocking", () => {
+  beforeEach(loadModule);
+
+  it("checkbox is unchecked and disabled on init when REPORTING_ENABLED is false", () => {
+    const { botBlockingEnabled } = getElements();
+    expect(botBlockingEnabled.checked).toBe(false);
+    expect(botBlockingEnabled.disabled).toBe(true);
+  });
+
+  it("shows coming soon hint when REPORTING_ENABLED is false", () => {
+    const { botBlockingHint } = getElements();
+    expect(botBlockingHint.textContent).toBe("Coming soon!");
+  });
+
+  it("strikes through enable label when REPORTING_ENABLED is false", () => {
+    const { botBlockingEnableLabel } = getElements();
+    expect(botBlockingEnableLabel.style.textDecoration).toBe("line-through");
+  });
+
+  it("saves bot blocking section open state on toggle", () => {
+    const { botBlockingDetails } = getElements();
+    botBlockingDetails.open = true;
+    botBlockingDetails.dispatchEvent(new Event("toggle"));
+    expect(chrome.storage.local.set).toHaveBeenCalledWith({ botBlockingSectionOpen: true });
+  });
+
+  it("hides the blocked count when REPORTING_ENABLED is false", () => {
+    const { botBlockingCount } = getElements();
+    expect(botBlockingCount.textContent).toBe("");
+  });
+});
+
+describe("popup — bot blocking count (REPORTING_ENABLED true)", () => {
+  // vi.doMock registrations survive vi.resetModules(), so without this the
+  // env.js mock would leak into every describe block below this one.
+  afterEach(() => {
+    vi.doUnmock("../shared/env.js");
+  });
+
+  it("shows the distinct count blocked across today and yesterday", async () => {
+    const today = new Date().toISOString().slice(0, 10);
+    await chrome.storage.local.set({
+      blockedBotEventsByDay: { [today]: ["a", "b", "c"] },
+    });
+    await loadModuleWithReportingEnabled();
+    const { botBlockingCount } = getElements();
+    expect(botBlockingCount.textContent).toBe("3 bots blocked in the last 24 hours");
+  });
+
+  it("uses singular phrasing for a count of 1", async () => {
+    const today = new Date().toISOString().slice(0, 10);
+    await chrome.storage.local.set({ blockedBotEventsByDay: { [today]: ["a"] } });
+    await loadModuleWithReportingEnabled();
+    const { botBlockingCount } = getElements();
+    expect(botBlockingCount.textContent).toBe("1 bot blocked in the last 24 hours");
+  });
+
+  it("is empty when nothing has been blocked", async () => {
+    await loadModuleWithReportingEnabled();
+    const { botBlockingCount } = getElements();
+    expect(botBlockingCount.textContent).toBe("");
   });
 });
 

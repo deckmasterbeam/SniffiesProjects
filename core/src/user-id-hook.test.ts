@@ -39,7 +39,9 @@ describe("installUserIdHook", () => {
   it("fires onUserId with the userId query param from a prod.ws.sniffies.com connection", () => {
     const onUserId = vi.fn();
     installUserIdHook(onUserId);
-    new window.WebSocket("wss://prod.ws.sniffies.com/?userId=694abfeb1cf11f4a71d32027&lat=47.6&lng=-122.3");
+    new window.WebSocket(
+      "wss://prod.ws.sniffies.com/?userId=694abfeb1cf11f4a71d32027&lat=47.6&lng=-122.3",
+    );
     expect(onUserId).toHaveBeenCalledWith("694abfeb1cf11f4a71d32027");
   });
 

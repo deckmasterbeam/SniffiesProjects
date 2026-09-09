@@ -1,0 +1,98 @@
+/* Section shell — shared with geo-override.css/profile-border.css (popup.css .section, details.collapsible, .collapsible-body) */
+
+#snp-bot-block-root .section {
+  background: #0e1825;
+  border: 1px solid #1c2b3a;
+  border-radius: 8px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+#snp-bot-block-root .section h2 {
+  margin: 0;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #7a90a4;
+}
+
+#snp-bot-block-root details.collapsible {
+  padding: 0;
+  display: block;
+}
+
+#snp-bot-block-root details.collapsible summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  user-select: none;
+}
+
+#snp-bot-block-root details.collapsible summary::-webkit-details-marker {
+  display: none;
+}
+
+#snp-bot-block-root details.collapsible summary::after {
+  content: "›";
+  margin-left: auto;
+  font-size: 16px;
+  line-height: 1;
+  color: #7a90a4;
+  transform: rotate(90deg);
+  transition: transform 0.15s;
+}
+
+#snp-bot-block-root details.collapsible[open] summary::after {
+  transform: rotate(270deg);
+}
+
+#snp-bot-block-root details.collapsible summary h2 {
+  margin: 0;
+}
+
+#snp-bot-block-root .collapsible-body {
+  padding: 0 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Form fields — shared with geo-override.css/profile-border.css (popup.css .row, .hint) */
+
+#snp-bot-block-root .row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  color: #ffffff;
+}
+
+#snp-bot-block-root .row input[type="checkbox"] {
+  accent-color: #ff5500;
+  width: 14px;
+  height: 14px;
+}
+
+#snp-bot-block-root .hint {
+  font-size: 11px;
+  color: #7a90a4;
+  margin: 0;
+}
+
+#snp-bot-block-root .stat {
+  font-size: 12px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+}
+
+#snp-bot-block-root .stat:empty {
+  display: none;
+}

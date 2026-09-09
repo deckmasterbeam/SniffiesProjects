@@ -6,9 +6,17 @@ import {
   PHONE_E164_REGEX,
   ProfileBorderOpen,
   SETTINGS_KEYS,
+  SNIFFIES_USER_ID_REGEX,
+  recordBlockedBotIds,
 } from "@sniffies-projects/core";
 
-export { DEFAULT_LOCAL_SETTINGS, DEFAULT_PROFILE_BORDER_OPEN, PHONE_E164_REGEX, SETTINGS_KEYS };
+export {
+  DEFAULT_LOCAL_SETTINGS,
+  DEFAULT_PROFILE_BORDER_OPEN,
+  PHONE_E164_REGEX,
+  SETTINGS_KEYS,
+  SNIFFIES_USER_ID_REGEX,
+};
 export type { ExtensionLocalSettings, ProfileBorderOpen };
 
 export const getLocalSettings = async (): Promise<ExtensionLocalSettings> => {
@@ -30,4 +38,31 @@ export const setFavoritesEnabled = async (enabled: boolean): Promise<void> => {
 
 export const setSniffiesUserId = async (userId: string): Promise<void> => {
   await chrome.storage.local.set({ [SETTINGS_KEYS.sniffiesUserId]: userId });
+};
+
+export const setBlockedBots = async (userIds: string[], fetchedAt: number): Promise<void> => {
+  await chrome.storage.local.set({
+    [SETTINGS_KEYS.blockedBots]: userIds,
+    [SETTINGS_KEYS.blockedBotsFetchedAt]: fetchedAt,
+  });
+};
+
+export const setBotBlockingEnabled = async (enabled: boolean): Promise<void> => {
+  await chrome.storage.local.set({ [SETTINGS_KEYS.botBlockingEnabled]: enabled });
+};
+
+// Chains calls so concurrent invocations (bot-block filtering can fire
+// onFiltered more than once in quick succession) don't race on the
+// read-modify-write against chrome.storage.local — each call's read only
+// starts once the previous call's write has finished.
+let recordBlockedBotEventChain: Promise<void> = Promise.resolve();
+
+export const recordBlockedBotEvent = (ids: string[]): Promise<void> => {
+  const result = recordBlockedBotEventChain.then(async () => {
+    const { blockedBotEventsByDay } = await getLocalSettings();
+    const next = recordBlockedBotIds(blockedBotEventsByDay, ids);
+    await chrome.storage.local.set({ [SETTINGS_KEYS.blockedBotEventsByDay]: next });
+  });
+  recordBlockedBotEventChain = result.catch(() => {});
+  return result;
 };

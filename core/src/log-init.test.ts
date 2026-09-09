@@ -62,9 +62,6 @@ describe("logInit", () => {
 
   it("strips a trailing slash from serverBase so the URL doesn't end up with a double slash", async () => {
     await logInit({ ...OPTS, serverBase: "https://server.example/" });
-    expect(fetchMock).toHaveBeenCalledWith(
-      "https://server.example/api/logInit",
-      expect.anything(),
-    );
+    expect(fetchMock).toHaveBeenCalledWith("https://server.example/api/logInit", expect.anything());
   });
 });

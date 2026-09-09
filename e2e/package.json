@@ -1,0 +1,29 @@
+{
+  "name": "sniffies-e2e",
+  "private": true,
+  "version": "0.1",
+  "type": "module",
+  "description": "Playwright tests: fixture-based extension/userscript coverage, plus a drift canary against live sniffies.com.",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "auth:capture": "playwright test --project=setup --headed",
+    "test:canary": "playwright test --project=canary",
+    "test:canary:debug": "playwright test --project=canary --debug",
+    "test:extension": "playwright test --project=extension",
+    "test:extension:debug": "playwright test --project=extension --debug",
+    "test:userscript": "playwright test --project=userscript",
+    "test:userscript:debug": "playwright test --project=userscript --debug",
+    "test:all": "playwright test --project=canary --project=extension --project=userscript",
+    "report": "playwright show-report",
+    "check-har": "node scripts/check-har-schema.mjs",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "prettier": "^3.8.3",
+    "@playwright/test": "^1.48.0",
+    "@types/chrome": "^0.2.8",
+    "@types/node": "^26.4.1",
+    "typescript": "^5.6.3"
+  }
+}

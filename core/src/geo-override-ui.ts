@@ -39,7 +39,7 @@ export const wireGeoOverrideForm = (container: Element, options: GeoOverrideForm
   // from mutating state after the user has re-enabled spoofing.
   let pendingFetch: { aborted: boolean } | null = null;
 
-  const fillWithCurrentPosition = (onSuccess: () => void): void => {
+  const fillWithCurrentPosition = (onSuccess: () => void, onError?: () => void): void => {
     const token = { aborted: false };
     pendingFetch = token;
     setStatus("Getting location…");
@@ -60,6 +60,7 @@ export const wireGeoOverrideForm = (container: Element, options: GeoOverrideForm
         }
         pendingFetch = null;
         setStatus(`Could not get location: ${err.message} (code ${err.code})`);
+        onError?.();
       },
       { timeout: 10000 },
     );
@@ -105,10 +106,15 @@ export const wireGeoOverrideForm = (container: Element, options: GeoOverrideForm
         setStatus("");
       }
     } else {
+      // Persist enabled: false immediately, independent of the position
+      // fetch below — that fetch can take up to 10s (or hang on a stalled
+      // permission prompt), and closing the popup before it resolves must
+      // not leave the previous enabled: true state persisted.
       void commitSave();
-      fillWithCurrentPosition(() => {
-        void commitSave();
-      });
+      fillWithCurrentPosition(
+        () => void commitSave(),
+        () => void commitSave(),
+      );
     }
   });
 

@@ -1,8 +1,8 @@
 // Build script: bundles TS entry points with esbuild and copies static assets
 // (manifest, HTML, CSS, icons) into dist/ preserving the src layout.
 // Pass --prod for a release build: validates SERVER_BASE/CLIENT_SECRET are
-// set, forces DEBUG/FAVORITES_NOTIFICATIONS_ENABLED off, and patches
-// manifest.json's version to match package.json.
+// set, forces DEBUG/FAVORITES_NOTIFICATIONS_ENABLED/REPORTING_ENABLED off,
+// and patches manifest.json's version to match package.json.
 
 import { context, build } from "esbuild";
 import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
@@ -21,7 +21,9 @@ let releaseVersion = null;
 if (prod) {
   const missingEnvVars = REQUIRED_RELEASE_ENV_VARS.filter((key) => !process.env[key]);
   if (missingEnvVars.length > 0) {
-    console.error(`error: missing required env var(s) for a release build: ${missingEnvVars.join(", ")}`);
+    console.error(
+      `error: missing required env var(s) for a release build: ${missingEnvVars.join(", ")}`,
+    );
     process.exit(1);
   }
 
@@ -38,6 +40,8 @@ const tsEntries = [
   "src/content/sniffies-profile-id.ts",
   "src/content/sniffies-user-id-hook.ts",
   "src/content/sniffies-user-id-relay.ts",
+  "src/content/sniffies-bot-block-hook.ts",
+  "src/content/sniffies-bot-block-relay.ts",
   "src/popup/popup.ts",
   "src/options/options.ts",
   "src/settings/settings.ts",
@@ -107,6 +111,7 @@ const buildOptions = {
     __FAVORITES_NOTIFICATIONS_ENABLED__: String(
       !prod && process.env.FAVORITES_NOTIFICATIONS_ENABLED !== "false",
     ),
+    __REPORTING_ENABLED__: String(!prod && process.env.REPORTING_ENABLED !== "false"),
   },
 };
 

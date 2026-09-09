@@ -26,6 +26,7 @@ export default defineConfig({
     __SERVER_BASE__: JSON.stringify(""),
     __CLIENT_SECRET__: JSON.stringify(""),
     __FAVORITES_NOTIFICATIONS_ENABLED__: "false",
+    __REPORTING_ENABLED__: "false",
   },
   test: {
     environment: "jsdom",

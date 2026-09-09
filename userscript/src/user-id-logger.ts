@@ -8,10 +8,11 @@ import { CLIENT_SECRET, SERVER_BASE, VERSION } from "./shared/env.js";
 
 const log = createLogger("user-id-logger");
 
-export const installUserIdLogging = (): boolean => {
+export const installUserIdLogging = (onUserId?: (userId: string) => void): boolean => {
   let initLogged = false;
   return installUserIdHook((userId) => {
     log("user id observed", userId);
+    onUserId?.(userId);
     if (initLogged) {
       return;
     }

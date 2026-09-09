@@ -22,5 +22,5 @@ for (const { table_name: table } of tables) {
   const [{ count }] = await sql.query(`SELECT COUNT(*) FROM ${table}`);
   console.log(`\n=== ${table} (${count} rows) ===`);
   const rows = await sql.query(`SELECT * FROM ${table} ORDER BY 1 DESC LIMIT 5`);
-  console.log(rows);
+  console.dir(rows, { depth: null });
 }

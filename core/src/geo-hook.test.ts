@@ -9,7 +9,15 @@ const SPOOF: GeoOverride = { enabled: true, latitude: 47.6, longitude: -122.3 };
 
 const makePosition = (lat: number, lng: number, accuracy = 10): GeolocationPosition =>
   ({
-    coords: { latitude: lat, longitude: lng, accuracy, altitude: null, altitudeAccuracy: null, heading: null, speed: null },
+    coords: {
+      latitude: lat,
+      longitude: lng,
+      accuracy,
+      altitude: null,
+      altitudeAccuracy: null,
+      heading: null,
+      speed: null,
+    },
     timestamp: Date.now(),
   }) as GeolocationPosition;
 
@@ -22,14 +30,20 @@ const makeMockGeo = (): MockGeo => {
   let nextId = 1;
 
   return {
-    getCurrentPosition: vi.fn((success: PositionCallback) => { success(REAL_POSITION); }),
+    getCurrentPosition: vi.fn((success: PositionCallback) => {
+      success(REAL_POSITION);
+    }),
     watchPosition: vi.fn((success: PositionCallback) => {
       const id = nextId++;
       watchers.set(id, success);
       return id;
     }),
-    clearWatch: vi.fn((id: number) => { watchers.delete(id); }),
-    _fireWatchers: (pos: GeolocationPosition) => { for (const cb of watchers.values()) cb(pos); },
+    clearWatch: vi.fn((id: number) => {
+      watchers.delete(id);
+    }),
+    _fireWatchers: (pos: GeolocationPosition) => {
+      for (const cb of watchers.values()) cb(pos);
+    },
   } as unknown as MockGeo;
 };
 
@@ -53,7 +67,9 @@ describe("installGeoHook", () => {
     const success = vi.fn();
     navigator.geolocation.getCurrentPosition(success);
     expect(success).toHaveBeenCalledWith(
-      expect.objectContaining({ coords: expect.objectContaining({ latitude: REAL.latitude, longitude: REAL.longitude }) }),
+      expect.objectContaining({
+        coords: expect.objectContaining({ latitude: REAL.latitude, longitude: REAL.longitude }),
+      }),
     );
   });
 
@@ -62,7 +78,9 @@ describe("installGeoHook", () => {
     const success = vi.fn();
     navigator.geolocation.getCurrentPosition(success);
     expect(success).toHaveBeenCalledWith(
-      expect.objectContaining({ coords: expect.objectContaining({ latitude: REAL.latitude, longitude: REAL.longitude }) }),
+      expect.objectContaining({
+        coords: expect.objectContaining({ latitude: REAL.latitude, longitude: REAL.longitude }),
+      }),
     );
   });
 
@@ -71,7 +89,13 @@ describe("installGeoHook", () => {
     const success = vi.fn();
     navigator.geolocation.getCurrentPosition(success);
     expect(success).toHaveBeenCalledWith(
-      expect.objectContaining({ coords: expect.objectContaining({ latitude: SPOOF.latitude, longitude: SPOOF.longitude, accuracy: 10 }) }),
+      expect.objectContaining({
+        coords: expect.objectContaining({
+          latitude: SPOOF.latitude,
+          longitude: SPOOF.longitude,
+          accuracy: 10,
+        }),
+      }),
     );
   });
 
@@ -81,7 +105,9 @@ describe("installGeoHook", () => {
     navigator.geolocation.watchPosition(success);
     mockGeo._fireWatchers(REAL_POSITION);
     expect(success).toHaveBeenCalledWith(
-      expect.objectContaining({ coords: expect.objectContaining({ latitude: SPOOF.latitude, longitude: SPOOF.longitude }) }),
+      expect.objectContaining({
+        coords: expect.objectContaining({ latitude: SPOOF.latitude, longitude: SPOOF.longitude }),
+      }),
     );
   });
 
@@ -91,7 +117,9 @@ describe("installGeoHook", () => {
     navigator.geolocation.watchPosition(success);
     hook!.refreshWatches();
     expect(success).toHaveBeenCalledWith(
-      expect.objectContaining({ coords: expect.objectContaining({ latitude: SPOOF.latitude, longitude: SPOOF.longitude }) }),
+      expect.objectContaining({
+        coords: expect.objectContaining({ latitude: SPOOF.latitude, longitude: SPOOF.longitude }),
+      }),
     );
   });
 

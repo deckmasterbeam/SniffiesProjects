@@ -1,0 +1,20 @@
+<div id="snp-report-backdrop">
+  <div class="snp-report-modal" role="dialog" aria-modal="true" aria-labelledby="snp-report-title">
+    <h3 id="snp-report-title">Report profile</h3>
+    <p class="hint">Flag this profile as a suspected bot for manual review.</p>
+    <label class="field">
+      <span>Message (optional)</span>
+      <textarea
+        id="snp-report-message"
+        rows="3"
+        maxlength="500"
+        placeholder="Anything that would help review this report"
+      ></textarea>
+    </label>
+    <p id="snp-report-status" class="hint" aria-live="polite"></p>
+    <div class="actions">
+      <button id="snp-report-cancel" class="secondary" type="button">Cancel</button>
+      <button id="snp-report-submit" class="primary" type="button">Report bot</button>
+    </div>
+  </div>
+</div>
