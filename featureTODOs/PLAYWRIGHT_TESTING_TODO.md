@@ -9,99 +9,51 @@ extension pages. Lives in `e2e/` — see `e2e/README.md` for setup and how to ru
 
 ## 0. Test harness (blocking prerequisites)
 
-- [x] **Fixture page DOM shapes.** `e2e/fixtures/sniffies-mock.html` reproduces the marker-click →
-      panel-open flow (`markerUserContainer`, `cv-marker-avatar-image`, `#app-screen`,
-      `cruiserNameLabel`, `pinUserButton`, `Sitelinks` nav), including a deliberately async
-      panel render (`setTimeout`) to exercise `sniffies-profile-id.ts`'s retry/poll logic for real.
+- [x] **Fixture page DOM shapes** — `e2e/fixtures/sniffies-mock.html` reproduces the marker-click →
+      panel-open flow, including an async panel render to exercise the retry/poll logic for real.
   - [ ] **Fake XHR/WS endpoints for bot-block-hook.ts** — not built yet. Needed once §3 (bot
         blocking) is tackled: the four surfaces in `core/src/bot-block-hook.ts`
         (`post-authentication`, `chat-data`, `messages`, the `prod.ws.sniffies.com` WebSocket).
-- [x] **Chrome extension loading.** `e2e/fixtures/extension.ts` — `chromium.launchPersistentContext`
-      with `--load-extension`/`--disable-extensions-except` pointed at `client/dist`, waits for the
-      MV3 service worker to get the extension id. Routes `https://sniffies.com/**` to the fixture
-      HTML via `context.route(...).fulfill(...)` — this is what lets the real content scripts
-      (matched by the browser against the real manifest host pattern) inject against fixture content
-      without any request ever leaving the machine. Proven working end-to-end by
-      `e2e/tests/extension/smoke.spec.ts` (2 passing tests: marker click → panel → report button →
-      submit round trip; and the profile-border redirect for an out-of-radius marker).
-- [x] **Userscript loading strategy — direct injection.** `e2e/fixtures/userscript.ts` —
-      `page.addInitScript({ content })` with the exact built `userscript/dist/sniffies-tools.user.js`,
-      run against the same shared `sniffies-mock.html` fixture the extension tests use. Safe because
-      the userscript declares `@grant none` and only touches plain `localStorage`/DOM/fetch/
-      geolocation — no GM_* APIs a real manager would need to polyfill, so this is a faithful stand-in
-      for what a manager would do at `@run-at document-start`. Proven working end-to-end by
-      `e2e/tests/userscript/smoke.spec.ts` (2 passing tests, mirroring the extension's: FAB mounts →
-      panel opens; and the profile-border redirect for an out-of-radius marker).
-  - [ ] **Follow-up: a Tampermonkey-based smoke test** — load a real userscript manager extension
-        into the same kind of persistent context as `extension.ts` and install the built `.user.js`
-        through it, for at least one test that exercises the real install/match/run-at pipeline
-        rather than assuming direct injection faithfully stands in for it. Not started; direct
-        injection covers all feature-logic testing needs in the meantime.
-- [x] **Server stubbing.** `e2e/fixtures/server-mocks.ts` — intercepts `report`, `favorites`,
-      `save-number`, `send-guid`, `blocked-bots` via `context.route`, matched against
-      `CLIENT_SERVER_BASE` (read live from `client/.env`'s `SERVER_BASE`, via
-      `e2e/fixtures/client-env.ts`, so it can't silently drift from whatever the extension under
-      test was actually built with). Wired into the `extension` fixture by default; overridable
-      per-test. Exercised by the smoke test's report-submit assertion.
-- [x] **Storage seeding/inspection helpers.** `e2e/fixtures/storage.ts` —
-      `getExtensionStorage`/`setExtensionStorage`/`clearExtensionStorage`, routed through the
-      background service worker (the only extension-privileged context guaranteed to exist without
-      opening a page for it). Used by the smoke test to seed `sniffiesUserId` and
-      `profileBorderOpen` directly instead of faking a WebSocket connect or clicking through UI.
+- [x] **Chrome extension loading** — `e2e/fixtures/extension.ts` loads the real built `client/dist`
+      via `launchPersistentContext`, routing `sniffies.com` to the fixture HTML so the real content
+      scripts inject against it with no network involved. Proven by
+      `e2e/tests/extension/smoke.spec.ts` (2 passing tests).
+- [x] **Userscript loading — direct injection** — `e2e/fixtures/userscript.ts` injects the built
+      `.user.js` via `page.addInitScript`, a faithful stand-in for a real manager since the script
+      needs no `GM_*` APIs. Proven by `e2e/tests/userscript/smoke.spec.ts` (2 passing tests).
+  - [ ] **Follow-up: a Tampermonkey-based smoke test** — load a real userscript manager and install
+        the built `.user.js` through it, for at least one test exercising the real
+        install/match/run-at pipeline. Not started; direct injection covers feature-logic testing
+        needs in the meantime.
+- [x] **Server stubbing** — `e2e/fixtures/server-mocks.ts` intercepts `report`/`favorites`/
+      `save-number`/`send-guid`/`blocked-bots` via `context.route`, read live from the client's own
+      `.env` so it can't drift from what the extension under test was built with.
+- [x] **Storage seeding/inspection helpers** — `e2e/fixtures/storage.ts`, routed through the
+      background service worker.
 
 ---
 
 ## 0b. Drift detection against live sniffies.com
 
-The fixture in §0 tests "does our code do the right thing given this input" — it can never tell us
-whether that input still matches what real Sniffies sends, since the fixture is entirely under our
-control and Sniffies isn't. This already happened once silently (the API hostname changed between
-two HAR captures an hour apart — see `TODO.md`'s bot-block section). This is a deliberately separate,
-non-gating suite: it never asserts business logic, only "does this shape still exist," and it's run
-manually/on a schedule, not on every push, since it depends on a live third-party site and a real
-account.
+A deliberately separate, non-gating suite: the §0 fixture can only test "does our code handle this
+input correctly," never whether that input still matches what real Sniffies sends. This already
+happened once silently (an API hostname changed between two HAR captures an hour apart). Run
+manually/on a schedule, not on every push, since it needs a live site + a real account.
 
-- [x] **`e2e/` package scaffolded** — `@playwright/test`, a `setup` project that captures an
-      authenticated session, and a `canary` project that reuses it. See `e2e/README.md`.
-- [x] **Manual-auth pattern, not scripted login.** `e2e/tests/auth.setup.ts` opens a headed browser
-      and calls `page.pause()` — a human logs in themselves in the Inspector, then resumes; the
-      session is saved to `.auth/user.json` (gitignored) and reused by the canary tests. No
-      password is ever typed by test code.
-- [x] **Site contract — single source of truth.** `e2e/site-contract.ts` lists every DOM selector
-      our extension code depends on existing on the real site, each with a description and which
-      source file it came from, so the canary list can't quietly drift out of sync with what the
-      code actually reads.
-- [x] **Selector canary — confirmed green against the live site.** `e2e/tests/canary/live-selectors.spec.ts`
-      checks the map has at least one visitor marker (`markerUserContainer`) and that clicking one
-      opens a profile panel exposing `cruiserNameLabel` + `pinUserButton`. First live run surfaced a
-      real bug: it asserted `toBeVisible()` on `markerUserContainer`, but that element is a
-      zero-size positioning anchor by design (confirmed via console — `0x0` bounding box,
-      `visibility:visible`) whose actual pixels come from an absolutely-positioned child; our code
-      only ever does `.closest()` + reads data attributes off it, never needs it to have a layout
-      box. Fixed by switching to `toBeAttached()` (presence, not visibility) and documented on the
-      selector itself in `core/src/sniffies-selectors.ts` so it isn't re-broken by a future test.
-      Also fixed a config bug found along the way: `canary`'s `dependencies: ["setup"]` forced the
-      manual, `page.pause()`-gated login to re-run on every single invocation — removed.
-- [x] **Payload/schema canary — HAR-based, done.** `e2e/scripts/check-har-schema.mjs` — takes a
-      manually-captured HAR (never committed; contains real user data) and checks every field path
-      `core/src/bot-block-hook.ts` reads: `nearbyVisitors.visitors[]._id`, `partialVisitorData[]._id`,
-      `conversationData.conversations[]` (participants/author1/author2), `conversationData.userIds[]`,
-      `messages[].author`, `partialUsers[]._id`, and the 6 filtered WS event shapes. Run via
-      `yarn check-har <path-to-har>`. Validated against 7 real captures — all field-path checks
-      passed (no drift on any of the four known surfaces).
-  - **Real finding, found and fixed:** the live WS event `newConversation` (fires when a brand-new
-    conversation thread starts) carried `conversation.participants`/`.author1`,
-    `submittedMessage.author`, and `partialUser._id` — the same identity fields filtered everywhere
-    else — completely unfiltered. Same class of bug as the `newMsg` leak already found and fixed in
-    `TODO.md` §5c, just for a new thread's first message instead of an ongoing one. Fixed in
-    `parseWsFrame` (`core/src/bot-block-hook.ts`) and `check-har-schema.mjs` updated to expect and
-    validate it — see `TODO.md` §5d for the full writeup and tests. `globalChatMessageDeleted`/
-    `newGlobalMsg`/`activeVisitUpdated` also turned up unfiltered across captures but are the
-    already-documented out-of-scope place-visit/global-chat-wall surfaces (see `TODO.md` §5c's own
-    notes) — not new findings, not touched.
-- [x] Use a dedicated test account, not a personal one — Sniffies has its own anti-bot detection
-      (the thing this whole feature filters around), and repeated automated visits risk getting a
-      real account flagged.
+- [x] **`e2e/` package scaffolded** — Playwright, a `setup` project capturing an authenticated
+      session, and a `canary` project that reuses it.
+- [x] **Manual-auth pattern, not scripted login** — a human logs in once via `page.pause()`; the
+      session is saved and reused. No password ever typed by test code.
+- [x] **Site contract** — `e2e/site-contract.ts`, the single source of truth pairing every DOM
+      selector the code depends on with its source, so the canary can't silently drift from it.
+- [x] **Selector canary, confirmed green against the live site** — checks the map has a visitor
+      marker and that clicking one opens a profile panel. Found and fixed one real bug along the
+      way (a zero-size-by-design element was asserted `toBeVisible()` instead of `toBeAttached()`).
+- [x] **Payload/schema canary (HAR-based)** — `e2e/scripts/check-har-schema.mjs` checks every field
+      path `bot-block-hook.ts` reads against a real captured HAR, validated against 7 captures. This
+      is what caught the `newConversation` WS leak (see `Bot_Reporting_TODO.md` §5).
+- [x] Uses a dedicated test account, not a personal one, to avoid tripping Sniffies' own anti-bot
+      detection.
 
 ---
 

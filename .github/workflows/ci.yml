@@ -1,0 +1,94 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: node scripts/install-all.mjs
+
+      - name: Run unit tests
+        run: node scripts/test-all.mjs
+
+  e2e-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: node scripts/install-all.mjs
+
+      # e2e/fixtures/extension.ts loads client/dist directly, and
+      # e2e/fixtures/client-env.ts reads client/.env at test time (not just
+      # build time) to know what the built extension expects to talk to — so
+      # both client/ and userscript/ need a real .env file, not just env vars
+      # passed to the build step.
+      - name: Write client .env
+        env:
+          SERVER_BASE: ${{ secrets.SERVER_BASE }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+        run: |
+          cat <<EOF > client/.env
+          SERVER_BASE=$SERVER_BASE
+          CLIENT_SECRET=$CLIENT_SECRET
+          DEBUG=false
+          FAVORITES_NOTIFICATIONS_ENABLED=false
+          REPORTING_ENABLED=true
+          EOF
+
+      - name: Write userscript .env
+        env:
+          SERVER_BASE: ${{ secrets.SERVER_BASE }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+        run: |
+          cat <<EOF > userscript/.env
+          SERVER_BASE=$SERVER_BASE
+          CLIENT_SECRET=$CLIENT_SECRET
+          DEBUG=false
+          REPORTING_ENABLED=true
+          EOF
+
+      - name: Build extension
+        working-directory: client
+        run: yarn build
+
+      - name: Build userscript
+        working-directory: userscript
+        run: yarn build
+
+      - name: Install Playwright browsers
+        working-directory: e2e
+        run: npx playwright install --with-deps chromium
+
+      # e2e/fixtures/extension.ts launches Chromium with headless: false
+      # (Playwright's documented requirement for loading an MV3 extension via
+      # --load-extension) — needs a real X display, hence xvfb-run. The
+      # userscript project runs normally headless; xvfb-run is a no-op for it.
+      - name: Install xvfb
+        run: sudo apt-get update && sudo apt-get install -y xvfb
+
+      - name: Run Playwright e2e tests (extension + userscript)
+        working-directory: e2e
+        run: xvfb-run -a npx playwright test --project=extension --project=userscript
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: e2e/playwright-report/
+          retention-days: 7
