@@ -30,7 +30,11 @@ import {
 } from "@sniffies-projects/core";
 import PANEL_CSS from "./panel.css";
 import PANEL_HTML from "./panel.html";
-import { installReportFeature, refreshBlockedBotsIfStale, type ReportFeatureState } from "./report.js";
+import {
+  installReportFeature,
+  refreshBlockedBotsIfStale,
+  type ReportFeatureState,
+} from "./report.js";
 import { REPORTING_ENABLED, VERSION } from "./shared/env.js";
 import {
   getBlockedBotEventsByDay,

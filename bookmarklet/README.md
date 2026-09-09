@@ -5,6 +5,7 @@
 Injects features into sniffies.com on browsers where extensions aren't available (e.g. iOS Safari) without 3rd party apps.
 
 Supported features:
+
 - Location spoofing (doesn't work well)
 
 ## Bookmarklet code
@@ -14,7 +15,7 @@ Prod:
 
 javascript:(function(){var s=document.createElement('script');s.src='https://sniffies-projects-bookmarklet.vercel.app/inject.js?t='+Date.now();document.head.appendChild(s);})();
 
-Preview: 
+Preview:
 
 javascript:(function(){var s=document.createElement('script');s.src='https://sniffies-projects-bookm-git-eb641a-joshbarnettcs-5719s-projects.vercel.app/inject.js?t='+Date.now();document.head.appendChild(s);})();
 ```

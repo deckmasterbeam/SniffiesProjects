@@ -14,7 +14,12 @@
 // exist for that one real difference, not speculative extensibility.
 
 import { createLogger } from "./log.js";
-import { REPORT_MODAL_HTML, REPORT_MODAL_CSS, wireReportModal, type ReportModalHandle } from "./report-ui.js";
+import {
+  REPORT_MODAL_HTML,
+  REPORT_MODAL_CSS,
+  wireReportModal,
+  type ReportModalHandle,
+} from "./report-ui.js";
 import {
   MARKER_AVATAR_SELECTOR as MARKER_SELECTOR,
   APP_SCREEN_SELECTOR,

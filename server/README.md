@@ -12,19 +12,19 @@ vercel deploy     # production
 
 ## Environment variables
 
-| Variable          | Required | Description                                            |
-| ----------------- | -------- | ------------------------------------------------------ |
-| `POSTGRES_URL`    | Yes      | Neon connection string                                 |
-| `TEXTBELT_KEY`    | Yes      | Textbelt API key                                       |
-| `CLIENT_SECRET`   | Yes      | Bearer token baked into the client extension dist      |
-| `WATCHER_SECRET`  | Yes      | Bearer token baked into the watcher extension dist     |
-| `ALLOWED_ORIGINS` | No       | Comma-separated allowed CORS origins. Defaults to all. |
-| `DAILY_SMS_LIMIT` | No       | Max SMS per phone per 24 h (default: `10`)             |
-| `SAVE_NUMBER_ENABLED` | No   | Must be exactly `"true"` to turn on `save-number`. See [Feature gates](#feature-gates). |
-| `SEND_GUID_ENABLED` | No     | Must be exactly `"true"` to turn on `send-guid`. See [Feature gates](#feature-gates). |
-| `FAVORITES_ENABLED` | No     | Must be exactly `"true"` to turn on `favorites`. See [Feature gates](#feature-gates). |
-| `NOTIFY_TEST_ENABLED` | No   | Must be exactly `"true"` to turn on `notify-test`. See [Feature gates](#feature-gates). |
-| `REPORTING_ENABLED` | No     | Must be exactly `"true"` to turn on `report`. See [Feature gates](#feature-gates). |
+| Variable              | Required | Description                                                                             |
+| --------------------- | -------- | --------------------------------------------------------------------------------------- |
+| `POSTGRES_URL`        | Yes      | Neon connection string                                                                  |
+| `TEXTBELT_KEY`        | Yes      | Textbelt API key                                                                        |
+| `CLIENT_SECRET`       | Yes      | Bearer token baked into the client extension dist                                       |
+| `WATCHER_SECRET`      | Yes      | Bearer token baked into the watcher extension dist                                      |
+| `ALLOWED_ORIGINS`     | No       | Comma-separated allowed CORS origins. Defaults to all.                                  |
+| `DAILY_SMS_LIMIT`     | No       | Max SMS per phone per 24 h (default: `10`)                                              |
+| `SAVE_NUMBER_ENABLED` | No       | Must be exactly `"true"` to turn on `save-number`. See [Feature gates](#feature-gates). |
+| `SEND_GUID_ENABLED`   | No       | Must be exactly `"true"` to turn on `send-guid`. See [Feature gates](#feature-gates).   |
+| `FAVORITES_ENABLED`   | No       | Must be exactly `"true"` to turn on `favorites`. See [Feature gates](#feature-gates).   |
+| `NOTIFY_TEST_ENABLED` | No       | Must be exactly `"true"` to turn on `notify-test`. See [Feature gates](#feature-gates). |
+| `REPORTING_ENABLED`   | No       | Must be exactly `"true"` to turn on `report`. See [Feature gates](#feature-gates).      |
 
 ### Two-secret model
 
@@ -40,13 +40,13 @@ Set `SERVER_BASE` in the client and watcher builds to point at the deployed URL 
 
 The phone/favorites flow (`save-number`, `send-guid`, `favorites`, `notify-test`) isn't live yet — the client's settings UI keeps it hidden behind its own `FAVORITES_NOTIFICATIONS_ENABLED` build flag, but the server endpoints themselves were still reachable by anyone with `CLIENT_SECRET`, which is extractable from the shipped extension. Since that secret alone isn't a strong access control, each of these four endpoints is additionally hard-gated server-side by its own env var:
 
-| Endpoint       | Flag                   |
-| -------------- | ----------------------- |
-| `save-number`  | `SAVE_NUMBER_ENABLED`  |
-| `send-guid`    | `SEND_GUID_ENABLED`    |
-| `favorites`    | `FAVORITES_ENABLED`    |
-| `notify-test`  | `NOTIFY_TEST_ENABLED`  |
-| `report`       | `REPORTING_ENABLED`    |
+| Endpoint      | Flag                  |
+| ------------- | --------------------- |
+| `save-number` | `SAVE_NUMBER_ENABLED` |
+| `send-guid`   | `SEND_GUID_ENABLED`   |
+| `favorites`   | `FAVORITES_ENABLED`   |
+| `notify-test` | `NOTIFY_TEST_ENABLED` |
+| `report`      | `REPORTING_ENABLED`   |
 
 Until an endpoint's flag is set to exactly `"true"` in the Vercel project's environment variables (and redeployed), it responds `404 { "error": "not_found" }` — before the auth check runs, so a disabled endpoint doesn't even confirm that it exists or that it expects a bearer token. Flip the relevant flag to `"true"` and redeploy when that endpoint is ready to launch; no code changes needed. Each flag can be turned on independently. The gate lives in `requireFeatureFlag` in [`_shared.ts`](./api/_shared.ts).
 
@@ -54,15 +54,15 @@ Until an endpoint's flag is set to exactly `"true"` in the Vercel project's envi
 
 Run [`schema.sql`](./schema.sql) against your Neon database to create all tables.
 
-| Table                 | Purpose                                              |
-| --------------------- | ---------------------------------------------------- |
-| `phone_registrations` | One row per phone; holds the GUID used as auth token |
-| `favorites`           | `(guid, user_id)` pairs; one row per favorited user  |
-| `notify_log`          | Record of every SMS sent, used for rate-limiting     |
-| `priority_numbers`    | Phones exempt from the daily SMS limit               |
-| `client_init_log`     | Record of every client init telemetry ping           |
-| `blocked_reporters`   | Sniffies ids whose reports are silently dropped      |
-| `pending_reports`     | Consolidated bot reports awaiting manual review      |
+| Table                 | Purpose                                                           |
+| --------------------- | ----------------------------------------------------------------- |
+| `phone_registrations` | One row per phone; holds the GUID used as auth token              |
+| `favorites`           | `(guid, user_id)` pairs; one row per favorited user               |
+| `notify_log`          | Record of every SMS sent, used for rate-limiting                  |
+| `priority_numbers`    | Phones exempt from the daily SMS limit                            |
+| `client_init_log`     | Record of every client init telemetry ping                        |
+| `blocked_reporters`   | Sniffies ids whose reports are silently dropped                   |
+| `pending_reports`     | Consolidated bot reports awaiting manual review                   |
 | `validated_reports`   | Manually confirmed bot reports; served as the "blocked bots" list |
 
 ---
@@ -91,11 +91,11 @@ Registers a phone number and returns its GUID. If the phone is already registere
 
 **Errors**
 
-| Status | `error`         | Meaning                              |
-| ------ | --------------- | ------------------------------------- |
-| 400    | `invalid_phone` | Not a valid E.164 number              |
-| 404    | `not_found`     | Feature gate is off                   |
-| 500    | `db_error`      | Database failure                      |
+| Status | `error`         | Meaning                  |
+| ------ | --------------- | ------------------------ |
+| 400    | `invalid_phone` | Not a valid E.164 number |
+| 404    | `not_found`     | Feature gate is off      |
+| 500    | `db_error`      | Database failure         |
 
 ---
 
@@ -164,7 +164,7 @@ Set `"favorite": false` to remove. `profilePicUrl` is optional and only used whe
 | Status | `error`                    | Meaning                 |
 | ------ | -------------------------- | ----------------------- |
 | 400    | `guid_and_userId_required` | Missing required fields |
-| 404    | `not_found`                 | Feature gate is off     |
+| 404    | `not_found`                | Feature gate is off     |
 | 500    | `db_error`                 | Database failure        |
 
 ---
@@ -192,11 +192,11 @@ Texts the GUID to the registered phone number. Used for the recovery flow when t
 **Errors**
 
 | Status | `error`                | Meaning                          |
-| ------ | ---------------------- | --------------------------------- |
-| 400    | `invalid_phone`        | Not a valid E.164 number          |
-| 404    | `not_found`            | Feature gate is off               |
-| 404    | `phone_not_registered` | Phone has no registration record  |
-| 502    | `textbelt_failed`      | Textbelt rejected the send        |
+| ------ | ---------------------- | -------------------------------- |
+| 400    | `invalid_phone`        | Not a valid E.164 number         |
+| 404    | `not_found`            | Feature gate is off              |
+| 404    | `phone_not_registered` | Phone has no registration record |
+| 502    | `textbelt_failed`      | Textbelt rejected the send       |
 
 ---
 
@@ -222,11 +222,11 @@ Records a client init telemetry ping. Called by the chrome client and the usersc
 
 **Errors**
 
-| Status | `error`                     | Meaning                             |
-| ------ | --------------------------- | ------------------------------------ |
-| 400    | `userId_and_version_required` | Missing `userId` or `version`      |
-| 400    | `invalid_client_type`       | `clientType` not a recognized value |
-| 500    | `db_error`                  | Database failure                    |
+| Status | `error`                       | Meaning                             |
+| ------ | ----------------------------- | ----------------------------------- |
+| 400    | `userId_and_version_required` | Missing `userId` or `version`       |
+| 400    | `invalid_client_type`         | `clientType` not a recognized value |
+| 500    | `db_error`                    | Database failure                    |
 
 ---
 
@@ -317,12 +317,12 @@ reporter reporting the same profile twice is a no-op.
 
 **Errors**
 
-| Status | `error`                                    | Meaning                              |
-| ------ | ------------------------------------------- | ------------------------------------- |
-| 400    | `invalid_report_type`                      | `reportType` not a recognized value   |
+| Status | `error`                                      | Meaning                             |
+| ------ | -------------------------------------------- | ----------------------------------- |
+| 400    | `invalid_report_type`                        | `reportType` not a recognized value |
 | 400    | `reportedUserId_and_reporterUserId_required` | Missing required fields             |
-| 404    | `not_found`                                 | Feature gate is off                   |
-| 500    | `db_error`                                  | Database failure                      |
+| 404    | `not_found`                                  | Feature gate is off                 |
+| 500    | `db_error`                                   | Database failure                    |
 
 ---
 
@@ -341,10 +341,10 @@ the client on init (and cached for 24h) to build the "blocked bots" filter list.
 
 **Errors**
 
-| Status | `error`     | Meaning                       |
-| ------ | ----------- | ------------------------------- |
+| Status | `error`        | Meaning                       |
+| ------ | -------------- | ----------------------------- |
 | 401    | `unauthorized` | Missing or wrong bearer token |
-| 500    | `db_error`  | Database failure                |
+| 500    | `db_error`     | Database failure              |
 
 ---
 

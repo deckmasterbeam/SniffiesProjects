@@ -43,6 +43,8 @@ describe("userscript — version badge", () => {
     const versionEl = title.querySelector("#snp-version")!;
     const closeBtn = document.querySelector("#snp-panel #snp-close")!;
     expect(title.contains(versionEl)).toBe(true);
-    expect(versionEl.compareDocumentPosition(closeBtn) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(
+      versionEl.compareDocumentPosition(closeBtn) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 });

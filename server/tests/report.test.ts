@@ -20,10 +20,7 @@ const ENV: Record<string, string> = {
 const savedEnv: Record<string, string | undefined> = {};
 
 function setupSql(blockedRows: unknown[] = [], insertRows: unknown[] = []) {
-  const sqlFn = vi
-    .fn()
-    .mockResolvedValueOnce(blockedRows)
-    .mockResolvedValue(insertRows);
+  const sqlFn = vi.fn().mockResolvedValueOnce(blockedRows).mockResolvedValue(insertRows);
   mockNeon.mockReturnValue(sqlFn as unknown as ReturnType<typeof neon>);
   return sqlFn;
 }
@@ -113,7 +110,11 @@ describe("misconfiguration", () => {
 describe("authorization", () => {
   it("returns 401 for wrong secret", async () => {
     const { status, body } = await callPost(
-      { reportType: "bot_suspected", reportedUserId: REPORTED_USER_ID, reporterUserId: REPORTER_USER_ID },
+      {
+        reportType: "bot_suspected",
+        reportedUserId: REPORTED_USER_ID,
+        reporterUserId: REPORTER_USER_ID,
+      },
       { authorization: "Bearer wrong" },
     );
     expect(status).toBe(401);
@@ -245,7 +246,10 @@ describe("database error", () => {
   });
 
   it("returns 500 when the upsert fails", async () => {
-    const sqlFn = vi.fn().mockResolvedValueOnce([]).mockRejectedValueOnce(new Error("insert failed"));
+    const sqlFn = vi
+      .fn()
+      .mockResolvedValueOnce([])
+      .mockRejectedValueOnce(new Error("insert failed"));
     mockNeon.mockReturnValue(sqlFn as unknown as ReturnType<typeof neon>);
     const { status, body } = await callPost({
       reportType: "bot_suspected",
