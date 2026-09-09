@@ -1,28 +1,31 @@
 import {
+  BOT_BLOCK_CSS,
+  BOT_BLOCK_HTML,
+  countDistinctBlockedBotsLast24h,
+  createLogger,
   DEFAULT_GEO_OVERRIDE,
   DEFAULT_PROFILE_BORDER_OPEN,
   GEO_OVERRIDE_CSS,
   GEO_OVERRIDE_HTML,
   PROFILE_BORDER_CSS,
   PROFILE_BORDER_HTML,
-  wireGeoOverrideForm,
+  UPDATE_BANNER_CSS,
+  UPDATE_BANNER_HTML,
   VERSION_BADGE_CSS,
-  wireVersionBadge,
-  wireProfileBorderForm,
-  createLogger,
-  countDistinctBlockedBotsLast24h,
-  BOT_BLOCK_HTML,
-  BOT_BLOCK_CSS,
   wireBotBlockForm,
+  wireGeoOverrideForm,
+  wireProfileBorderForm,
+  wireUpdateBanner,
+  wireVersionBadge,
 } from "@sniffies-projects/core";
 import { FAVORITES_NOTIFICATIONS_ENABLED, REPORTING_ENABLED } from "../shared/env.js";
 import {
-  SETTINGS_KEYS,
   getLocalSettings,
   setBotBlockingEnabled,
   setFavoritesEnabled,
   setGeoOverride,
   setProfileBorderOpen,
+  SETTINGS_KEYS,
 } from "../shared/settings.js";
 
 const log = createLogger("popup");
@@ -44,6 +47,10 @@ const versionStyle = document.createElement("style");
 versionStyle.textContent = VERSION_BADGE_CSS;
 document.head.appendChild(versionStyle);
 
+const updateBannerStyle = document.createElement("style");
+updateBannerStyle.textContent = UPDATE_BANNER_CSS;
+document.head.appendChild(updateBannerStyle);
+
 // ── Element references ────────────────────────────────────────────────────────
 
 const favoritesDetails = document.getElementById("favorites-details") as HTMLDetailsElement | null;
@@ -58,7 +65,12 @@ const openSettingsBtn = document.getElementById("open-settings");
 const init = async (): Promise<void> => {
   const settings = await getLocalSettings();
 
-  wireVersionBadge(document.body, chrome.runtime.getManifest().version);
+  const version = chrome.runtime.getManifest().version;
+  wireVersionBadge(document.body, version);
+
+  const updateRoot = document.getElementById("snp-update-root")!;
+  updateRoot.innerHTML = UPDATE_BANNER_HTML;
+  wireUpdateBanner(updateRoot, "chrome", version);
 
   // Geo form — inject HTML from core and wire up logic
   const geoRoot = document.getElementById("snp-geo-root")!;

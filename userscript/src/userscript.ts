@@ -4,43 +4,50 @@
 // build script; this file contains only the runtime logic.
 
 import {
-  installGeoHook,
-  type GeoOverride,
-  DEFAULT_GEO_OVERRIDE,
-  GEO_OVERRIDE_HTML,
-  GEO_OVERRIDE_CSS,
-  wireGeoOverrideForm,
-  VERSION_BADGE_CSS,
-  wireVersionBadge,
-  installProfileBorderRedirect,
-  type ProfileBorderOpen,
-  DEFAULT_PROFILE_BORDER_OPEN,
-  PROFILE_BORDER_HTML,
-  PROFILE_BORDER_CSS,
-  wireProfileBorderForm,
-  createLogger,
-  SITELINKS_NAV_SELECTOR,
-  countDistinctBlockedBotsLast24h,
-  BOT_BLOCK_HTML,
   BOT_BLOCK_CSS,
+  BOT_BLOCK_HTML,
+  countDistinctBlockedBotsLast24h,
+  createLogger,
+  DEFAULT_GEO_OVERRIDE,
+  DEFAULT_PROFILE_BORDER_OPEN,
+  GEO_OVERRIDE_CSS,
+  GEO_OVERRIDE_HTML,
+  installGeoHook,
+  installProfileBorderRedirect,
+  PROFILE_BORDER_CSS,
+  PROFILE_BORDER_HTML,
+  SITELINKS_NAV_SELECTOR,
+  UPDATE_BANNER_CSS,
+  UPDATE_BANNER_HTML,
+  VERSION_BADGE_CSS,
   wireBotBlockForm,
+  wireGeoOverrideForm,
+  wireProfileBorderForm,
+  wireUpdateBanner,
+  wireVersionBadge,
+  type GeoOverride,
+  type ProfileBorderOpen,
 } from "@sniffies-projects/core";
 import PANEL_CSS from "./panel.css";
 import PANEL_HTML from "./panel.html";
 import {
-  getGeoOverride,
-  setGeoOverride,
-  getProfileBorderOpen,
-  setProfileBorderOpen,
-  getBotBlockingEnabled,
-  setBotBlockingEnabled,
-  getBotBlockingSectionOpen,
-  setBotBlockingSectionOpen,
+  installReportFeature,
+  refreshBlockedBotsIfStale,
+  type ReportFeatureState,
+} from "./report.js";
+import { REPORTING_ENABLED, VERSION } from "./shared/env.js";
+import {
   getBlockedBotEventsByDay,
+  getBotBlockingEnabled,
+  getBotBlockingSectionOpen,
+  getGeoOverride,
+  getProfileBorderOpen,
+  setBotBlockingEnabled,
+  setBotBlockingSectionOpen,
+  setGeoOverride,
+  setProfileBorderOpen,
 } from "./shared/settings.js";
 import { installUserIdLogging } from "./user-id-logger.js";
-import { installReportFeature, refreshBlockedBotsIfStale, type ReportFeatureState } from "./report.js";
-import { REPORTING_ENABLED, VERSION } from "./shared/env.js";
 
 const log = createLogger("tools");
 
@@ -217,6 +224,10 @@ export function mountUI(state: HookState | null): void {
   versionStyle.textContent = VERSION_BADGE_CSS;
   document.head.appendChild(versionStyle);
 
+  const updateBannerStyle = document.createElement("style");
+  updateBannerStyle.textContent = UPDATE_BANNER_CSS;
+  document.head.appendChild(updateBannerStyle);
+
   const fab = document.createElement("button");
   fab.id = "snp-fab";
   fab.title = "Sniffies Tools";
@@ -230,6 +241,10 @@ export function mountUI(state: HookState | null): void {
   document.body.appendChild(panel);
 
   wireVersionBadge(panel, VERSION);
+
+  const updateRoot = panel.querySelector<HTMLElement>("#snp-update-root")!;
+  updateRoot.innerHTML = UPDATE_BANNER_HTML;
+  wireUpdateBanner(updateRoot, "userscript", VERSION);
 
   const geoRoot = panel.querySelector<HTMLElement>("#snp-geo-root")!;
   geoRoot.innerHTML = GEO_OVERRIDE_HTML;

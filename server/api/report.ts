@@ -65,7 +65,10 @@ const handler = async (req: VercelRequest, res: VercelResponse): Promise<void> =
     return;
   }
 
-  if (!SNIFFIES_USER_ID_REGEX.test(reportedUserId) || !SNIFFIES_USER_ID_REGEX.test(reporterUserId)) {
+  if (
+    !SNIFFIES_USER_ID_REGEX.test(reportedUserId) ||
+    !SNIFFIES_USER_ID_REGEX.test(reporterUserId)
+  ) {
     json(res, 400, { error: "invalid_user_id" });
     return;
   }
@@ -80,7 +83,11 @@ const handler = async (req: VercelRequest, res: VercelResponse): Promise<void> =
     }
 
     const messageJson = JSON.stringify([
-      { reporterId: reporterUserId, message: message || null, reportedAt: new Date().toISOString() },
+      {
+        reporterId: reporterUserId,
+        message: message || null,
+        reportedAt: new Date().toISOString(),
+      },
     ]);
 
     await sql`

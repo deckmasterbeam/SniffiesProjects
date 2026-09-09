@@ -3,12 +3,13 @@
 Location spoofing for Sniffies, packaged as an iOS userscript.
 
 Supported features:
+
 - Location spoofing
 - Bot reporting/blocking
 
 ## Usage
 
-Open [sniffies.com](https://sniffies.com) in Safari. A 📍 button will appear in the nav bar — tap it to open features panel. 
+Open [sniffies.com](https://sniffies.com) in Safari. A 📍 button will appear in the nav bar — tap it to open features panel.
 
 Location spoofing: Enable, enter coordinates, and save. It may take a moment for Sniffies to pick up the location change. If it takes longer than a moment, reload the sniffies site, the location change should be picked up on reload.
 
@@ -29,7 +30,7 @@ Every push to `main` builds this package and publishes it as a GitHub release ta
 [releases page](https://github.com/deckmasterbeam/SniffiesProjects/releases) for the latest one.
 
 Don't download that release asset directly, though — Safari/Tampermonkey detect a userscript by
-navigating *to* it as a page (raw JS, not a forced download), which a GitHub release asset doesn't
+navigating _to_ it as a page (raw JS, not a forced download), which a GitHub release asset doesn't
 do. Instead, open the tagged version straight from `raw.githubusercontent.com`, substituting the
 tag from the releases page:
 
@@ -56,11 +57,11 @@ Install dependencies:
 npm install
 ```
 
-| Command | Output |
-|---|---|
-| `npm run build` | Unminified — use while developing |
+| Command              | Output                                    |
+| -------------------- | ----------------------------------------- |
+| `npm run build`      | Unminified — use while developing         |
 | `npm run build:prod` | Minified — use when copying to your phone |
-| `npm run watch` | Unminified, rebuilds on file change |
+| `npm run watch`      | Unminified, rebuilds on file change       |
 
 The output file is `dist/sniffies-tools.user.js`.
 

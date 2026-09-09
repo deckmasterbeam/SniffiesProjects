@@ -3,9 +3,7 @@
 
 import { readFileSync, mkdirSync, writeFileSync } from "node:fs";
 
-const { version } = JSON.parse(
-  readFileSync(new URL("../package.json", import.meta.url), "utf8"),
-);
+const { version } = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
 
 const html = `<!doctype html>
 <html>

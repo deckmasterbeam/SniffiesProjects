@@ -17,5 +17,4 @@ export const mountFab = (fab: HTMLButtonElement): void => {
 /**
  * Returns true if the current page is a Sniffies domain.
  */
-export const isSniffiesDomain = (): boolean =>
-  location.hostname.endsWith("sniffies.com");
+export const isSniffiesDomain = (): boolean => location.hostname.endsWith("sniffies.com");
