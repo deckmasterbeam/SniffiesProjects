@@ -27,6 +27,7 @@ jobs:
         env:
           SERVER_BASE: ${{ secrets.SERVER_BASE }}
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+          REPORTING_ENABLED: ${{ vars.REPORTING_ENABLED }}
 
       - name: Commit dist to repo
         run: |

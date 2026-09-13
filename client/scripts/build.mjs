@@ -1,8 +1,10 @@
 // Build script: bundles TS entry points with esbuild and copies static assets
 // (manifest, HTML, CSS, icons) into dist/ preserving the src layout.
+// FAVORITES_NOTIFICATIONS_ENABLED/REPORTING_ENABLED are read as exactly
+// "true"/"false" — always set them explicitly, in both dev and prod envs.
 // Pass --prod for a release build: validates SERVER_BASE/CLIENT_SECRET are
-// set, forces DEBUG/FAVORITES_NOTIFICATIONS_ENABLED/REPORTING_ENABLED off,
-// and patches manifest.json's version to match package.json.
+// set, forces DEBUG off, and patches manifest.json's version to match
+// package.json.
 
 import { context, build } from "esbuild";
 import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
@@ -109,9 +111,9 @@ const buildOptions = {
     __CLIENT_SECRET__: JSON.stringify(process.env.CLIENT_SECRET ?? ""),
     __DEBUG__: String(!prod && process.env.DEBUG === "true"),
     __FAVORITES_NOTIFICATIONS_ENABLED__: String(
-      !prod && process.env.FAVORITES_NOTIFICATIONS_ENABLED !== "false",
+      process.env.FAVORITES_NOTIFICATIONS_ENABLED === "true",
     ),
-    __REPORTING_ENABLED__: String(!prod && process.env.REPORTING_ENABLED !== "false"),
+    __REPORTING_ENABLED__: String(process.env.REPORTING_ENABLED === "true"),
   },
 };
 

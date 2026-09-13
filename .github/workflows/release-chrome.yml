@@ -27,6 +27,8 @@ jobs:
         env:
           SERVER_BASE: ${{ secrets.SERVER_BASE }}
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+          FAVORITES_NOTIFICATIONS_ENABLED: ${{ vars.FAVORITES_NOTIFICATIONS_ENABLED }}
+          REPORTING_ENABLED: ${{ vars.REPORTING_ENABLED }}
 
       - name: Zip dist
         run: cd dist && zip -r ../sniffies-chrome.zip . && cd ..

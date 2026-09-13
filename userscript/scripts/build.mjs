@@ -75,11 +75,11 @@ const buildOptions = {
     ".html": "text",
   },
   define: {
-    __DEBUG__: String(!prod),
+    __DEBUG__: String(!prod && process.env.DEBUG === "true"),
     __SERVER_BASE__: JSON.stringify(process.env.SERVER_BASE ?? ""),
     __CLIENT_SECRET__: JSON.stringify(process.env.CLIENT_SECRET ?? ""),
     __VERSION__: JSON.stringify(pkg.version),
-    __REPORTING_ENABLED__: String(!prod && process.env.REPORTING_ENABLED !== "false"),
+    __REPORTING_ENABLED__: String(process.env.REPORTING_ENABLED === "true"),
   },
 };
 
