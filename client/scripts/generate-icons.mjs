@@ -1,12 +1,12 @@
 import sharp from "sharp";
 import { mkdirSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { ROOT_DIR } from "../../scripts/const.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const root = resolve(__dirname, "..");
 const logoPath = join(__dirname, "sniffies_logo.png");
-const iconsDir = join(root, "icons");
+const iconsDir = join(ROOT_DIR, "icons");
 mkdirSync(iconsDir, { recursive: true });
 
 const SIZES = [16, 32, 48, 128];

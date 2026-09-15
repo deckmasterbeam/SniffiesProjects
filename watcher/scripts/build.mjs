@@ -1,14 +1,12 @@
 // Build script: bundles TS entry points with esbuild and copies static assets into dist/.
 
-import { context, build } from "esbuild";
-import { cp, mkdir, rm } from "node:fs/promises";
+import { build, context } from "esbuild";
 import { existsSync } from "node:fs";
+import { cp, mkdir, rm } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { ROOT_DIR } from "../../scripts/const.mjs";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const root = resolve(__dirname, "..");
-const distDir = join(root, "dist");
+const distDir = join(ROOT_DIR, "dist");
 const watch = process.argv.includes("--watch");
 
 const tsEntries = [
@@ -21,7 +19,7 @@ const staticAssets = ["manifest.json"];
 
 const copyAssets = async () => {
   for (const rel of staticAssets) {
-    const from = join(root, rel);
+    const from = join(ROOT_DIR, rel);
     if (!existsSync(from)) {
       continue;
     }
@@ -30,7 +28,7 @@ const copyAssets = async () => {
     await cp(from, to);
   }
 
-  const iconsDir = join(root, "icons");
+  const iconsDir = join(ROOT_DIR, "icons");
   if (existsSync(iconsDir)) {
     await cp(iconsDir, join(distDir, "icons"), { recursive: true });
   }
@@ -38,7 +36,7 @@ const copyAssets = async () => {
 
 const buildOptions = {
   entryPoints: tsEntries.map((entry) => ({
-    in: join(root, entry),
+    in: join(ROOT_DIR, entry),
     out: entry.replace(/\.ts$/, ""),
   })),
   outdir: distDir,
@@ -49,7 +47,7 @@ const buildOptions = {
   sourcemap: true,
   logLevel: "info",
   alias: {
-    "@sniffies-projects/core": resolve(root, "../core/src/index.ts"),
+    "@sniffies-projects/core": resolve(ROOT_DIR, "../core/src/index.ts"),
   },
   loader: {
     ".css": "text",

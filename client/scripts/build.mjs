@@ -1,16 +1,13 @@
 // Build script: builds to dist/
 // Pass --prod for a release build
 
-import { context, build } from "esbuild";
-import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { build, context } from "esbuild";
 import { existsSync } from "node:fs";
+import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
-import { REQUIRED_RELEASE_ENV_VARS } from "../../scripts/const.mjs";
+import { REQUIRED_RELEASE_ENV_VARS, ROOT_DIR } from "../../scripts/const.mjs";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const root = resolve(__dirname, "..");
-const distDir = join(root, "dist");
+const distDir = join(ROOT_DIR, "dist");
 const watch = process.argv.includes("--watch");
 const prod = process.argv.includes("--prod");
 
@@ -24,7 +21,7 @@ if (prod) {
     process.exit(1);
   }
 
-  const pkg = JSON.parse(await readFile(join(root, "package.json"), "utf8"));
+  const pkg = JSON.parse(await readFile(join(ROOT_DIR, "package.json"), "utf8"));
   releaseVersion = pkg.version;
   console.log(`[build:prod] version ${releaseVersion}`);
 }
@@ -57,7 +54,7 @@ const staticAssets = [
 
 const copyAssets = async () => {
   for (const rel of staticAssets) {
-    const from = join(root, rel);
+    const from = join(ROOT_DIR, rel);
     if (!existsSync(from)) {
       continue;
     }
@@ -75,7 +72,7 @@ const copyAssets = async () => {
     }
   }
 
-  const iconsDir = join(root, "icons");
+  const iconsDir = join(ROOT_DIR, "icons");
   if (existsSync(iconsDir)) {
     await cp(iconsDir, join(distDir, "icons"), { recursive: true });
   }
@@ -83,14 +80,14 @@ const copyAssets = async () => {
 
 const buildOptions = {
   alias: {
-    "@sniffies-projects/core": resolve(root, "../core/src/index.ts"),
+    "@sniffies-projects/core": resolve(ROOT_DIR, "../core/src/index.ts"),
   },
   loader: {
     ".css": "text",
     ".html": "text",
   },
   entryPoints: tsEntries.map((entry) => ({
-    in: join(root, entry),
+    in: join(ROOT_DIR, entry),
     // Preserve the src/ layout so manifest.json paths resolve unchanged.
     out: entry.replace(/\.ts$/, ""),
   })),

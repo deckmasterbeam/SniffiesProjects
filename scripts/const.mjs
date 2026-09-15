@@ -1,4 +1,4 @@
-import { dirname } from "node:path";
+import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 export const REQUIRED_RELEASE_ENV_VARS = ["SERVER_BASE", "CLIENT_SECRET"];
