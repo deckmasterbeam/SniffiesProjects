@@ -3,7 +3,7 @@ import { spawn } from "node:child_process";
 import { mkdir, rm, readFile, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { REQUIRED_RELEASE_ENV_VARS } from "../../scripts/release-env.mjs";
+import { REQUIRED_RELEASE_ENV_VARS } from "../../scripts/const.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = resolve(__dirname, "..");

@@ -1,23 +1,16 @@
-// Runs `yarn install` in every package, sequentially.
-// Exits with code 1 if any package fails.
+// Runs `yarn install` in every package sequentially. Exits with code 1 if any package fails.
 
 import { spawnSync } from "node:child_process";
-import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
-
-const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-
-const packages = ["core", "client", "bookmarklet", "userscript", "server", "watcher", "e2e"];
+import { resolve } from "node:path";
+import { PACKAGE_LIST, ROOT_DIR, makeTextBlock } from "./const.mjs";
 
 let failed = false;
 
-for (const pkg of packages) {
-  console.log(`\n${"─".repeat(40)}`);
-  console.log(`  Installing: ${pkg}`);
-  console.log(`${"─".repeat(40)}\n`);
+for (const pkg of PACKAGE_LIST) {
+  console.log(makeTextBlock(`Installing: ${pkg}`));
 
   const result = spawnSync("yarn", ["install"], {
-    cwd: resolve(root, pkg),
+    cwd: resolve(ROOT_DIR, pkg),
     stdio: "inherit",
     shell: true,
   });
@@ -27,10 +20,7 @@ for (const pkg of packages) {
   }
 }
 
-console.log(`\n${"─".repeat(40)}`);
+console.log(makeTextBlock(failed ? "✗ Some packages failed to install" : "✓ All packages installed"));
 if (failed) {
-  console.log("  ✗ Some packages failed to install");
   process.exit(1);
-} else {
-  console.log("  ✓ All packages installed");
 }

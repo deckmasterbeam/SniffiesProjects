@@ -1,23 +1,16 @@
-// Runs `yarn audit` in every package, sequentially.
-// Exits with code 1 if any package reports vulnerabilities.
+// Runs `yarn audit` in every package one at a time. Exits with code 1 if any package reports vulnerabilities.
 
 import { spawnSync } from "node:child_process";
-import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
-
-const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-
-const packages = ["core", "client", "bookmarklet", "userscript", "server", "watcher", "e2e"];
+import { resolve } from "node:path";
+import { PACKAGE_LIST, ROOT_DIR, makeTextBlock } from "./const.mjs";
 
 let failed = false;
 
-for (const pkg of packages) {
-  console.log(`\n${"─".repeat(40)}`);
-  console.log(`  Auditing: ${pkg}`);
-  console.log(`${"─".repeat(40)}\n`);
+for (const pkg of PACKAGE_LIST) {
+  console.log(makeTextBlock(`Auditing: ${pkg}`));
 
   const result = spawnSync("yarn", ["audit"], {
-    cwd: resolve(root, pkg),
+    cwd: resolve(ROOT_DIR, pkg),
     stdio: "inherit",
     shell: true,
   });
@@ -27,10 +20,7 @@ for (const pkg of packages) {
   }
 }
 
-console.log(`\n${"─".repeat(40)}`);
+console.log(makeTextBlock(failed ? "Some packages have audit findings" : "No audit findings"));
 if (failed) {
-  console.log("  ✗ Some packages have audit findings");
   process.exit(1);
-} else {
-  console.log("  ✓ No audit findings");
 }
