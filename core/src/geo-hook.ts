@@ -6,7 +6,6 @@ type PatchedGeo = Geolocation & { __sniffiesPatched?: boolean };
 export interface GeoHookResult {
   nativeGetCurrentPosition: Geolocation["getCurrentPosition"];
   nativeWatchPosition: Geolocation["watchPosition"];
-  /** Re-fires all active watchPosition subscribers with the current real position. Call this whenever the override changes so active watches reflect the new state immediately. */
   refreshWatches: () => void;
 }
 

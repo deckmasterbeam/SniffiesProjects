@@ -1,34 +1,10 @@
 import { createLogger, type Logger } from "./log.js";
 
-// Filters blocked-bot accounts out of Sniffies' own data before the page ever
-// parses it, across four reverse-engineered surfaces (see TODO.md section 5
-// for the HAR-derived field paths this was built against):
-//   - POST .../api/post-authentication (map init)
-//   - GET  .../api/v2/post-authentication/chat-data (chat init)
-//   - GET  .../api/messages?conversationId=... (an opened chat thread)
-//   - wss://prod.ws.sniffies.com/ (live presence events, live 1:1 chat
-//     messages via a "newMsg" frame, and new conversation threads via a
-//     "newConversation" frame — confirmed by HAR, see below)
-// The API host itself isn't stable: a second capture, taken minutes after the
-// first, saw every /api/* call move from uswapi2.sniffies.com to
-// usw.api.sniffies.com — so XHR matching is done by *path* against any
-// *.sniffies.com host, not by a fixed hostname (that mismatch was the root
-// cause of a real filtering miss during testing).
-// This is inherently fragile: Sniffies can change any of these wire formats
-// without notice, silently turning off filtering. There's no realistic way to
-// unit-test the filtering logic against live Sniffies traffic — the pure
-// filter/decision functions below are covered, but the actual hook only gets
-// manual verification. Every successful filter logs via log.warn (so it's
-// visible without flipping on __DEBUG__) naming which blocked id(s) were
-// removed and from where — check the console if filtering seems to be
-// missing something.
-
 export interface BotBlockState {
   blockedIds: ReadonlySet<string>;
   enabled: boolean;
 }
 
-/** Called with the distinct blocked ids removed from a single response/frame. */
 export type OnBotsFiltered = (ids: string[]) => void;
 
 const POST_AUTH_PATH = "/api/post-authentication";
@@ -89,12 +65,7 @@ const filterById = <T extends WithId>(
     return false;
   });
 
-/**
- * Removes blocked accounts from the map init payload's visitor lists. If
- * `removed` is passed, every stripped id is added to it as filtering happens
- * — a single pass, rather than a separate pre-scan to find which ids were
- * present.
- */
+/** Removes blocked accounts from the map init */
 export const filterPostAuthenticationPayload = (
   payload: NearbyVisitorsPayload,
   blockedIds: ReadonlySet<string>,
@@ -224,22 +195,10 @@ const parseWsFrame = (raw: string): WsFrameInfo | null => {
     return { eventName: obj.eventName, id: typeof obj.data === "string" ? obj.data : null };
   }
   if (obj.eventName === "newMsg") {
-    // Live 1:1 chat message. Confirmed via HAR: the app reacts to this frame
-    // by immediately fetching /api/conversation/visitor for the author (and,
-    // per user report, that round-trip is what causes the counterpart to see
-    // a read receipt) — dropping the frame here is what actually stops that
-    // chain, since we only rewrite XHR *responses* and can't intercept a
-    // request that never gets sent.
     const author = (obj.data as { message?: { author?: unknown } } | undefined)?.message?.author;
     return { eventName: obj.eventName, id: typeof author === "string" ? author : null };
   }
   if (obj.eventName === "newConversation") {
-    // Fires when a brand-new conversation thread starts — same leak as
-    // newMsg above, just for a first message instead of one in an existing
-    // thread. Confirmed via HAR: data.partialUser is the counterpart's
-    // lightweight profile, the same {_id, ...} shape as partialVisitorData/
-    // partialUsers elsewhere, so it's the definitive id regardless of
-    // whether the blocked account is data.conversation's author1 or author2.
     const id = (obj.data as { partialUser?: { _id?: unknown } } | undefined)?.partialUser?._id;
     return { eventName: obj.eventName, id: typeof id === "string" ? id : null };
   }
@@ -259,11 +218,6 @@ export const shouldFilterWebSocketFrame = (
 };
 
 // ── XHR ────────────────────────────────────────────────────────────────────
-// Sniffies calls these endpoints via XMLHttpRequest, not fetch (confirmed
-// from the HAR). Shadowing responseText/response as instance-level accessor
-// properties (rather than racing the app's own load/readystatechange
-// listeners) means whenever the app reads the response, it gets the filtered
-// version regardless of when that read happens.
 
 type PatchedXHRPrototype = typeof XMLHttpRequest.prototype & {
   __sniffiesBotBlockPatched?: boolean;
@@ -343,9 +297,6 @@ const installXhrFilter = (
             json = responseDescriptor.get!.call(this);
           } else {
             text = responseTextDescriptor.get!.call(this) as string;
-            // Only parse when we're actually going to filter — an unfiltered
-            // (disabled, or empty blocklist) response just passes the raw
-            // text through untouched below.
             if (shouldFilter) {
               try {
                 json = JSON.parse(text);
@@ -393,10 +344,6 @@ const installXhrFilter = (
 };
 
 // ── WebSocket ────────────────────────────────────────────────────────────────
-// Wraps the WebSocket *instance* returned by the constructor (not just the
-// connect URL, like installUserIdHook does) so blocked-account frames never
-// reach the page's own message listeners — via addEventListener("message",
-// ...) or the onmessage property, both of which Sniffies may use.
 
 type PatchedWebSocketCtor = typeof WebSocket & { __sniffiesBotBlockPatched?: boolean };
 
@@ -433,10 +380,6 @@ const patchSocketInstance = (
     return false;
   };
 
-  // WebSocket's addEventListener/removeEventListener overloads (unlike the
-  // base EventTarget ones) don't accept a null listener — loosen the type
-  // here since we deliberately pass through whatever the caller gave us,
-  // null included, rather than special-casing it.
   const nativeAddEventListener = socket.addEventListener.bind(socket) as (
     type: string,
     listener: EventListenerOrEventListenerObject | null,
@@ -563,21 +506,9 @@ export interface BotBlockHookResult {
 }
 
 /**
- * Installs both filters (XHR + WebSocket). Safe to call once per page load;
- * each half no-ops if already patched.
- *
- * @param getState - Called on every intercepted response/frame, so the
- *                    blocklist and enabled flag can be updated live after
- *                    install (mirrors installGeoHook's getOverride pattern).
- *                    This hook runs at document_start, before the isolated
- *                    world has read chrome.storage and relayed the blocklist
- *                    over — until the first relay message arrives, getState()
- *                    should return `enabled: false` so early responses pass
- *                    through unfiltered rather than racing the relay.
- * @param onFiltered - Optional. Called with the distinct blocked ids removed
- *                      from a single response/frame, each time filtering
- *                      actually happens. Fires alongside (not instead of) the
- *                      log.warn diagnostic.
+ * Installs bot filters
+ * @param getState
+ * @param onFiltered
  */
 export const installBotBlockHook = (
   getState: () => BotBlockState,

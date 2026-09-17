@@ -1,46 +1,42 @@
-// Sniffies Tools — iOS userscript
-// Install via a userscript manager app (e.g. Userscripts, Stay) that supports
-// the ==UserScript== metadata format. The metadata header is prepended by the
-// build script; this file contains only the runtime logic.
-
 import {
-  installGeoHook,
-  type GeoOverride,
-  DEFAULT_GEO_OVERRIDE,
-  GEO_OVERRIDE_HTML,
-  GEO_OVERRIDE_CSS,
-  wireGeoOverrideForm,
-  VERSION_BADGE_CSS,
-  wireVersionBadge,
-  installProfileBorderRedirect,
-  type ProfileBorderOpen,
-  DEFAULT_PROFILE_BORDER_OPEN,
-  PROFILE_BORDER_HTML,
-  PROFILE_BORDER_CSS,
-  wireProfileBorderForm,
-  createLogger,
-  SITELINKS_NAV_SELECTOR,
-  countDistinctBlockedBotsLast24h,
-  BOT_BLOCK_HTML,
   BOT_BLOCK_CSS,
+  BOT_BLOCK_HTML,
+  countDistinctBlockedBotsLast24h,
+  createLogger,
+  DEFAULT_GEO_OVERRIDE,
+  DEFAULT_PROFILE_BORDER_OPEN,
+  GEO_OVERRIDE_CSS,
+  GEO_OVERRIDE_HTML,
+  ICON_HOLDER_RIGHT_BOTTOM_SELECTOR,
+  installGeoHook,
+  installProfileBorderRedirect,
+  PROFILE_BORDER_CSS,
+  PROFILE_BORDER_HTML,
+  VERSION_BADGE_CSS,
   wireBotBlockForm,
+  wireGeoOverrideForm,
+  wireProfileBorderForm,
+  wireVersionBadge,
+  type GeoOverride,
+  type ProfileBorderOpen,
 } from "@sniffies-projects/core";
+import FAB_ICON_PNG from "../../client/icons/icon48.png";
 import PANEL_CSS from "./panel.css";
 import PANEL_HTML from "./panel.html";
-import {
-  getGeoOverride,
-  setGeoOverride,
-  getProfileBorderOpen,
-  setProfileBorderOpen,
-  getBotBlockingEnabled,
-  setBotBlockingEnabled,
-  getBotBlockingSectionOpen,
-  setBotBlockingSectionOpen,
-  getBlockedBotEventsByDay,
-} from "./shared/settings.js";
-import { installUserIdLogging } from "./user-id-logger.js";
 import { installReportFeature, refreshBlockedBotsIfStale, type ReportFeatureState } from "./report.js";
 import { REPORTING_ENABLED, VERSION } from "./shared/env.js";
+import {
+  getBlockedBotEventsByDay,
+  getBotBlockingEnabled,
+  getBotBlockingSectionOpen,
+  getGeoOverride,
+  getProfileBorderOpen,
+  setBotBlockingEnabled,
+  setBotBlockingSectionOpen,
+  setGeoOverride,
+  setProfileBorderOpen,
+} from "./shared/settings.js";
+import { installUserIdLogging } from "./user-id-logger.js";
 
 const log = createLogger("tools");
 
@@ -51,21 +47,38 @@ declare global {
 }
 
 // ── FAB mount ─────────────────────────────────────────────────────────────────
+// class for buttons that show up on the map
+const ICON_HOLDER_ROW_CLASS = "lower-map-icon";
+// class for the fab button when mounted on the map
+const FAB_DOCKED_CLASS = "snp-fab-docked";
+const NGCONTENT_ATTR_PREFIX = "_ngcontent-";
+
+const copyNgContentAttr = (target: Element, source: Element): void => {
+  const attr = Array.from(source.attributes).find((a) => a.name.startsWith(NGCONTENT_ATTR_PREFIX));
+  if (attr) {
+    target.setAttribute(attr.name, attr.value);
+  }
+};
 
 const mountFab = (fab: HTMLButtonElement): void => {
-  const tryInsert = (): boolean => {
-    const navTarget = document.querySelector<HTMLElement>(SITELINKS_NAV_SELECTOR);
-    if (navTarget?.parentElement) {
-      navTarget.parentElement.insertBefore(fab, navTarget.nextSibling);
-      return true;
+  const tryInsertIntoIconHolder = (): boolean => {
+    const iconHolder = document.querySelector<HTMLElement>(ICON_HOLDER_RIGHT_BOTTOM_SELECTOR);
+    if (!iconHolder) return false;
+    if (fab.parentElement !== iconHolder) {
+      iconHolder.prepend(fab);
+      fab.classList.add(ICON_HOLDER_ROW_CLASS, FAB_DOCKED_CLASS);
+      copyNgContentAttr(fab, iconHolder);
     }
-    return false;
+    return true;
   };
 
-  if (tryInsert()) return;
+  // Fallback anchor, used until the icon row above first appears.
+  if (!tryInsertIntoIconHolder()) {
+    document.body.appendChild(fab);
+  }
 
   const observer = new MutationObserver(() => {
-    if (tryInsert()) observer.disconnect();
+    tryInsertIntoIconHolder();
   });
   observer.observe(document.body, { childList: true, subtree: true });
 };
@@ -220,7 +233,11 @@ export function mountUI(state: HookState | null): void {
   const fab = document.createElement("button");
   fab.id = "snp-fab";
   fab.title = "Sniffies Tools";
-  fab.textContent = "📍";
+  const fabIcon = document.createElement("i");
+  fabIcon.id = "snp-fab-icon";
+  fabIcon.classList.add("fa", "snp-fab-icon-base-size");
+  fabIcon.style.backgroundImage = `url("${FAB_ICON_PNG}")`;
+  fab.appendChild(fabIcon);
   mountFab(fab);
 
   const panel = document.createElement("div");
@@ -267,7 +284,7 @@ export function mountUI(state: HookState | null): void {
 
   wireBotBlockForm(botBlockRoot, {
     reportingEnabled: REPORTING_ENABLED,
-    initialEnabled: getBotBlockingEnabled(),
+    userEnabledReporting: getBotBlockingEnabled(),
     initialCount: countDistinctBlockedBotsLast24h(getBlockedBotEventsByDay()),
     initialOpen: getBotBlockingSectionOpen(),
     onToggle: setBotBlockingSectionOpen,
