@@ -1,8 +1,8 @@
 // Build script: bundles TS entry points with esbuild and copies static assets into dist/.
 
-import { context, build } from "esbuild";
-import { cp, mkdir, rm } from "node:fs/promises";
+import { build, context } from "esbuild";
 import { existsSync } from "node:fs";
+import { cp, mkdir, rm } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
