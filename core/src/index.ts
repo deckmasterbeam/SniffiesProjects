@@ -54,5 +54,6 @@ export {
   NAME_LABEL_SELECTOR,
   PIN_BUTTON_SELECTOR,
   SITELINKS_NAV_SELECTOR,
+  ICON_HOLDER_RIGHT_BOTTOM_SELECTOR,
 } from "./sniffies-selectors.js";
 export type { SniffiesSelectorName } from "./sniffies-selectors.js";

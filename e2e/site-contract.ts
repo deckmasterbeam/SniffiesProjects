@@ -38,8 +38,13 @@ const SELECTOR_METADATA: Record<SniffiesSelectorName, SelectorMeta> = {
     source: "core/src/report-button-hook.ts",
   },
   SITELINKS_NAV_SELECTOR: {
-    description: "Sidebar nav link used as the FAB's mount anchor (userscript/bookmarklet only)",
-    source: "userscript/src/userscript.ts, bookmarklet/src/mount-fab.ts",
+    description: "Sidebar nav link used as the FAB's mount anchor (bookmarklet only)",
+    source: "bookmarklet/src/mount-fab.ts",
+  },
+  ICON_HOLDER_RIGHT_BOTTOM_SELECTOR: {
+    description:
+      "Map's own travel-mode/hide-me/find-me icon row. This is the FAB's preferred mount target",
+    source: "userscript/src/userscript.ts",
   },
 };
 

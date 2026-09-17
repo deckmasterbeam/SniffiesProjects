@@ -107,7 +107,7 @@ const init = async (): Promise<void> => {
   botBlockRoot.innerHTML = BOT_BLOCK_HTML;
   wireBotBlockForm(botBlockRoot, {
     reportingEnabled: REPORTING_ENABLED,
-    initialEnabled: settings.botBlockingEnabled,
+    userEnabledReporting: settings.botBlockingEnabled,
     initialCount: countDistinctBlockedBotsLast24h(settings.blockedBotEventsByDay),
     initialOpen: settings.botBlockingSectionOpen,
     onToggle: (open) => {
