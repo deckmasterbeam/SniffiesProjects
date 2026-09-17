@@ -4,11 +4,13 @@ import { mkdir, readFile, rm } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const distDir = join(ROOT_DIR, "dist");
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const root = resolve(__dirname, "..");
+const distDir = join(root, "dist");
 const watch = process.argv.includes("--watch");
 
 const buildOptions = {
-  entryPoints: [join(ROOT_DIR, "src/inject.ts")],
+  entryPoints: [join(root, "src/inject.ts")],
   outfile: join(distDir, "inject.js"),
   bundle: true,
   format: "iife",
@@ -17,7 +19,7 @@ const buildOptions = {
   sourcemap: false,
   logLevel: "info",
   alias: {
-    "@sniffies-projects/core": resolve(ROOT_DIR, "../core/src/index.ts"),
+    "@sniffies-projects/core": resolve(root, "../core/src/index.ts"),
   },
   loader: {
     ".css": "text",

@@ -4,9 +4,11 @@ import { build, context } from "esbuild";
 import { existsSync } from "node:fs";
 import { cp, mkdir, rm } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
-import { ROOT_DIR } from "../../scripts/const.mjs";
+import { fileURLToPath } from "node:url";
 
-const distDir = join(ROOT_DIR, "dist");
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const root = resolve(__dirname, "..");
+const distDir = join(root, "dist");
 const watch = process.argv.includes("--watch");
 
 const tsEntries = [
@@ -19,7 +21,7 @@ const staticAssets = ["manifest.json"];
 
 const copyAssets = async () => {
   for (const rel of staticAssets) {
-    const from = join(ROOT_DIR, rel);
+    const from = join(root, rel);
     if (!existsSync(from)) {
       continue;
     }
@@ -28,7 +30,7 @@ const copyAssets = async () => {
     await cp(from, to);
   }
 
-  const iconsDir = join(ROOT_DIR, "icons");
+  const iconsDir = join(root, "icons");
   if (existsSync(iconsDir)) {
     await cp(iconsDir, join(distDir, "icons"), { recursive: true });
   }
@@ -36,7 +38,7 @@ const copyAssets = async () => {
 
 const buildOptions = {
   entryPoints: tsEntries.map((entry) => ({
-    in: join(ROOT_DIR, entry),
+    in: join(root, entry),
     out: entry.replace(/\.ts$/, ""),
   })),
   outdir: distDir,
@@ -47,7 +49,7 @@ const buildOptions = {
   sourcemap: true,
   logLevel: "info",
   alias: {
-    "@sniffies-projects/core": resolve(ROOT_DIR, "../core/src/index.ts"),
+    "@sniffies-projects/core": resolve(root, "../core/src/index.ts"),
   },
   loader: {
     ".css": "text",

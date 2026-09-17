@@ -1,10 +1,13 @@
 import { build, context } from "esbuild";
 import { spawn } from "node:child_process";
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
-import { join, resolve } from "node:path";
-import { REQUIRED_RELEASE_ENV_VARS, ROOT_DIR } from "../../scripts/const.mjs";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import { REQUIRED_RELEASE_ENV_VARS } from "../../scripts/const.mjs";
 
-const distDir = join(ROOT_DIR, "dist");
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const root = resolve(__dirname, "..");
+const distDir = join(root, "dist");
 const watch = process.argv.includes("--watch");
 const prod = process.argv.includes("--prod");
 
@@ -13,7 +16,7 @@ const prod = process.argv.includes("--prod");
 // here is expected, not an error.
 if (typeof process.loadEnvFile === "function") {
   try {
-    process.loadEnvFile(join(ROOT_DIR, ".env"));
+    process.loadEnvFile(join(root, ".env"));
   } catch {
     // no .env file present — rely on process.env as already set
   }
@@ -27,7 +30,7 @@ if (prod) {
   }
 }
 
-const pkg = JSON.parse(await readFile(join(ROOT_DIR, "package.json"), "utf8"));
+const pkg = JSON.parse(await readFile(join(root, "package.json"), "utf8"));
 
 // GITHUB_ACTIONS is set by the release workflow (.github/workflows/release-userscript.yml),
 // which is the only place userscript builds are committed/published from. Any build without
@@ -65,7 +68,7 @@ const buildOptions = {
   sourcemap: prod ? "inline" : false,
   logLevel: "info",
   alias: {
-    "@sniffies-projects/core": resolve(ROOT_DIR, "../core/src/index.ts"),
+    "@sniffies-projects/core": resolve(root, "../core/src/index.ts"),
   },
   loader: {
     ".css": "text",
