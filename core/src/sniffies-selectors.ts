@@ -14,6 +14,10 @@ export const SNIFFIES_SELECTORS = {
   SITELINKS_NAV_SELECTOR: '[title="Sitelinks"]',
   /** Map's own travel-mode/hide-me/find-me icon row — the FAB's preferred mount target (userscript only). */
   ICON_HOLDER_RIGHT_BOTTOM_SELECTOR: '[data-testid="iconHolderRightBottom"]',
+  /** Confirm button in Sniffies' own Travel Mode UI — clicking it PUTs the picked pin to the location API. */
+  TRAVEL_HERE_BUTTON_SELECTOR: '[data-testid="travelHereButton"]',
+  /** Travel Mode's city search box — anchors the pending-capture status message next to it. */
+  CITIES_INPUT_SELECTOR: '[data-testid="citiesInput"]',
 } as const;
 
 export type SniffiesSelectorName = keyof typeof SNIFFIES_SELECTORS;
@@ -26,4 +30,6 @@ export const {
   PIN_BUTTON_SELECTOR,
   SITELINKS_NAV_SELECTOR,
   ICON_HOLDER_RIGHT_BOTTOM_SELECTOR,
+  TRAVEL_HERE_BUTTON_SELECTOR,
+  CITIES_INPUT_SELECTOR,
 } = SNIFFIES_SELECTORS;

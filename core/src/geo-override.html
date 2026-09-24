@@ -1,25 +1,22 @@
 <details class="section collapsible" id="geo-details">
   <summary><h2>Location Spoofing</h2></summary>
   <div class="collapsible-body">
-    <p class="hint">Spoof the coordinates Sniffies sees.</p>
+    <p class="hint">
+      Turn this on, then use Sniffies' own Travel Mode: tap the plane icon on the map, drop the pin
+      where you want, then tap "Travel here". This extension picks that up automatically and keeps
+      spoofing it — including for the app's own GPS checks — until you turn it off.
+    </p>
+    <p class="hint">
+      Note: this can pick up a location you search for by city name, but it can't pick up a location
+      you reach only by dragging the map afterward without confirming.
+    </p>
     <label class="row">
       <input id="geo-enabled" type="checkbox" />
-      <span>Enable</span>
+      <span>Spoofing enabled</span>
     </label>
-    <div id="geo-fields">
-      <label class="field">
-        <span>Latitude</span>
-        <input id="geo-lat" type="number" step="any" placeholder="47.61477" autocomplete="off" />
-      </label>
-      <label class="field">
-        <span>Longitude</span>
-        <input id="geo-lng" type="number" step="any" placeholder="-122.32525" autocomplete="off" />
-      </label>
-      <button id="geo-fill-current" class="secondary" type="button">Fill with current</button>
-      <div class="actions">
-        <button id="geo-save" class="primary" type="button">Save</button>
-      </div>
-      <p id="geo-status" class="hint" aria-live="polite"></p>
+    <p id="geo-status" class="hint" aria-live="polite"></p>
+    <div class="actions">
+      <button id="geo-clear" class="secondary" type="button">Clear location</button>
     </div>
   </div>
 </details>

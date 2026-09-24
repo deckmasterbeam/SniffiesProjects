@@ -16,8 +16,19 @@ export { installProfileBorderRedirect } from "./profile-border-hook.js";
 export type { ClientType, LogInitOptions } from "./log-init.js";
 export { logInit } from "./log-init.js";
 export { GEO_OVERRIDE_HTML, GEO_OVERRIDE_CSS, wireGeoOverrideForm } from "./geo-override-ui.js";
+export type { GeoOverrideFormHandle } from "./geo-override-ui.js";
 export { VERSION_BADGE_HTML, VERSION_BADGE_CSS, wireVersionBadge } from "./version-badge.js";
 export type { GeoOverrideFormContract } from "./geo-override-form-contract.js";
+export type { TravelClickArmer } from "./travel-capture-hook.js";
+export { installTravelClickArmer, extractTravelDestination } from "./travel-capture-hook.js";
+export type { CitySearchResult } from "./city-search-hook.js";
+export {
+  isCitySearchUrl,
+  extractCitySearchResult,
+  installCitySearchXhrObserver,
+} from "./city-search-hook.js";
+export type { CitySearchStatusHandle } from "./city-search-status-hook.js";
+export { installCitySearchStatusUI } from "./city-search-status-hook.js";
 export { REPORT_MODAL_HTML, REPORT_MODAL_CSS, wireReportModal } from "./report-ui.js";
 export type { ReportFormContract } from "./report-form-contract.js";
 export type { ReportModalHandle } from "./report-ui.js";
@@ -42,6 +53,7 @@ export {
   SNIFFIES_USER_ID_REGEX,
   SETTINGS_KEYS,
   DEFAULT_LOCAL_SETTINGS,
+  hasCapturedCoords,
 } from "./settings.js";
 export type { GeoOverride, ProfileBorderOpen, ExtensionLocalSettings } from "./settings.js";
 export type { Logger } from "./log.js";
@@ -55,5 +67,7 @@ export {
   PIN_BUTTON_SELECTOR,
   SITELINKS_NAV_SELECTOR,
   ICON_HOLDER_RIGHT_BOTTOM_SELECTOR,
+  TRAVEL_HERE_BUTTON_SELECTOR,
+  CITIES_INPUT_SELECTOR,
 } from "./sniffies-selectors.js";
 export type { SniffiesSelectorName } from "./sniffies-selectors.js";

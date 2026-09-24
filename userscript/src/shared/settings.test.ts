@@ -5,10 +5,14 @@ import {
   getBlockedBotsFetchedAt,
   getBotBlockingEnabled,
   getBotBlockingSectionOpen,
+  getGeoSectionOpen,
+  getProfileBorderSectionOpen,
   recordBlockedBotEvent,
   setBlockedBots,
   setBotBlockingEnabled,
   setBotBlockingSectionOpen,
+  setGeoSectionOpen,
+  setProfileBorderSectionOpen,
 } from "./settings.js";
 
 afterEach(() => {
@@ -58,6 +62,28 @@ describe("bot blocking section open", () => {
   it("round-trips true", () => {
     setBotBlockingSectionOpen(true);
     expect(getBotBlockingSectionOpen()).toBe(true);
+  });
+});
+
+describe("geo section open", () => {
+  it("defaults to false", () => {
+    expect(getGeoSectionOpen()).toBe(false);
+  });
+
+  it("round-trips true", () => {
+    setGeoSectionOpen(true);
+    expect(getGeoSectionOpen()).toBe(true);
+  });
+});
+
+describe("profile border section open", () => {
+  it("defaults to false", () => {
+    expect(getProfileBorderSectionOpen()).toBe(false);
+  });
+
+  it("round-trips true", () => {
+    setProfileBorderSectionOpen(true);
+    expect(getProfileBorderSectionOpen()).toBe(true);
   });
 });
 

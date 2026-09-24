@@ -1,4 +1,5 @@
 import type { GeoOverride } from "./settings.js";
+import { hasCapturedCoords } from "./settings.js";
 import { createLogger } from "./log.js";
 
 type PatchedGeo = Geolocation & { __sniffiesPatched?: boolean };
@@ -11,12 +12,9 @@ export interface GeoHookResult {
 
 /**
  * Wraps navigator.geolocation to intercept position calls.
- *
- * @param getOverride - Called on every position request; return null to pass through real coords.
- * @param onPosition  - Optional callback fired with the real (pre-spoof) coords, useful for
- *                      relaying observed positions back to a storage layer.
- * @returns Native geo methods (needed by callers that must bypass the hook, e.g. "fill with
- *          current" in a UI running on the same page), or null if already patched.
+ * @param getOverride Called on every position request. Return null to pass through real coords
+ * @param onPosition Optional callback fired with the real coords
+ * @returns geo methods
  */
 export const installGeoHook = (
   getOverride: () => GeoOverride | null,
@@ -36,8 +34,8 @@ export const installGeoHook = (
 
   const applyOverride = (position: GeolocationPosition): GeolocationPosition => {
     const ov = getOverride();
-    if (!ov?.enabled) {
-      log("override disabled, passing real coords", position.coords);
+    if (!ov?.enabled || !hasCapturedCoords(ov)) {
+      log("override disabled or no location captured yet, passing real coords", position.coords);
       return position;
     }
     const spoofed = {
@@ -66,15 +64,26 @@ export const installGeoHook = (
       callback(applyOverride(position));
     };
 
+  // Without this, a denied/blocked/timed-out native geolocation call fails
+  // silently on our end — the site's own error callback still fires, but
+  // nothing here logs it, so "intercepted" appears to hang forever with no
+  // clue why the success path (and any override) never ran.
+  const wrapError =
+    (callback: PositionErrorCallback | null | undefined): PositionErrorCallback =>
+    (err) => {
+      log("native geolocation call failed", { code: err.code, message: err.message });
+      callback?.(err);
+    };
+
   geo.getCurrentPosition = (success, error, options) => {
     log("getCurrentPosition intercepted");
-    nativeGetCurrentPosition(wrapSuccess(success), error, options);
+    nativeGetCurrentPosition(wrapSuccess(success), wrapError(error), options);
   };
 
   geo.watchPosition = (success, error, options) => {
     log("watchPosition intercepted");
     const wrapped = wrapSuccess(success);
-    const id = nativeWatchPosition(wrapped, error, options);
+    const id = nativeWatchPosition(wrapped, wrapError(error), options);
     activeWatchers.set(id, wrapped);
     return id;
   };

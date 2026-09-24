@@ -34,12 +34,8 @@ const getElements = () => ({
   botBlockingHint: document.getElementById("bot-block-hint") as HTMLElement,
   botBlockingEnableLabel: document.getElementById("bot-block-enable-label") as HTMLElement,
   botBlockingCount: document.getElementById("bot-block-count") as HTMLElement,
-  geoFields: document.getElementById("geo-fields") as HTMLElement,
   geoEnabled: document.getElementById("geo-enabled") as HTMLInputElement,
-  geoLat: document.getElementById("geo-lat") as HTMLInputElement,
-  geoLng: document.getElementById("geo-lng") as HTMLInputElement,
-  geoFillCurrent: document.getElementById("geo-fill-current") as HTMLButtonElement,
-  geoSave: document.getElementById("geo-save") as HTMLButtonElement,
+  geoClear: document.getElementById("geo-clear") as HTMLButtonElement,
   geoStatus: document.getElementById("geo-status") as HTMLElement,
   geoDetails: document.getElementById("geo-details") as HTMLDetailsElement,
   profileBorderEnabled: document.getElementById("profile-border-enabled") as HTMLInputElement,
@@ -320,56 +316,17 @@ describe("popup — bot blocking count (REPORTING_ENABLED true)", () => {
   });
 });
 
-describe("popup — geo fields visibility", () => {
+describe("popup — geo status", () => {
   beforeEach(loadModule);
 
-  it("hides geo fields on init when disabled", () => {
-    const { geoFields } = getElements();
-    expect(geoFields.style.display).toBe("none");
+  it("leaves the checkbox enabled and unchecked with a no-coords hint when nothing has been captured", () => {
+    const { geoEnabled, geoStatus, geoClear } = getElements();
+    expect(geoEnabled.disabled).toBe(false);
+    expect(geoStatus.textContent).toBe("No location captured yet.");
+    expect(geoClear.style.display).toBe("none");
   });
 
-  it("shows geo fields when enable is checked", () => {
-    const { geoEnabled, geoFields } = getElements();
-    geoEnabled.checked = true;
-    geoEnabled.dispatchEvent(new Event("change"));
-    expect(geoFields.style.display).toBe("");
-  });
-
-  it("hides geo fields when enable is unchecked", () => {
-    const { geoEnabled, geoFields } = getElements();
-    geoEnabled.checked = true;
-    geoEnabled.dispatchEvent(new Event("change"));
-    geoEnabled.checked = false;
-    geoEnabled.dispatchEvent(new Event("change"));
-    expect(geoFields.style.display).toBe("none");
-  });
-
-  it("hides save button on init when lat and lng are empty", () => {
-    const { geoSave } = getElements();
-    expect(geoSave.style.display).toBe("none");
-  });
-
-  it("shows save button when both lat and lng are filled", () => {
-    const { geoLat, geoLng, geoSave } = getElements();
-    geoLat.value = "40.7128";
-    geoLat.dispatchEvent(new Event("input"));
-    geoLng.value = "-74.006";
-    geoLng.dispatchEvent(new Event("input"));
-    expect(geoSave.style.display).toBe("");
-  });
-
-  it("hides save button when lat is cleared", () => {
-    const { geoLat, geoLng, geoSave } = getElements();
-    geoLat.value = "40.7128";
-    geoLat.dispatchEvent(new Event("input"));
-    geoLng.value = "-74.006";
-    geoLng.dispatchEvent(new Event("input"));
-    geoLat.value = "";
-    geoLat.dispatchEvent(new Event("input"));
-    expect(geoSave.style.display).toBe("none");
-  });
-
-  it("shows fields and save button on init when geo is saved as enabled with coords", async () => {
+  it("shows saved coords on init when a location was previously captured", async () => {
     vi.resetModules();
     (chrome.storage.local.get as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       geoOverride: { enabled: true, latitude: 40.7128, longitude: -74.006 },
@@ -389,29 +346,53 @@ describe("popup — geo fields visibility", () => {
     });
     await import("./popup.js");
     await flushPromises();
-    const geoFields = document.getElementById("geo-fields") as HTMLElement;
-    expect(geoFields.style.display).toBe("");
+    const { geoEnabled, geoStatus, geoClear } = getElements();
+    expect(geoEnabled.checked).toBe(true);
+    expect(geoStatus.textContent).toBe("Spoofing: 40.71280, -74.00600");
+    expect(geoClear.style.display).toBe("");
   });
 });
 
 describe("popup — geo override", () => {
-  beforeEach(loadModule);
+  beforeEach(async () => {
+    vi.resetModules();
+    (chrome.storage.local.get as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      geoOverride: { enabled: true, latitude: 40.7128, longitude: -74.006 },
+      geoSectionOpen: false,
+      profileBorderOpen: { enabled: false, openInNewTab: false },
+      profileBorderSectionOpen: false,
+      favoritesEnabled: false,
+      favoritesSectionOpen: false,
+      guid: "",
+      phone: "",
+    });
+    document.body.innerHTML = POPUP_HTML;
+    Object.defineProperty(navigator, "geolocation", {
+      value: { getCurrentPosition: vi.fn() },
+      writable: true,
+      configurable: true,
+    });
+    await import("./popup.js");
+    await flushPromises();
+  });
 
-  it("saves geo form values when save is clicked", async () => {
-    const { geoLat, geoLng, geoSave } = getElements();
-    geoLat.value = "40.7128";
-    geoLng.value = "-74.0060";
-    geoSave.click();
+  it("saves geoOverride with enabled: false when the checkbox is unchecked", async () => {
+    const { geoEnabled } = getElements();
+    geoEnabled.checked = false;
+    geoEnabled.dispatchEvent(new Event("change"));
     await flushPromises();
     expect(chrome.storage.local.set).toHaveBeenCalledWith({
       geoOverride: { enabled: false, latitude: 40.7128, longitude: -74.006 },
     });
   });
 
-  it("shows geo status while getting location", () => {
-    const { geoFillCurrent, geoStatus } = getElements();
-    geoFillCurrent.click();
-    expect(geoStatus.textContent).toBe("Getting location…");
+  it("clears the coords but preserves enabled when Clear location is clicked", async () => {
+    const { geoClear } = getElements();
+    geoClear.click();
+    await flushPromises();
+    expect(chrome.storage.local.set).toHaveBeenCalledWith({
+      geoOverride: { enabled: true, latitude: 0, longitude: 0, label: undefined },
+    });
   });
 });
 

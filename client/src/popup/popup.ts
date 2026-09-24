@@ -66,7 +66,7 @@ const init = async (): Promise<void> => {
   wireGeoOverrideForm(geoRoot, {
     initial: { ...DEFAULT_GEO_OVERRIDE, ...settings.geoOverride },
     onSave: setGeoOverride,
-    getNativePosition: navigator.geolocation.getCurrentPosition.bind(navigator.geolocation),
+    onClear: setGeoOverride,
     initialOpen: settings.geoSectionOpen,
     onToggle: (open) => {
       void chrome.storage.local.set({ [SETTINGS_KEYS.geoSectionOpen]: open });

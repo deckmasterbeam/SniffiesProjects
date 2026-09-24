@@ -5,11 +5,16 @@ import {
   createLogger,
   DEFAULT_GEO_OVERRIDE,
   DEFAULT_PROFILE_BORDER_OPEN,
+  extractTravelDestination,
   GEO_OVERRIDE_CSS,
   GEO_OVERRIDE_HTML,
+  hasCapturedCoords,
   ICON_HOLDER_RIGHT_BOTTOM_SELECTOR,
+  installCitySearchStatusUI,
+  installCitySearchXhrObserver,
   installGeoHook,
   installProfileBorderRedirect,
+  installTravelClickArmer,
   PROFILE_BORDER_CSS,
   PROFILE_BORDER_HTML,
   VERSION_BADGE_CSS,
@@ -30,11 +35,15 @@ import {
   getBotBlockingEnabled,
   getBotBlockingSectionOpen,
   getGeoOverride,
+  getGeoSectionOpen,
   getProfileBorderOpen,
+  getProfileBorderSectionOpen,
   setBotBlockingEnabled,
   setBotBlockingSectionOpen,
   setGeoOverride,
+  setGeoSectionOpen,
   setProfileBorderOpen,
+  setProfileBorderSectionOpen,
 } from "./shared/settings.js";
 import { installUserIdLogging } from "./user-id-logger.js";
 
@@ -45,6 +54,11 @@ declare global {
     __sniffiesInjected?: boolean;
   }
 }
+
+// Longest we'll wait for the proactive location push before reloading
+// anyway — long enough for a normal request round trip, short enough that a
+// hung request doesn't leave the user stuck on the paywall-bound page.
+const RELOAD_SAFETY_TIMEOUT_MS = 4000;
 
 // ── FAB mount ─────────────────────────────────────────────────────────────────
 // class for buttons that show up on the map
@@ -87,9 +101,16 @@ const mountFab = (fab: HTMLButtonElement): void => {
 
 interface HookState {
   currentOverride: GeoOverride;
-  hook: ReturnType<typeof installGeoHook>;
-  nativeGetCurrentPosition: Geolocation["getCurrentPosition"];
-  sendLocationUpdate: (override: GeoOverride) => void;
+  sendLocationUpdate: (override: GeoOverride) => Promise<void>;
+  /**
+   * The single place that mutates the override the fetch/geo hooks read —
+   * both automatic captures (travel click, city search) and UI-driven
+   * changes (the enabled checkbox, clear button) must go through this so
+   * they share one source of truth instead of drifting apart.
+   */
+  setOverride: (next: GeoOverride) => void;
+  /** Registers the UI's listener for locations captured via a native "Travel here" click or city search. */
+  subscribeOverrideCapture: (cb: (next: GeoOverride) => void) => void;
   currentProfileBorderOpen: ProfileBorderOpen;
   updateProfileBorderOpen: (next: ProfileBorderOpen) => void;
   reportState: ReportFeatureState;
@@ -103,16 +124,100 @@ function installHooks(): HookState {
   refreshBlockedBotsIfStale(reportState);
 
   let currentOverride: GeoOverride = getGeoOverride();
+  // TODO debug?
+  log("initial override", currentOverride, { hasLocation: hasCapturedCoords(currentOverride) });
   const hook = installGeoHook(() => currentOverride);
-  const nativeGetCurrentPosition =
-    hook?.nativeGetCurrentPosition ??
-    navigator.geolocation.getCurrentPosition.bind(navigator.geolocation);
 
   const nativeFetch = window.fetch.bind(window);
   let lastLocationRequest: { url: string; init: RequestInit } | null = null;
   let apiBase: string | null = null;
+  let onOverrideCaptured: ((next: GeoOverride) => void) | null = null;
 
-  const sendLocationUpdate = (override: GeoOverride): void => {
+  // Shared by automatic captures below and by the UI's checkbox/clear
+  // actions (wired in mountUI via the returned setOverride) — anything that
+  // changes the override must go through here so the fetch hook's own
+  // currentOverride.enabled checks never see a stale value.
+  const applyOverride = (next: GeoOverride): void => {
+    currentOverride = next;
+    setGeoOverride(next);
+    hook?.refreshWatches();
+    onOverrideCaptured?.(next);
+  };
+
+  // A city search alone doesn't mean the user wants to travel there yet —
+  // they might search around before deciding. So a search only stages a
+  // *pending* location (shown next to Sniffies' own search box, not saved
+  // anywhere) until they confirm it by clicking "Travel here", same gesture
+  // as confirming a dragged pin.
+  let pendingSearchOverride: GeoOverride | null = null;
+  const citySearchStatusUI = installCitySearchStatusUI();
+
+  const commitPendingSearchOverride = (): void => {
+    if (!pendingSearchOverride) {
+      return;
+    }
+    const next = pendingSearchOverride;
+    pendingSearchOverride = null;
+    citySearchStatusUI.clear();
+    log("travel here clicked — committing pending search location", next);
+    applyOverride(next);
+    // Unlike a dragged-pin confirmation (which reads a PUT Sniffies' own
+    // code already sent), picking a city from search never tells Sniffies'
+    // server your location changed — it's just a map lookup. So this has to
+    // proactively push the new coords itself, or the server (and anything
+    // the app derives from it on reload, rather than a fresh geolocation
+    // call) stays on the old location.
+    //
+    // Sniffies' own click handling is still running in parallel (we don't
+    // block it), and on this account it eventually bounces to a paywall
+    // page rather than ever sending a real location PUT. Reloading here —
+    // once our own push has landed, or after a timeout if it hasn't — races
+    // that bounce: the user lands back on the map with the new location
+    // already active instead of watching the paywall flash by.
+    const pushed = sendLocationUpdate(next).catch((err) => {
+      log("proactive location update failed", err);
+    });
+    const timedOut = new Promise<void>((resolve) => setTimeout(resolve, RELOAD_SAFETY_TIMEOUT_MS));
+    void Promise.race([pushed, timedOut]).then(() => {
+      log("reloading to show the newly confirmed location");
+      location.reload();
+    });
+  };
+
+  // Fires synchronously the moment "Travel here" is clicked, independent of
+  // whether a location PUT ever follows (it doesn't, on paywalled
+  // accounts) — that's what actually commits a pending search capture.
+  const travelArmer = installTravelClickArmer(commitPendingSearchOverride);
+
+  // City search (GET /api/city/{id}) goes through XMLHttpRequest, not fetch
+  // — confirmed via DevTools' Initiator stack — so it needs its own patch
+  // rather than living inside the window.fetch override below.
+  installCitySearchXhrObserver((result) => {
+    log("city search response seen (XHR)", { result, spoofingEnabled: currentOverride.enabled });
+    // Same enabled-gate as the travel-here capture below — searching a city
+    // with spoofing off should behave like normal site usage.
+    if (!currentOverride.enabled) {
+      log("spoofing not enabled — skipping city search capture");
+      return;
+    }
+    if (result) {
+      pendingSearchOverride = {
+        enabled: true,
+        latitude: result.latitude,
+        longitude: result.longitude,
+        label: result.label,
+      };
+      log("staged pending search location", pendingSearchOverride);
+      citySearchStatusUI.showPending(result.label ?? `${result.latitude}, ${result.longitude}`);
+    } else {
+      log("city search response had no usable location to capture");
+    }
+  });
+
+  // Returns a promise so callers that need the request to actually land
+  // before doing something else (e.g. reloading the page) can wait for it,
+  // instead of firing it and moving on immediately.
+  const sendLocationUpdate = (override: GeoOverride): Promise<void> => {
     const spoofed = { lat: override.latitude, lng: override.longitude };
     if (lastLocationRequest) {
       try {
@@ -122,17 +227,16 @@ function installHooks(): HookState {
         >;
         body.virtualLocation = spoofed;
         body.physicalLocation = spoofed;
-        void nativeFetch(lastLocationRequest.url, {
+        return nativeFetch(lastLocationRequest.url, {
           ...lastLocationRequest.init,
           body: JSON.stringify(body),
-        });
-        return;
+        }).then(() => undefined);
       } catch {
         // fall through to proactive request
       }
     }
     if (apiBase) {
-      void nativeFetch(`${apiBase}/api/visitor/current/location?state=loaded`, {
+      return nativeFetch(`${apiBase}/api/visitor/current/location?state=loaded`, {
         method: "PUT",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -141,8 +245,9 @@ function installHooks(): HookState {
           physicalLocation: spoofed,
           homeDistanceInMiles: null,
         }),
-      });
+      }).then(() => undefined);
     }
+    return Promise.resolve();
   };
 
   window.fetch = async (input, init) => {
@@ -158,7 +263,26 @@ function installHooks(): HookState {
     }
     if (url.includes("/api/visitor/current/location")) {
       lastLocationRequest = { url, init: { ...init } };
-      if (currentOverride.enabled) {
+      const wasArmed = travelArmer.consume();
+      log("location PUT seen", { url, wasArmed, spoofingEnabled: currentOverride.enabled });
+      // Only capture the picked location while spoofing is turned on — using
+      // Sniffies' own Travel Mode with spoofing off should behave like normal
+      // site usage, not silently re-enable us.
+      if (wasArmed && currentOverride.enabled) {
+        try {
+          const body = JSON.parse((init?.body as string) ?? "{}") as Record<string, unknown>;
+          const captured = extractTravelDestination(body);
+          log("parsed travel PUT body", { body, captured });
+          if (captured) {
+            applyOverride({ enabled: true, ...captured });
+            log("saved captured override", currentOverride);
+          } else {
+            log("armed travel click but PUT body had no virtualLocation to capture", body);
+          }
+        } catch (err) {
+          log("failed to parse/capture travel PUT body", err);
+        }
+      } else if (currentOverride.enabled && hasCapturedCoords(currentOverride)) {
         try {
           const body = JSON.parse((init?.body as string) ?? "{}") as Record<string, unknown>;
           const spoofed = { lat: currentOverride.latitude, lng: currentOverride.longitude };
@@ -179,11 +303,21 @@ function installHooks(): HookState {
     currentProfileBorderOpen = next;
   };
 
+  log("init", {
+    version: VERSION,
+    reportingBuildFlag: REPORTING_ENABLED,
+    geoSpoofing: { enabled: currentOverride.enabled, hasLocation: hasCapturedCoords(currentOverride) },
+    profileBorderOpen: currentProfileBorderOpen.enabled,
+    botBlocking: reportState.botBlockState.enabled,
+  });
+
   return {
     currentOverride,
-    hook,
-    nativeGetCurrentPosition,
     sendLocationUpdate,
+    setOverride: applyOverride,
+    subscribeOverrideCapture: (cb) => {
+      onOverrideCaptured = cb;
+    },
     currentProfileBorderOpen,
     updateProfileBorderOpen,
     reportState,
@@ -193,14 +327,10 @@ function installHooks(): HookState {
 // ── UI (runs after DOMContentLoaded) ─────────────────────────────────────────
 
 export function mountUI(state: HookState | null): void {
-  const hook = state?.hook ?? null;
-  const nativeGetCurrentPosition =
-    state?.nativeGetCurrentPosition ??
-    (() => {
-      throw new Error("geolocation unavailable");
-    });
-  const sendLocationUpdate = state?.sendLocationUpdate ?? (() => {});
-  let currentOverride = state?.currentOverride ?? { ...DEFAULT_GEO_OVERRIDE };
+  const sendLocationUpdate = state?.sendLocationUpdate ?? (() => Promise.resolve());
+  const setOverride = state?.setOverride ?? (() => {});
+  const subscribeOverrideCapture = state?.subscribeOverrideCapture ?? (() => {});
+  const initialOverride = state?.currentOverride ?? { ...DEFAULT_GEO_OVERRIDE };
   const updateProfileBorderOpen = state?.updateProfileBorderOpen ?? (() => {});
   const currentProfileBorderOpen = state?.currentProfileBorderOpen ?? {
     ...DEFAULT_PROFILE_BORDER_OPEN,
@@ -251,19 +381,21 @@ export function mountUI(state: HookState | null): void {
   const geoRoot = panel.querySelector<HTMLElement>("#snp-geo-root")!;
   geoRoot.innerHTML = GEO_OVERRIDE_HTML;
 
-  wireGeoOverrideForm(geoRoot, {
-    initial: currentOverride,
+  const geoFormHandle = wireGeoOverrideForm(geoRoot, {
+    initial: initialOverride,
     onSave: (next) => {
-      setGeoOverride(next);
-      currentOverride = next;
-      hook?.refreshWatches();
+      setOverride(next);
       if (next.enabled) {
-        sendLocationUpdate(next);
+        void sendLocationUpdate(next);
       }
     },
-    getNativePosition: nativeGetCurrentPosition,
-    initialOpen: false,
-    onToggle: () => {},
+    onClear: setOverride,
+    initialOpen: getGeoSectionOpen(),
+    onToggle: setGeoSectionOpen,
+  });
+
+  subscribeOverrideCapture((next) => {
+    geoFormHandle.setOverride(next);
   });
 
   const profileBorderRoot = panel.querySelector<HTMLElement>("#snp-profile-border-root")!;
@@ -275,8 +407,8 @@ export function mountUI(state: HookState | null): void {
       setProfileBorderOpen(next);
       updateProfileBorderOpen(next);
     },
-    initialOpen: false,
-    onToggle: () => {},
+    initialOpen: getProfileBorderSectionOpen(),
+    onToggle: setProfileBorderSectionOpen,
   });
 
   const botBlockRoot = panel.querySelector<HTMLElement>("#snp-bot-block-root")!;
