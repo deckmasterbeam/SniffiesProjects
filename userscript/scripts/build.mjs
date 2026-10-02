@@ -25,7 +25,9 @@ if (typeof process.loadEnvFile === "function") {
 if (prod) {
   const missingEnvVars = REQUIRED_RELEASE_ENV_VARS.filter((key) => !process.env[key]);
   if (missingEnvVars.length > 0) {
-    console.error(`error: missing required env var(s) for a release build: ${missingEnvVars.join(", ")}`);
+    console.error(
+      `error: missing required env var(s) for a release build: ${missingEnvVars.join(", ")}`,
+    );
     process.exit(1);
   }
 }

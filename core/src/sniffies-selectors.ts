@@ -8,8 +8,10 @@ export const SNIFFIES_SELECTORS = {
   APP_SCREEN_SELECTOR: "#app-screen",
   /** Cruiser name label inside the open profile panel. */
   NAME_LABEL_SELECTOR: '[data-testid="cruiserNameLabel"]',
-  /** Pin-user button — the report button is anchored to its parent. */
+  /** Pin-user button — its appearance signals a (re)rendered profile panel. */
   PIN_BUTTON_SELECTOR: '[data-testid="pinUserButton"]',
+  /** Profile three-dot options menu (only in the DOM while open) — the report button mounts inside it. */
+  PROFILE_OPTIONS_MENU_SELECTOR: '[data-testid="profileOptionsContainer"]',
   /** Sidebar nav link used as the FAB's mount anchor (bookmarklet only). */
   SITELINKS_NAV_SELECTOR: '[title="Sitelinks"]',
   /** Map's own travel-mode/hide-me/find-me icon row — the FAB's preferred mount target (userscript only). */
@@ -28,6 +30,7 @@ export const {
   APP_SCREEN_SELECTOR,
   NAME_LABEL_SELECTOR,
   PIN_BUTTON_SELECTOR,
+  PROFILE_OPTIONS_MENU_SELECTOR,
   SITELINKS_NAV_SELECTOR,
   ICON_HOLDER_RIGHT_BOTTOM_SELECTOR,
   TRAVEL_HERE_BUTTON_SELECTOR,

@@ -41,14 +41,20 @@ afterEach(() => {
 
 describe("wireGeoOverrideForm", () => {
   describe("initial render", () => {
-    it("leaves the checkbox enabled and unchecked with a no-coords hint when nothing captured", () => {
-      wireGeoOverrideForm(container, { initial: NO_COORDS, onSave: vi.fn(), onClear: vi.fn(), initialOpen: false, onToggle: () => {} });
+    it("leaves the checkbox enabled and unchecked with no saved location when nothing captured", () => {
+      wireGeoOverrideForm(container, {
+        initial: NO_COORDS,
+        onSave: vi.fn(),
+        onClear: vi.fn(),
+        initialOpen: false,
+        onToggle: () => {},
+      });
       expect(el<HTMLInputElement>(container, "geo-enabled").disabled).toBe(false);
       expect(el<HTMLInputElement>(container, "geo-enabled").checked).toBe(false);
-      expect(el(container, "geo-status").textContent).toBe("No location captured yet.");
+      expect(el(container, "geo-saved").textContent).toBe("");
     });
 
-    it("checks the box and shows a waiting-for-pick hint when armed but no coords yet", () => {
+    it("checks the box and shows no saved location when armed but no coords yet", () => {
       wireGeoOverrideForm(container, {
         initial: ARMED_NO_COORDS,
         onSave: vi.fn(),
@@ -57,9 +63,7 @@ describe("wireGeoOverrideForm", () => {
         onToggle: () => {},
       });
       expect(el<HTMLInputElement>(container, "geo-enabled").checked).toBe(true);
-      expect(el(container, "geo-status").textContent).toBe(
-        "Enabled — go pick a location with Sniffies' Travel Mode.",
-      );
+      expect(el(container, "geo-saved").textContent).toBe("");
     });
 
     it("checks the box and shows the spoofed coords when enabled with captured coords", () => {
@@ -71,7 +75,7 @@ describe("wireGeoOverrideForm", () => {
         onToggle: () => {},
       });
       expect(el<HTMLInputElement>(container, "geo-enabled").checked).toBe(true);
-      expect(el(container, "geo-status").textContent).toBe("Spoofing: 47.60000, -122.30000");
+      expect(el(container, "geo-saved").textContent).toBe("Saved: 47.60000, -122.30000");
     });
 
     it("leaves the box unchecked and shows the last coords when captured but disabled", () => {
@@ -83,11 +87,17 @@ describe("wireGeoOverrideForm", () => {
         onToggle: () => {},
       });
       expect(el<HTMLInputElement>(container, "geo-enabled").checked).toBe(false);
-      expect(el(container, "geo-status").textContent).toBe("Off — last set to 47.60000, -122.30000");
+      expect(el(container, "geo-saved").textContent).toBe("Saved: 47.60000, -122.30000");
     });
 
     it("hides the clear button when nothing has been captured", () => {
-      wireGeoOverrideForm(container, { initial: NO_COORDS, onSave: vi.fn(), onClear: vi.fn(), initialOpen: false, onToggle: () => {} });
+      wireGeoOverrideForm(container, {
+        initial: NO_COORDS,
+        onSave: vi.fn(),
+        onClear: vi.fn(),
+        initialOpen: false,
+        onToggle: () => {},
+      });
       expect(el(container, "geo-clear").style.display).toBe("none");
     });
 
@@ -104,19 +114,6 @@ describe("wireGeoOverrideForm", () => {
   });
 
   describe("city-search captured location (label)", () => {
-    it("shows the confirmation phrasing with the place name when enabled", () => {
-      wireGeoOverrideForm(container, {
-        initial: CAPTURED_VIA_SEARCH_ON,
-        onSave: vi.fn(),
-        onClear: vi.fn(),
-        initialOpen: false,
-        onToggle: () => {},
-      });
-      expect(el(container, "geo-status").textContent).toBe(
-        "Captured your desired location change to: London, England",
-      );
-    });
-
     it("shows the place name (not raw coords) when disabled", () => {
       wireGeoOverrideForm(container, {
         initial: CAPTURED_VIA_SEARCH_OFF,
@@ -125,10 +122,23 @@ describe("wireGeoOverrideForm", () => {
         initialOpen: false,
         onToggle: () => {},
       });
-      expect(el(container, "geo-status").textContent).toBe("Off — last set to London, England");
+      expect(el(container, "geo-saved").textContent).toBe("Saved: London, England");
     });
 
-    it("shows raw coords (not the confirmation phrasing) once a label-less capture replaces it", () => {
+    it("shows the saved place name next to the clear button, and empties it on clear", () => {
+      wireGeoOverrideForm(container, {
+        initial: CAPTURED_VIA_SEARCH_ON,
+        onSave: vi.fn(),
+        onClear: vi.fn(),
+        initialOpen: false,
+        onToggle: () => {},
+      });
+      expect(el(container, "geo-saved").textContent).toBe("Saved: London, England");
+      click(el(container, "geo-clear"));
+      expect(el(container, "geo-saved").textContent).toBe("");
+    });
+
+    it("shows raw coords once a label-less capture replaces it", () => {
       const handle = wireGeoOverrideForm(container, {
         initial: CAPTURED_VIA_SEARCH_ON,
         onSave: vi.fn(),
@@ -137,14 +147,20 @@ describe("wireGeoOverrideForm", () => {
         onToggle: () => {},
       });
       handle.setOverride(CAPTURED_ON);
-      expect(el(container, "geo-status").textContent).toBe("Spoofing: 47.60000, -122.30000");
+      expect(el(container, "geo-saved").textContent).toBe("Saved: 47.60000, -122.30000");
     });
   });
 
   describe("toggling", () => {
     it("can be checked with no coords captured yet — not disabled", () => {
       const onSave = vi.fn();
-      wireGeoOverrideForm(container, { initial: NO_COORDS, onSave, onClear: vi.fn(), initialOpen: false, onToggle: () => {} });
+      wireGeoOverrideForm(container, {
+        initial: NO_COORDS,
+        onSave,
+        onClear: vi.fn(),
+        initialOpen: false,
+        onToggle: () => {},
+      });
       const checkbox = el<HTMLInputElement>(container, "geo-enabled");
       checkbox.checked = true;
       change(checkbox);
@@ -182,22 +198,6 @@ describe("wireGeoOverrideForm", () => {
       change(checkbox);
       expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ enabled: false }));
     });
-
-    it("updates the status text immediately after toggling", () => {
-      wireGeoOverrideForm(container, {
-        initial: NO_COORDS,
-        onSave: vi.fn(),
-        onClear: vi.fn(),
-        initialOpen: false,
-        onToggle: () => {},
-      });
-      const checkbox = el<HTMLInputElement>(container, "geo-enabled");
-      checkbox.checked = true;
-      change(checkbox);
-      expect(el(container, "geo-status").textContent).toBe(
-        "Enabled — go pick a location with Sniffies' Travel Mode.",
-      );
-    });
   });
 
   describe("clear button", () => {
@@ -226,9 +226,7 @@ describe("wireGeoOverrideForm", () => {
       });
       click(el(container, "geo-clear"));
       expect(el<HTMLInputElement>(container, "geo-enabled").checked).toBe(true);
-      expect(el(container, "geo-status").textContent).toBe(
-        "Enabled — go pick a location with Sniffies' Travel Mode.",
-      );
+      expect(el(container, "geo-saved").textContent).toBe("");
       expect(el(container, "geo-clear").style.display).toBe("none");
     });
 
@@ -242,7 +240,7 @@ describe("wireGeoOverrideForm", () => {
       });
       click(el(container, "geo-clear"));
       expect(el<HTMLInputElement>(container, "geo-enabled").checked).toBe(false);
-      expect(el(container, "geo-status").textContent).toBe("No location captured yet.");
+      expect(el(container, "geo-saved").textContent).toBe("");
     });
   });
 
@@ -257,7 +255,7 @@ describe("wireGeoOverrideForm", () => {
       });
       handle.setOverride(CAPTURED_ON);
       expect(el<HTMLInputElement>(container, "geo-enabled").checked).toBe(true);
-      expect(el(container, "geo-status").textContent).toBe("Spoofing: 47.60000, -122.30000");
+      expect(el(container, "geo-saved").textContent).toBe("Saved: 47.60000, -122.30000");
       expect(el(container, "geo-clear").style.display).toBe("");
     });
 

@@ -88,8 +88,9 @@
 
 #snp-geo-root .actions {
   display: flex;
+  flex-direction: column;
   gap: 8px;
-  align-items: center;
+  align-items: flex-start;
 }
 
 #snp-geo-root button.secondary {
@@ -116,4 +117,3 @@
   border-color: #1c2b3a;
   cursor: not-allowed;
 }
-

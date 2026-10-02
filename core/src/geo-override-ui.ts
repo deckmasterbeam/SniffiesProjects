@@ -7,14 +7,14 @@ export { GEO_OVERRIDE_HTML, GEO_OVERRIDE_CSS };
 export type { GeoOverrideFormContract };
 
 export interface GeoOverrideFormHandle {
-  /** Pushes a freshly captured (or otherwise externally updated) override into the form. */
   setOverride: (next: GeoOverride) => void;
 }
 
 const formatCoords = (override: GeoOverride): string =>
   `${override.latitude.toFixed(5)}, ${override.longitude.toFixed(5)}`;
 
-const describeLocation = (override: GeoOverride): string => override.label ?? formatCoords(override);
+const describeLocation = (override: GeoOverride): string =>
+  override.label ?? formatCoords(override);
 
 export const wireGeoOverrideForm = (
   container: Element,
@@ -25,8 +25,7 @@ export const wireGeoOverrideForm = (
   const details = container.querySelector<HTMLDetailsElement>("#geo-details");
   const geoEnabled = el<HTMLInputElement>("geo-enabled");
   const geoClear = el<HTMLButtonElement>("geo-clear");
-  const statusEl = el<HTMLElement>("geo-status");
-
+  const geoSaved = el<HTMLElement>("geo-saved");
   if (details) {
     details.open = options.initialOpen;
     details.addEventListener("toggle", () => options.onToggle(details.open));
@@ -37,15 +36,7 @@ export const wireGeoOverrideForm = (
   const render = (): void => {
     geoEnabled.checked = current.enabled;
     geoClear.style.display = hasCapturedCoords(current) ? "" : "none";
-    statusEl.textContent = !hasCapturedCoords(current)
-      ? current.enabled
-        ? "Enabled — go pick a location with Sniffies' Travel Mode."
-        : "No location captured yet."
-      : current.enabled
-        ? current.label
-          ? `Captured your desired location change to: ${current.label}`
-          : `Spoofing: ${formatCoords(current)}`
-        : `Off — last set to ${describeLocation(current)}`;
+    geoSaved.textContent = hasCapturedCoords(current) ? `Saved: ${describeLocation(current)}` : "";
   };
 
   render();
@@ -57,8 +48,6 @@ export const wireGeoOverrideForm = (
   });
 
   geoClear.addEventListener("click", () => {
-    // enabled is preserved — clearing the location doesn't turn spoofing
-    // off, it stays armed waiting for a new pick.
     current = { ...current, latitude: 0, longitude: 0, label: undefined };
     render();
     void options.onClear(current);

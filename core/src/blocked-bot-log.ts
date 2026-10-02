@@ -6,10 +6,6 @@ const dateKeyFor = (date: Date): string => date.toISOString().slice(0, 10);
 
 const yesterdayOf = (date: Date): Date => new Date(date.getTime() - 24 * 60 * 60 * 1000);
 
-/**
- * Merges newly-filtered ids into todays bucket and drops every bucket
- * except today and yesterday
- */
 export const recordBlockedBotIds = (
   log: BlockedBotDailyLog,
   ids: string[],
@@ -28,7 +24,6 @@ export const recordBlockedBotIds = (
   return record;
 };
 
-/** Distinct accounts filtered across todays and yesterdays buckets. */
 export const countDistinctBlockedBotsLast24h = (
   log: BlockedBotDailyLog,
   now: Date = new Date(),

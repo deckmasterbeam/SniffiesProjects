@@ -2,21 +2,21 @@
   <summary><h2>Location Spoofing</h2></summary>
   <div class="collapsible-body">
     <p class="hint">
-      Turn this on, then use Sniffies' own Travel Mode: tap the plane icon on the map, drop the pin
-      where you want, then tap "Travel here". This extension picks that up automatically and keeps
-      spoofing it — including for the app's own GPS checks — until you turn it off.
+      Override the location that your browser sends to Sniffies. Use the built-in Sniffies "Travel
+      Mode" to select a location to travel to. From that mode, search for anywhere and click "Travel
+      here"
     </p>
     <p class="hint">
-      Note: this can pick up a location you search for by city name, but it can't pick up a location
-      you reach only by dragging the map afterward without confirming.
+      Note: this can pick up a location you search for by name, but it can't pick up a location you
+      reach by manually dragging the map.
     </p>
     <label class="row">
       <input id="geo-enabled" type="checkbox" />
       <span>Spoofing enabled</span>
     </label>
-    <p id="geo-status" class="hint" aria-live="polite"></p>
     <div class="actions">
       <button id="geo-clear" class="secondary" type="button">Clear location</button>
+      <span id="geo-saved" class="hint" aria-live="polite"></span>
     </div>
   </div>
 </details>

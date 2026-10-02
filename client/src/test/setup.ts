@@ -26,6 +26,7 @@ beforeEach(() => {
       get: vi.fn(async () => ({})),
       set: vi.fn(async () => {}),
     },
+    onChanged: { addListener: vi.fn() },
   },
   tabs: { create: vi.fn(async () => {}) },
   runtime: {

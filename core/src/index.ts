@@ -29,6 +29,11 @@ export {
 } from "./city-search-hook.js";
 export type { CitySearchStatusHandle } from "./city-search-status-hook.js";
 export { installCitySearchStatusUI } from "./city-search-status-hook.js";
+export type {
+  LocationOverrideController,
+  LocationOverrideControllerOptions,
+} from "./location-override-controller.js";
+export { installLocationOverrideController } from "./location-override-controller.js";
 export { REPORT_MODAL_HTML, REPORT_MODAL_CSS, wireReportModal } from "./report-ui.js";
 export type { ReportFormContract } from "./report-form-contract.js";
 export type { ReportModalHandle } from "./report-ui.js";

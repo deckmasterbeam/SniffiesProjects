@@ -4,7 +4,7 @@ const POPUP_HTML = `
   <button id="open-settings"></button>
   <div class="snp-title">
     <h1>Sniffies Plug-ins</h1>
-    <span id="snp-version" class="snp-version"></span>
+    <span id="snp-version-root"></span>
   </div>
   <details id="favorites-details" class="section collapsible">
     <summary><h2>Favorites</h2></summary>
@@ -27,8 +27,6 @@ const getElements = () => ({
   version: document.getElementById("snp-version") as HTMLElement,
   favoritesEnabled: document.getElementById("favorites-enabled") as HTMLInputElement,
   favoritesDetails: document.getElementById("favorites-details") as HTMLDetailsElement,
-  favoritesHint: document.getElementById("favorites-hint") as HTMLElement,
-  favoritesEnableLabel: document.getElementById("favorites-enable-label") as HTMLElement,
   botBlockingEnabled: document.getElementById("bot-block-enabled") as HTMLInputElement,
   botBlockingDetails: document.getElementById("bot-block-details") as HTMLDetailsElement,
   botBlockingHint: document.getElementById("bot-block-hint") as HTMLElement,
@@ -36,7 +34,7 @@ const getElements = () => ({
   botBlockingCount: document.getElementById("bot-block-count") as HTMLElement,
   geoEnabled: document.getElementById("geo-enabled") as HTMLInputElement,
   geoClear: document.getElementById("geo-clear") as HTMLButtonElement,
-  geoStatus: document.getElementById("geo-status") as HTMLElement,
+  geoSaved: document.getElementById("geo-saved") as HTMLElement,
   geoDetails: document.getElementById("geo-details") as HTMLDetailsElement,
   profileBorderEnabled: document.getElementById("profile-border-enabled") as HTMLInputElement,
   profileBorderTabField: document.getElementById("profile-border-tab-field") as HTMLElement,
@@ -200,20 +198,10 @@ describe("popup — profile border open", () => {
 describe("popup — favorites", () => {
   beforeEach(loadModule);
 
-  it("checkbox is unchecked and disabled on init when FAVORITES_NOTIFICATIONS_ENABLED is false", () => {
-    const { favoritesEnabled } = getElements();
+  it("hides the favorites section when FAVORITES_NOTIFICATIONS_ENABLED is false", () => {
+    const { favoritesDetails, favoritesEnabled } = getElements();
+    expect(favoritesDetails.style.display).toBe("none");
     expect(favoritesEnabled.checked).toBe(false);
-    expect(favoritesEnabled.disabled).toBe(true);
-  });
-
-  it("shows coming soon hint when FAVORITES_NOTIFICATIONS_ENABLED is false", () => {
-    const { favoritesHint } = getElements();
-    expect(favoritesHint.textContent).toBe("Coming soon!");
-  });
-
-  it("strikes through enable label when FAVORITES_NOTIFICATIONS_ENABLED is false", () => {
-    const { favoritesEnableLabel } = getElements();
-    expect(favoritesEnableLabel.style.textDecoration).toBe("line-through");
   });
 
   it("saves favoritesEnabled when checkbox is toggled (when enabled)", async () => {
@@ -319,10 +307,10 @@ describe("popup — bot blocking count (REPORTING_ENABLED true)", () => {
 describe("popup — geo status", () => {
   beforeEach(loadModule);
 
-  it("leaves the checkbox enabled and unchecked with a no-coords hint when nothing has been captured", () => {
-    const { geoEnabled, geoStatus, geoClear } = getElements();
+  it("leaves the checkbox enabled and unchecked with no saved location when nothing has been captured", () => {
+    const { geoEnabled, geoSaved, geoClear } = getElements();
     expect(geoEnabled.disabled).toBe(false);
-    expect(geoStatus.textContent).toBe("No location captured yet.");
+    expect(geoSaved.textContent).toBe("");
     expect(geoClear.style.display).toBe("none");
   });
 
@@ -346,9 +334,9 @@ describe("popup — geo status", () => {
     });
     await import("./popup.js");
     await flushPromises();
-    const { geoEnabled, geoStatus, geoClear } = getElements();
+    const { geoEnabled, geoSaved, geoClear } = getElements();
     expect(geoEnabled.checked).toBe(true);
-    expect(geoStatus.textContent).toBe("Spoofing: 40.71280, -74.00600");
+    expect(geoSaved.textContent).toBe("Saved: 40.71280, -74.00600");
     expect(geoClear.style.display).toBe("");
   });
 });

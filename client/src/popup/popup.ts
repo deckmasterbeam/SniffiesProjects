@@ -7,6 +7,7 @@ import {
   PROFILE_BORDER_HTML,
   wireGeoOverrideForm,
   VERSION_BADGE_CSS,
+  VERSION_BADGE_HTML,
   wireVersionBadge,
   wireProfileBorderForm,
   createLogger,
@@ -48,8 +49,6 @@ document.head.appendChild(versionStyle);
 
 const favoritesDetails = document.getElementById("favorites-details") as HTMLDetailsElement | null;
 const favoritesEnabledCheckbox = document.getElementById("favorites-enabled") as HTMLInputElement;
-const favoritesHint = document.getElementById("favorites-hint");
-const favoritesEnableLabel = document.getElementById("favorites-enable-label");
 
 const openSettingsBtn = document.getElementById("open-settings");
 
@@ -58,7 +57,9 @@ const openSettingsBtn = document.getElementById("open-settings");
 const init = async (): Promise<void> => {
   const settings = await getLocalSettings();
 
-  wireVersionBadge(document.body, chrome.runtime.getManifest().version);
+  const versionRoot = document.getElementById("snp-version-root")!;
+  versionRoot.innerHTML = VERSION_BADGE_HTML;
+  wireVersionBadge(versionRoot, chrome.runtime.getManifest().version);
 
   // Geo form — inject HTML from core and wire up logic
   const geoRoot = document.getElementById("snp-geo-root")!;
@@ -90,13 +91,9 @@ const init = async (): Promise<void> => {
     favoritesDetails.open = settings.favoritesSectionOpen;
   }
   if (!FAVORITES_NOTIFICATIONS_ENABLED) {
-    favoritesEnabledCheckbox.checked = false;
-    favoritesEnabledCheckbox.disabled = true;
-    if (favoritesHint) {
-      favoritesHint.textContent = "Coming soon!";
-    }
-    if (favoritesEnableLabel) {
-      favoritesEnableLabel.style.textDecoration = "line-through";
+    // style.display rather than `hidden`: details.collapsible sets display: block.
+    if (favoritesDetails) {
+      favoritesDetails.style.display = "none";
     }
   } else {
     favoritesEnabledCheckbox.checked = settings.favoritesEnabled;
