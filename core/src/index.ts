@@ -38,11 +38,7 @@ export { REPORT_MODAL_HTML, REPORT_MODAL_CSS, wireReportModal } from "./report-u
 export type { ReportFormContract } from "./report-form-contract.js";
 export type { ReportModalHandle } from "./report-ui.js";
 export type { MarkerSelection, ReportButtonInjectionOptions } from "./report-button-hook.js";
-export {
-  installReportButtonInjection,
-  fetchBlockedBots,
-  refreshBlockedBotsIfStale,
-} from "./report-button-hook.js";
+export { installReportButtonInjection, refreshBlockedBotsIfStale } from "./report-button-hook.js";
 export {
   PROFILE_BORDER_HTML,
   PROFILE_BORDER_CSS,
@@ -62,7 +58,7 @@ export {
 } from "./settings.js";
 export type { GeoOverride, ProfileBorderOpen, ExtensionLocalSettings } from "./settings.js";
 export type { Logger } from "./log.js";
-export { createLogger, formatTag } from "./log.js";
+export { createLogger } from "./log.js";
 export {
   SNIFFIES_SELECTORS,
   MARKER_CONTAINER_SELECTOR,

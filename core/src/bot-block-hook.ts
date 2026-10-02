@@ -5,7 +5,7 @@ export interface BotBlockState {
   enabled: boolean;
 }
 
-export type OnBotsFiltered = (ids: string[]) => void;
+type OnBotsFiltered = (ids: string[]) => void;
 
 const POST_AUTH_PATH = "/api/post-authentication";
 const CHAT_DATA_PATH = "/api/v2/post-authentication/chat-data";

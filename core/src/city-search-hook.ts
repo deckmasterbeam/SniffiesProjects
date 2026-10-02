@@ -1,21 +1,3 @@
-// Lets the extension pick up the location behind Sniffies' Travel Mode city
-// search box (`cities-input`) — a fallback for when the "Travel here" map-pin
-// flow can't be captured (e.g. no PUT ever fires for paywalled accounts).
-// GET /api/city/{id} runs when a search result is selected and returns the
-// picked city's coordinates directly in its response body, so unlike the
-// travel-here capture (which reads an outgoing request body) this reads an
-// incoming response body.
-//
-// Confirmed via DevTools' Network panel Initiator stack: this call
-// (getFullCityData/selectCity) goes through XMLHttpRequest, not fetch —
-// unlike the travel-here location PUT, which does use fetch. Angular's
-// HttpClient backend is a single global choice, but Sniffies isn't
-// consistent about which transport different parts of its own app use (the
-// existing XHR patch in bot-block-hook.ts exists for the same reason), so
-// this has to patch XHR independently rather than reusing the fetch hook.
-
-// Matches uswapi(2).sniffies.com/api/city/<id> — deliberately not anchored to
-// a specific host, since Sniffies serves from multiple regional API hosts.
 const CITY_ENDPOINT_PATTERN = /\/api\/city\/[^/?]+/;
 
 export const isCitySearchUrl = (url: string): boolean => CITY_ENDPOINT_PATTERN.test(url);
@@ -23,7 +5,6 @@ export const isCitySearchUrl = (url: string): boolean => CITY_ENDPOINT_PATTERN.t
 export interface CitySearchResult {
   latitude: number;
   longitude: number;
-  /** e.g. "London, England" — omitted if the response had no city/admin_name to build one from. */
   label?: string;
 }
 
@@ -51,13 +32,7 @@ type PatchedXHRPrototype = typeof XMLHttpRequest.prototype & {
 };
 type XhrWithCityFlag = XMLHttpRequest & { __sniffiesIsCitySearch?: boolean };
 
-/**
- * Watches for GET /api/city/{id} XHR responses and reports the extracted
- * result (or null if the response didn't parse/match). Read-only — unlike
- * bot-block-hook's XHR patch, this never needs to rewrite what the app sees,
- * so it just listens for "load" and reads the native responseText rather
- * than overriding the response/responseText getters.
- */
+/** Watches for GET /api/city/{id} XHR responses and reports the extracted result */
 export const installCitySearchXhrObserver = (
   onResponse: (result: CitySearchResult | null) => void,
 ): void => {

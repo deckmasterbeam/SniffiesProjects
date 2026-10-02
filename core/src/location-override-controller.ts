@@ -1,4 +1,4 @@
-import { extractCitySearchResult, installCitySearchXhrObserver } from "./city-search-hook.js";
+import { installCitySearchXhrObserver } from "./city-search-hook.js";
 import { installCitySearchStatusUI } from "./city-search-status-hook.js";
 import { installGeoHook } from "./geo-hook.js";
 import { hasCapturedCoords, type GeoOverride } from "./settings.js";

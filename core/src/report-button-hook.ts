@@ -262,7 +262,7 @@ export const installReportButtonInjection = (options: ReportButtonInjectionOptio
   }
 };
 
-export const fetchBlockedBots = async (
+const fetchBlockedBots = async (
   serverBase: string,
   getAuthHeaders: () => Record<string, string>,
   onResult: (userIds: string[], fetchedAt: number) => void,
