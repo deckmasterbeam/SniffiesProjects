@@ -1,7 +1,7 @@
 import GEO_OVERRIDE_HTML from "./geo-override.html";
 import GEO_OVERRIDE_CSS from "./geo-override.css";
 import { hasCapturedCoords, type GeoOverride } from "./settings.js";
-import type { GeoOverrideFormContract } from "./geo-override-form-contract.js";
+import type { GeoOverrideFormContract } from "./contracts.js";
 
 export { GEO_OVERRIDE_HTML, GEO_OVERRIDE_CSS };
 export type { GeoOverrideFormContract };

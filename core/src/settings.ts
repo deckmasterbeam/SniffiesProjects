@@ -4,7 +4,6 @@ export interface GeoOverride {
   enabled: boolean;
   latitude: number;
   longitude: number;
-  /** Human-readable place name, set when captured via city search rather than a map pin drop. */
   label?: string;
 }
 

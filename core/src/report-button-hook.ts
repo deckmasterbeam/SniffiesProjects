@@ -1,3 +1,4 @@
+import type { MarkerSelection, ReportButtonInjectionOptions } from "./contracts.js";
 import { createLogger } from "./log.js";
 import {
   REPORT_MODAL_HTML,
@@ -23,20 +24,6 @@ const CLICK_REINJECT_RETRY_INTERVAL_MS = 100;
 
 const INITIAL_LOAD_REINJECT_RETRY_WINDOW_MS = 3000;
 const INITIAL_LOAD_REINJECT_RETRY_INTERVAL_MS = 300;
-
-export interface MarkerSelection {
-  userId: string;
-  profilePicUrl: string | null;
-}
-
-export interface ReportButtonInjectionOptions {
-  serverBase: string;
-  getAuthHeaders: () => Record<string, string>;
-  reportingEnabled: boolean;
-  getReporterUserId: () => string;
-  onProfileResolved?: (screen: Element, userId: string) => void;
-  onMarkerClick?: (marker: HTMLElement, selection: MarkerSelection | null) => void;
-}
 
 const extractUserIdFromUrl = (url: string): string | null => {
   try {

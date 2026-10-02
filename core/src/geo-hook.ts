@@ -64,10 +64,6 @@ export const installGeoHook = (
       callback(applyOverride(position));
     };
 
-  // Without this, a denied/blocked/timed-out native geolocation call fails
-  // silently on our end — the site's own error callback still fires, but
-  // nothing here logs it, so "intercepted" appears to hang forever with no
-  // clue why the success path (and any override) never ran.
   const wrapError =
     (callback: PositionErrorCallback | null | undefined): PositionErrorCallback =>
     (err) => {

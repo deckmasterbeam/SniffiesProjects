@@ -1,19 +1,7 @@
-// Injects a status line directly under Sniffies' own Travel Mode city search
-// box, so both the general limitation (search-only capture) and any pending
-// capture are visible right where the user is already looking — no need to
-// open the extension's own panel to see either. Sniffies tears down and
-// rebuilds this dialog every time Travel Mode opens, so re-injection is
-// retried via MutationObserver, same pattern as report-button-hook.ts's
-// injected report button.
-
 import { CITIES_INPUT_SELECTOR } from "./sniffies-selectors.js";
 
 const STATUS_ELEMENT_ID = "snp-city-search-status";
 
-// Shown whenever nothing is pending — moving the map itself isn't
-// observable to the extension (no capturable signal for a raw drag), only a
-// search result or a real "Travel here" PUT are, so this sets expectations
-// up front rather than leaving silent failure to be debugged after the fact.
 const DEFAULT_NOTE_TEXT =
   'Location spoofing only picks up cities you search for here — moving the map before tapping "Travel here" won\'t be captured.';
 
@@ -28,9 +16,7 @@ const PENDING_STYLE = [
 ].join(";");
 
 export interface CitySearchStatusHandle {
-  /** Shows a "captured, pending Travel Here confirmation" message. */
   showPending: (description: string) => void;
-  /** Reverts to the default instructional note — e.g. once "Travel here" confirms it, or it's cleared. */
   clear: () => void;
 }
 
@@ -63,8 +49,6 @@ export const installCitySearchStatusUI = (): CitySearchStatusHandle => {
     }
   };
 
-  // Re-render whenever the dialog re-renders (e.g. Travel Mode reopened)
-  // and our element isn't there yet but should be.
   const observer = new MutationObserver(() => {
     if (!document.getElementById(STATUS_ELEMENT_ID)) {
       render();

@@ -1,8 +1,7 @@
-import type { BotBlockFormContract } from "./bot-block-form-contract.js";
+import type { BotBlockFormContract } from "./contracts.js";
 import BOT_BLOCK_CSS from "./bot-block.css";
 import BOT_BLOCK_HTML from "./bot-block.html";
 
-// TODO: why?
 export { BOT_BLOCK_CSS, BOT_BLOCK_HTML };
 export type { BotBlockFormContract };
 

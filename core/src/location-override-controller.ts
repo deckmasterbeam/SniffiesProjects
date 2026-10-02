@@ -1,3 +1,4 @@
+import type { LocationOverrideControllerOptions } from "./contracts.js";
 import { installCitySearchXhrObserver } from "./city-search-hook.js";
 import { installCitySearchStatusUI } from "./city-search-status-hook.js";
 import { installGeoHook } from "./geo-hook.js";
@@ -8,13 +9,6 @@ import { createLogger } from "./log.js";
 const log = createLogger("location-override");
 
 const RELOAD_SAFETY_TIMEOUT_MS = 4000;
-
-export interface LocationOverrideControllerOptions {
-  initialOverride: GeoOverride;
-  onOverrideChanged: (next: GeoOverride) => void;
-  onPosition?: (coords: { latitude: number; longitude: number }) => void;
-  reloadPage?: () => void;
-}
 
 export interface LocationOverrideController {
   getOverride: () => GeoOverride;
@@ -85,11 +79,6 @@ export const installLocationOverrideController = (
     return Promise.resolve();
   };
 
-  // A city search alone doesn't mean the user wants to travel there yet —
-  // they might search around before deciding. So a search only stages a
-  // *pending* location (shown next to Sniffies' own search box, not saved
-  // anywhere) until they confirm it by clicking "Travel here", same gesture
-  // as confirming a dragged pin.
   let pendingSearchOverride: GeoOverride | null = null;
   const citySearchStatusUI = installCitySearchStatusUI();
 

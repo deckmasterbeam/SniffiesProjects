@@ -1,9 +1,5 @@
+import type { BotBlockState } from "./contracts.js";
 import { createLogger, type Logger } from "./log.js";
-
-export interface BotBlockState {
-  blockedIds: ReadonlySet<string>;
-  enabled: boolean;
-}
 
 type OnBotsFiltered = (ids: string[]) => void;
 
