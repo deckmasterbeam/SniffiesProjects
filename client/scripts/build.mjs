@@ -1,11 +1,3 @@
-// Build script: bundles TS entry points with esbuild and copies static assets
-// (manifest, HTML, CSS, icons) into dist/ preserving the src layout.
-// FAVORITES_NOTIFICATIONS_ENABLED/REPORTING_ENABLED are read as exactly
-// "true"/"false" — always set them explicitly, in both dev and prod envs.
-// Pass --prod for a release build: validates SERVER_BASE/CLIENT_SECRET are
-// set, forces DEBUG off, and patches manifest.json's version to match
-// package.json.
-
 import { context, build } from "esbuild";
 import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";

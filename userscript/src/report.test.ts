@@ -90,8 +90,14 @@ describe("refreshBlockedBotsIfStale", () => {
   });
 
   it("fetches and persists the blocked list when never fetched before", async () => {
-    fetchMock.mockResolvedValue({ ok: true, json: async () => ({ ok: true, userIds: ["abc123"] }) });
-    const state = { currentSniffiesUserId: "", botBlockState: { blockedIds: new Set<string>(), enabled: true } };
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: async () => ({ ok: true, userIds: ["abc123"] }),
+    });
+    const state = {
+      currentSniffiesUserId: "",
+      botBlockState: { blockedIds: new Set<string>(), enabled: true },
+    };
     refreshBlockedBotsIfStale(state);
     await Promise.resolve();
     await Promise.resolve();
@@ -107,7 +113,10 @@ describe("refreshBlockedBotsIfStale", () => {
 
   it("does not fetch when the cache is fresh", () => {
     setBlockedBots(["abc123"], Date.now());
-    const state = { currentSniffiesUserId: "", botBlockState: { blockedIds: new Set<string>(), enabled: true } };
+    const state = {
+      currentSniffiesUserId: "",
+      botBlockState: { blockedIds: new Set<string>(), enabled: true },
+    };
     refreshBlockedBotsIfStale(state);
     expect(fetchMock).not.toHaveBeenCalled();
   });
@@ -115,7 +124,10 @@ describe("refreshBlockedBotsIfStale", () => {
   it("fetches when the cache is older than 24 hours", () => {
     setBlockedBots(["abc123"], Date.now() - 25 * 60 * 60 * 1000);
     fetchMock.mockResolvedValue({ ok: true, json: async () => ({ ok: true, userIds: [] }) });
-    const state = { currentSniffiesUserId: "", botBlockState: { blockedIds: new Set<string>(), enabled: true } };
+    const state = {
+      currentSniffiesUserId: "",
+      botBlockState: { blockedIds: new Set<string>(), enabled: true },
+    };
     refreshBlockedBotsIfStale(state);
     expect(fetchMock).toHaveBeenCalled();
   });

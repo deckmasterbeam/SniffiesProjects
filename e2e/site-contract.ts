@@ -34,12 +34,29 @@ const SELECTOR_METADATA: Record<SniffiesSelectorName, SelectorMeta> = {
     source: "core/src/report-button-hook.ts, client/src/content/sniffies-profile-id.ts",
   },
   PIN_BUTTON_SELECTOR: {
-    description: "Pin-user button — the report button is anchored to its parent",
+    description: "Pin-user button — its appearance signals a (re)rendered profile panel",
+    source: "core/src/report-button-hook.ts",
+  },
+  PROFILE_OPTIONS_MENU_SELECTOR: {
+    description: "Profile three-dot options menu — the report button mounts inside it",
     source: "core/src/report-button-hook.ts",
   },
   SITELINKS_NAV_SELECTOR: {
-    description: "Sidebar nav link used as the FAB's mount anchor (userscript/bookmarklet only)",
-    source: "userscript/src/userscript.ts, bookmarklet/src/mount-fab.ts",
+    description: "Sidebar nav link used as the FAB's mount anchor (bookmarklet only)",
+    source: "bookmarklet/src/mount-fab.ts",
+  },
+  ICON_HOLDER_RIGHT_BOTTOM_SELECTOR: {
+    description:
+      "Map's own travel-mode/hide-me/find-me icon row. This is the FAB's preferred mount target",
+    source: "userscript/src/userscript.ts",
+  },
+  TRAVEL_HERE_BUTTON_SELECTOR: {
+    description: "Confirm button in Sniffies' own Travel Mode UI",
+    source: "core/src/city-search-hook.ts",
+  },
+  CITIES_INPUT_SELECTOR: {
+    description: "Travel Mode's city search box — anchors the pending-capture status message",
+    source: "core/src/city-search-status-hook.ts",
   },
 };
 

@@ -1,28 +1,6 @@
-// Every real-sniffies.com DOM selector our code depends on, centralized here
-// instead of duplicated as string literals across client/, userscript/, and
-// bookmarklet/ (which is what caused the FAB mount selector to exist as two
-// independent copies before this file). These are reverse-engineered and can
-// change without notice — see core/src/bot-block-hook.ts's header for a case
-// where that already happened to an API host.
-//
-// SNIFFIES_SELECTORS below is the actual source of truth; the individual
-// named consts are destructured from it purely so existing call sites can
-// keep importing them by name. e2e/site-contract.ts (the drift canary) keys
-// its metadata off `SniffiesSelectorName` (derived from this object's keys),
-// so adding a selector here without also describing it there is a type
-// error in site-contract.ts, not a silent gap.
-
+// All the sniffies.com selectors that we depend on
 export const SNIFFIES_SELECTORS = {
-  /**
-   * Marker container carrying data-within-radius — profile-border-hook.ts's
-   * redirect target. Confirmed live (2026-09-01): a zero-size positioning
-   * anchor (0x0 bounding box, `visibility:visible`) — the actual pixels come
-   * from an absolutely-positioned child. Only ever queried via `.closest()`
-   * on a click and read for its data attributes, never expected to have a
-   * layout box of its own — so a presence check (Playwright's `toBeAttached`)
-   * is correct here, not a visibility check (`toBeVisible`, which requires a
-   * non-empty bounding box and will always fail on this element).
-   */
+  /** Marker container carrying data-within-radius */
   MARKER_CONTAINER_SELECTOR: '[data-testid="markerUserContainer"]',
   /** Map marker avatar image — click target that resolves a profile's user id. */
   MARKER_AVATAR_SELECTOR: '[data-testid="cv-marker-avatar-image"]',
@@ -30,10 +8,18 @@ export const SNIFFIES_SELECTORS = {
   APP_SCREEN_SELECTOR: "#app-screen",
   /** Cruiser name label inside the open profile panel. */
   NAME_LABEL_SELECTOR: '[data-testid="cruiserNameLabel"]',
-  /** Pin-user button — the report button is anchored to its parent. */
+  /** Pin-user button — its appearance signals a (re)rendered profile panel. */
   PIN_BUTTON_SELECTOR: '[data-testid="pinUserButton"]',
-  /** Sidebar nav link used as the FAB's mount anchor (userscript/bookmarklet only). */
+  /** Profile three-dot options menu (only in the DOM while open) — the report button mounts inside it. */
+  PROFILE_OPTIONS_MENU_SELECTOR: '[data-testid="profileOptionsContainer"]',
+  /** Sidebar nav link used as the FAB's mount anchor (bookmarklet only). */
   SITELINKS_NAV_SELECTOR: '[title="Sitelinks"]',
+  /** Map's own travel-mode/hide-me/find-me icon row — the FAB's preferred mount target (userscript only). */
+  ICON_HOLDER_RIGHT_BOTTOM_SELECTOR: '[data-testid="iconHolderRightBottom"]',
+  /** Confirm button in Sniffies' own Travel Mode UI — clicking it PUTs the picked pin to the location API. */
+  TRAVEL_HERE_BUTTON_SELECTOR: '[data-testid="travelHereButton"]',
+  /** Travel Mode's city search box — anchors the pending-capture status message next to it. */
+  CITIES_INPUT_SELECTOR: '[data-testid="citiesInput"]',
 } as const;
 
 export type SniffiesSelectorName = keyof typeof SNIFFIES_SELECTORS;
@@ -44,5 +30,9 @@ export const {
   APP_SCREEN_SELECTOR,
   NAME_LABEL_SELECTOR,
   PIN_BUTTON_SELECTOR,
+  PROFILE_OPTIONS_MENU_SELECTOR,
   SITELINKS_NAV_SELECTOR,
+  ICON_HOLDER_RIGHT_BOTTOM_SELECTOR,
+  TRAVEL_HERE_BUTTON_SELECTOR,
+  CITIES_INPUT_SELECTOR,
 } = SNIFFIES_SELECTORS;

@@ -4,6 +4,7 @@ export interface GeoOverride {
   enabled: boolean;
   latitude: number;
   longitude: number;
+  label?: string;
 }
 
 export const DEFAULT_GEO_OVERRIDE: GeoOverride = {
@@ -11,6 +12,10 @@ export const DEFAULT_GEO_OVERRIDE: GeoOverride = {
   latitude: 0,
   longitude: 0,
 };
+
+/** True once a real location has been captured — (0, 0) is the "nothing picked yet" sentinel. */
+export const hasCapturedCoords = (override: GeoOverride): boolean =>
+  override.latitude !== 0 || override.longitude !== 0;
 
 export interface ProfileBorderOpen {
   enabled: boolean;

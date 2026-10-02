@@ -1,25 +1,22 @@
 <details class="section collapsible" id="geo-details">
   <summary><h2>Location Spoofing</h2></summary>
   <div class="collapsible-body">
-    <p class="hint">Spoof the coordinates Sniffies sees.</p>
+    <p class="hint">
+      Override the location that your browser sends to Sniffies. Use the built-in Sniffies "Travel
+      Mode" to select a location to travel to. From that mode, search for anywhere and click "Travel
+      here"
+    </p>
+    <p class="hint">
+      Note: this can pick up a location you search for by name, but it can't pick up a location you
+      reach by manually dragging the map.
+    </p>
     <label class="row">
       <input id="geo-enabled" type="checkbox" />
-      <span>Enable</span>
+      <span>Spoofing enabled</span>
     </label>
-    <div id="geo-fields">
-      <label class="field">
-        <span>Latitude</span>
-        <input id="geo-lat" type="number" step="any" placeholder="47.61477" autocomplete="off" />
-      </label>
-      <label class="field">
-        <span>Longitude</span>
-        <input id="geo-lng" type="number" step="any" placeholder="-122.32525" autocomplete="off" />
-      </label>
-      <button id="geo-fill-current" class="secondary" type="button">Fill with current</button>
-      <div class="actions">
-        <button id="geo-save" class="primary" type="button">Save</button>
-      </div>
-      <p id="geo-status" class="hint" aria-live="polite"></p>
+    <div class="actions">
+      <button id="geo-clear" class="secondary" type="button">Clear location</button>
+      <span id="geo-saved" class="hint" aria-live="polite"></span>
     </div>
   </div>
 </details>

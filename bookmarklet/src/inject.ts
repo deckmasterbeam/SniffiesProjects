@@ -54,9 +54,6 @@ function main(): void {
   log("initial override", currentOverride);
   const hook = installGeoHook(() => currentOverride);
   log("hook installed", hook ? "yes" : "already patched");
-  const nativeGetCurrentPosition =
-    hook?.nativeGetCurrentPosition ??
-    navigator.geolocation.getCurrentPosition.bind(navigator.geolocation);
 
   // Intercept fetch so pre-existing watchPosition watchers (registered before this
   // bookmarklet loaded) also send spoofed coords to the Sniffies location API.
@@ -169,7 +166,12 @@ function main(): void {
         sendLocationUpdate(next);
       }
     },
-    getNativePosition: nativeGetCurrentPosition,
+    onClear: (cleared) => {
+      log("override cleared", cleared);
+      saveGeoOverride(cleared);
+      currentOverride = cleared;
+      hook?.refreshWatches();
+    },
     initialOpen: false,
     onToggle: () => {},
   });

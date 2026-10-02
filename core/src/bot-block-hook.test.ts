@@ -8,6 +8,8 @@ import {
   type BotBlockState,
 } from "./bot-block-hook.js";
 
+const sniffiesPostAuth = "https://uswapi2.sniffies.com/api/post-authentication";
+
 // ── Pure filter functions ────────────────────────────────────────────────────
 
 describe("filterPostAuthenticationPayload", () => {
@@ -188,17 +190,7 @@ describe("shouldFilterWebSocketFrame", () => {
   });
 });
 
-// ── installBotBlockHook ──────────────────────────────────────────────────────
-// Both XHR and WebSocket globals are swapped for every test in this section
-// (even the WebSocket-only ones) since installBotBlockHook always patches
-// both — leaving the real XMLHttpRequest prototype unmocked would let it get
-// permanently patched as a side effect of a WebSocket-focused test.
-
 const makeMockWebSocketCtor = (): typeof WebSocket => {
-  // onmessage must be a real prototype accessor (get/set), not a class field —
-  // a class field would be an own instance property and wouldn't exercise the
-  // Object.getOwnPropertyDescriptor(prototype, "onmessage") shadowing that
-  // installBotBlockHook relies on, same as the real WebSocket API.
   const onmessageStore = new WeakMap<object, ((ev: MessageEvent) => unknown) | null>();
   class MockWebSocket extends EventTarget {
     static CONNECTING = 0;
@@ -239,12 +231,8 @@ const makeMockXHRCtor = (): typeof XMLHttpRequest => {
     get response(): unknown {
       return this._responseText;
     }
-    open(_method: string, _url: string): void {
-      // no-op: url classification happens via the patched open()
-    }
-    send(): void {
-      // no-op: a real implementation would perform the network request here
-    }
+    open(_method: string, _url: string): void {}
+    send(): void {}
     __setRawResponse(text: string): void {
       this._responseText = text;
     }
@@ -259,8 +247,6 @@ describe("installBotBlockHook — WebSocket", () => {
   beforeEach(() => {
     originalWebSocket = window.WebSocket;
     window.WebSocket = makeMockWebSocketCtor();
-    // installBotBlockHook always patches XHR too — mock it here as well so
-    // these WebSocket-focused tests don't leave the real global patched.
     originalXHR = window.XMLHttpRequest;
     window.XMLHttpRequest = makeMockXHRCtor();
   });
@@ -445,8 +431,6 @@ describe("installBotBlockHook — XHR", () => {
   beforeEach(() => {
     originalXHR = window.XMLHttpRequest;
     window.XMLHttpRequest = makeMockXHRCtor();
-    // installBotBlockHook always patches WebSocket too — mock it here as well
-    // so these XHR-focused tests don't leave the real global patched.
     originalWebSocket = window.WebSocket;
     window.WebSocket = makeMockWebSocketCtor();
   });
@@ -465,7 +449,7 @@ describe("installBotBlockHook — XHR", () => {
     const xhr = new window.XMLHttpRequest() as XMLHttpRequest & {
       __setRawResponse: (t: string) => void;
     };
-    xhr.open("POST", "https://uswapi2.sniffies.com/api/post-authentication?timeThreshold=1");
+    xhr.open("POST", `${sniffiesPostAuth}?timeThreshold=1`);
     xhr.__setRawResponse(
       JSON.stringify({ nearbyVisitors: { visitors: [{ _id: "blocked1" }, { _id: "ok1" }] } }),
     );
@@ -516,9 +500,6 @@ describe("installBotBlockHook — XHR", () => {
   });
 
   it("matches by path against any *.sniffies.com host, not a fixed hostname", () => {
-    // Regression test: Sniffies moved every /api/* call from uswapi2.sniffies.com
-    // to usw.api.sniffies.com between two HAR captures taken minutes apart —
-    // filtering must not depend on which one is currently in use.
     installBotBlockHook(() => state);
     const xhr = new window.XMLHttpRequest() as XMLHttpRequest & {
       __setRawResponse: (t: string) => void;
@@ -570,7 +551,7 @@ describe("installBotBlockHook — XHR", () => {
     const xhr = new window.XMLHttpRequest() as XMLHttpRequest & {
       __setRawResponse: (t: string) => void;
     };
-    xhr.open("POST", "https://uswapi2.sniffies.com/api/post-authentication");
+    xhr.open("POST", sniffiesPostAuth);
     xhr.__setRawResponse(
       JSON.stringify({ nearbyVisitors: { visitors: [{ _id: "blocked1" }, { _id: "ok1" }] } }),
     );
@@ -588,7 +569,7 @@ describe("installBotBlockHook — XHR", () => {
     const xhr = new window.XMLHttpRequest() as XMLHttpRequest & {
       __setRawResponse: (t: string) => void;
     };
-    xhr.open("POST", "https://uswapi2.sniffies.com/api/post-authentication");
+    xhr.open("POST", sniffiesPostAuth);
     xhr.__setRawResponse(
       JSON.stringify({ nearbyVisitors: { visitors: [{ _id: "blocked1" }, { _id: "ok1" }] } }),
     );
@@ -605,7 +586,7 @@ describe("installBotBlockHook — XHR", () => {
     const xhr = new window.XMLHttpRequest() as XMLHttpRequest & {
       __setRawResponse: (t: string) => void;
     };
-    xhr.open("POST", "https://uswapi2.sniffies.com/api/post-authentication");
+    xhr.open("POST", sniffiesPostAuth);
     const raw = JSON.stringify({ nearbyVisitors: { visitors: [{ _id: "blocked1" }] } });
     xhr.__setRawResponse(raw);
     parseSpy.mockClear(); // ignore the JSON.stringify/parse round trip used to build `raw` above
@@ -622,7 +603,7 @@ describe("installBotBlockHook — XHR", () => {
     const xhr = new window.XMLHttpRequest() as XMLHttpRequest & {
       __setRawResponse: (t: string) => void;
     };
-    xhr.open("POST", "https://uswapi2.sniffies.com/api/post-authentication");
+    xhr.open("POST", sniffiesPostAuth);
     const raw = JSON.stringify({ nearbyVisitors: { visitors: [{ _id: "blocked1" }] } });
     xhr.__setRawResponse(raw);
     parseSpy.mockClear();

@@ -165,7 +165,8 @@ describe("wireReportModal", () => {
       const onSubmit = vi
         .fn()
         .mockImplementationOnce(
-          () => new Promise<void>((_, reject) => (rejectFirst = () => reject(new Error("network")))),
+          () =>
+            new Promise<void>((_, reject) => (rejectFirst = () => reject(new Error("network")))),
         )
         .mockImplementationOnce(() => new Promise<void>(() => {}));
       const handle = wireReportModal(container, { onSubmit });

@@ -86,27 +86,11 @@
   margin: 0;
 }
 
-#snp-geo-root button.primary {
-  font-size: 12px;
-  font-weight: 700;
-  padding: 7px 16px;
-  border-radius: 20px;
-  border: none;
-  background: #ff5500;
-  color: #fff;
-  cursor: pointer;
-  letter-spacing: 0.02em;
-  transition: background 0.15s;
-}
-
-#snp-geo-root button.primary:hover:not(:disabled) {
-  background: #e04a00;
-}
-
-#snp-geo-root button.primary:disabled {
-  background: #1c2b3a;
-  color: #7a90a4;
-  cursor: not-allowed;
+#snp-geo-root .actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
 }
 
 #snp-geo-root button.secondary {
@@ -132,43 +116,4 @@
   color: #1c2b3a;
   border-color: #1c2b3a;
   cursor: not-allowed;
-}
-
-#snp-geo-root .field {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: 11px;
-  color: #7a90a4;
-}
-
-#snp-geo-root .field input {
-  font-size: 13px;
-  padding: 7px 10px;
-  border-radius: 6px;
-  border: 1px solid #1c2b3a;
-  background: #080e18;
-  color: #ffffff;
-  outline: none;
-  transition: border-color 0.15s;
-}
-
-#snp-geo-root .field input::placeholder {
-  color: #3a4f62;
-}
-
-#snp-geo-root .field input:focus {
-  border-color: #ff5500;
-}
-
-#snp-geo-root .actions {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-#snp-geo-root #geo-fields {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
 }

@@ -1,6 +1,6 @@
 import REPORT_MODAL_HTML from "./report-modal.html";
 import REPORT_MODAL_CSS from "./report-modal.css";
-import type { ReportFormContract } from "./report-form-contract.js";
+import type { ReportFormContract } from "./contracts.js";
 
 export { REPORT_MODAL_HTML, REPORT_MODAL_CSS };
 export type { ReportFormContract };
@@ -22,20 +22,12 @@ export const wireReportModal = (
   const cancelBtn = el<HTMLButtonElement>("snp-report-cancel");
   const submitBtn = el<HTMLButtonElement>("snp-report-submit");
 
-  // The stylesheet defaults #snp-report-backdrop to display:none, but that
-  // stylesheet isn't guaranteed to be loaded wherever this container lives
-  // (e.g. tests render REPORT_MODAL_HTML without REPORT_MODAL_CSS), so set
-  // the inline state explicitly rather than relying on CSS for the initial
-  // hidden state.
   backdrop.style.display = "none";
 
   const setStatus = (text: string): void => {
     statusEl.textContent = text;
   };
 
-  // Bumped on every open() so a submit's async result can tell whether the
-  // modal has since been reopened (e.g. for a different profile) and, if so,
-  // skip updating status/closing — this instance is reused across opens.
   let generation = 0;
 
   const close = (): void => {

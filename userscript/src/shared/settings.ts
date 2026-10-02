@@ -8,7 +8,9 @@ import {
 } from "@sniffies-projects/core";
 
 const GEO_STORAGE_KEY = "sniffies-geo";
+const GEO_SECTION_OPEN_STORAGE_KEY = "sniffies-geo-section-open";
 const PROFILE_BORDER_STORAGE_KEY = "sniffies-profile-border";
+const PROFILE_BORDER_SECTION_OPEN_STORAGE_KEY = "sniffies-profile-border-section-open";
 const BLOCKED_BOTS_STORAGE_KEY = "sniffies-blocked-bots";
 const BLOCKED_BOTS_FETCHED_AT_STORAGE_KEY = "sniffies-blocked-bots-fetched-at";
 const BOT_BLOCKING_ENABLED_STORAGE_KEY = "sniffies-bot-blocking-enabled";
@@ -28,6 +30,14 @@ export const setGeoOverride = (next: GeoOverride): void => {
   localStorage.setItem(GEO_STORAGE_KEY, JSON.stringify(next));
 };
 
+export const getGeoSectionOpen = (): boolean => {
+  return localStorage.getItem(GEO_SECTION_OPEN_STORAGE_KEY) === "true";
+};
+
+export const setGeoSectionOpen = (open: boolean): void => {
+  localStorage.setItem(GEO_SECTION_OPEN_STORAGE_KEY, String(open));
+};
+
 export const getProfileBorderOpen = (): ProfileBorderOpen => {
   try {
     const raw = localStorage.getItem(PROFILE_BORDER_STORAGE_KEY);
@@ -41,6 +51,14 @@ export const getProfileBorderOpen = (): ProfileBorderOpen => {
 
 export const setProfileBorderOpen = (next: ProfileBorderOpen): void => {
   localStorage.setItem(PROFILE_BORDER_STORAGE_KEY, JSON.stringify(next));
+};
+
+export const getProfileBorderSectionOpen = (): boolean => {
+  return localStorage.getItem(PROFILE_BORDER_SECTION_OPEN_STORAGE_KEY) === "true";
+};
+
+export const setProfileBorderSectionOpen = (open: boolean): void => {
+  localStorage.setItem(PROFILE_BORDER_SECTION_OPEN_STORAGE_KEY, String(open));
 };
 
 export const getBlockedBots = (): string[] => {

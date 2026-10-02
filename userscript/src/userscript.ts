@@ -1,46 +1,52 @@
-// Sniffies Tools — iOS userscript
-// Install via a userscript manager app (e.g. Userscripts, Stay) that supports
-// the ==UserScript== metadata format. The metadata header is prepended by the
-// build script; this file contains only the runtime logic.
-
 import {
-  installGeoHook,
-  type GeoOverride,
-  DEFAULT_GEO_OVERRIDE,
-  GEO_OVERRIDE_HTML,
-  GEO_OVERRIDE_CSS,
-  wireGeoOverrideForm,
-  VERSION_BADGE_CSS,
-  wireVersionBadge,
-  installProfileBorderRedirect,
-  type ProfileBorderOpen,
-  DEFAULT_PROFILE_BORDER_OPEN,
-  PROFILE_BORDER_HTML,
-  PROFILE_BORDER_CSS,
-  wireProfileBorderForm,
-  createLogger,
-  SITELINKS_NAV_SELECTOR,
-  countDistinctBlockedBotsLast24h,
-  BOT_BLOCK_HTML,
   BOT_BLOCK_CSS,
+  BOT_BLOCK_HTML,
+  countDistinctBlockedBotsLast24h,
+  createLogger,
+  DEFAULT_GEO_OVERRIDE,
+  DEFAULT_PROFILE_BORDER_OPEN,
+  GEO_OVERRIDE_CSS,
+  GEO_OVERRIDE_HTML,
+  hasCapturedCoords,
+  ICON_HOLDER_RIGHT_BOTTOM_SELECTOR,
+  installLocationOverrideController,
+  installProfileBorderRedirect,
+  PROFILE_BORDER_CSS,
+  PROFILE_BORDER_HTML,
+  VERSION_BADGE_CSS,
+  VERSION_BADGE_HTML,
   wireBotBlockForm,
+  wireGeoOverrideForm,
+  wireProfileBorderForm,
+  wireVersionBadge,
+  type LocationOverrideController,
+  type ProfileBorderOpen,
 } from "@sniffies-projects/core";
+import FAB_ICON_PNG from "../../client/icons/icon48.png";
 import PANEL_CSS from "./panel.css";
 import PANEL_HTML from "./panel.html";
 import {
-  getGeoOverride,
-  setGeoOverride,
-  getProfileBorderOpen,
-  setProfileBorderOpen,
-  getBotBlockingEnabled,
-  setBotBlockingEnabled,
-  getBotBlockingSectionOpen,
-  setBotBlockingSectionOpen,
+  installReportFeature,
+  refreshBlockedBotsIfStale,
+  type ReportFeatureState,
+} from "./report.js";
+import { REPORTING_ENABLED, VERSION } from "./shared/env.js";
+import {
   getBlockedBotEventsByDay,
+  getBotBlockingEnabled,
+  getBotBlockingSectionOpen,
+  getGeoOverride,
+  getGeoSectionOpen,
+  getProfileBorderOpen,
+  getProfileBorderSectionOpen,
+  setBotBlockingEnabled,
+  setBotBlockingSectionOpen,
+  setGeoOverride,
+  setGeoSectionOpen,
+  setProfileBorderOpen,
+  setProfileBorderSectionOpen,
 } from "./shared/settings.js";
 import { installUserIdLogging } from "./user-id-logger.js";
-import { installReportFeature, refreshBlockedBotsIfStale, type ReportFeatureState } from "./report.js";
-import { REPORTING_ENABLED, VERSION } from "./shared/env.js";
 
 const log = createLogger("tools");
 
@@ -51,21 +57,38 @@ declare global {
 }
 
 // ── FAB mount ─────────────────────────────────────────────────────────────────
+// class for buttons that show up on the map
+const ICON_HOLDER_ROW_CLASS = "lower-map-icon";
+// class for the fab button when mounted on the map
+const FAB_DOCKED_CLASS = "snp-fab-docked";
+const NGCONTENT_ATTR_PREFIX = "_ngcontent-";
+
+const copyNgContentAttr = (target: Element, source: Element): void => {
+  const attr = Array.from(source.attributes).find((a) => a.name.startsWith(NGCONTENT_ATTR_PREFIX));
+  if (attr) {
+    target.setAttribute(attr.name, attr.value);
+  }
+};
 
 const mountFab = (fab: HTMLButtonElement): void => {
-  const tryInsert = (): boolean => {
-    const navTarget = document.querySelector<HTMLElement>(SITELINKS_NAV_SELECTOR);
-    if (navTarget?.parentElement) {
-      navTarget.parentElement.insertBefore(fab, navTarget.nextSibling);
-      return true;
+  const tryInsertIntoIconHolder = (): boolean => {
+    const iconHolder = document.querySelector<HTMLElement>(ICON_HOLDER_RIGHT_BOTTOM_SELECTOR);
+    if (!iconHolder) return false;
+    if (fab.parentElement !== iconHolder) {
+      iconHolder.prepend(fab);
+      fab.classList.add(ICON_HOLDER_ROW_CLASS, FAB_DOCKED_CLASS);
+      copyNgContentAttr(fab, iconHolder);
     }
-    return false;
+    return true;
   };
 
-  if (tryInsert()) return;
+  // Fallback anchor, used until the icon row above first appears.
+  if (!tryInsertIntoIconHolder()) {
+    document.body.appendChild(fab);
+  }
 
   const observer = new MutationObserver(() => {
-    if (tryInsert()) observer.disconnect();
+    tryInsertIntoIconHolder();
   });
   observer.observe(document.body, { childList: true, subtree: true });
 };
@@ -73,10 +96,7 @@ const mountFab = (fab: HTMLButtonElement): void => {
 // ── Hooks (runs at document-start, before page scripts) ──────────────────────
 
 interface HookState {
-  currentOverride: GeoOverride;
-  hook: ReturnType<typeof installGeoHook>;
-  nativeGetCurrentPosition: Geolocation["getCurrentPosition"];
-  sendLocationUpdate: (override: GeoOverride) => void;
+  geoController: LocationOverrideController;
   currentProfileBorderOpen: ProfileBorderOpen;
   updateProfileBorderOpen: (next: ProfileBorderOpen) => void;
   reportState: ReportFeatureState;
@@ -89,76 +109,10 @@ function installHooks(): HookState {
   });
   refreshBlockedBotsIfStale(reportState);
 
-  let currentOverride: GeoOverride = getGeoOverride();
-  const hook = installGeoHook(() => currentOverride);
-  const nativeGetCurrentPosition =
-    hook?.nativeGetCurrentPosition ??
-    navigator.geolocation.getCurrentPosition.bind(navigator.geolocation);
-
-  const nativeFetch = window.fetch.bind(window);
-  let lastLocationRequest: { url: string; init: RequestInit } | null = null;
-  let apiBase: string | null = null;
-
-  const sendLocationUpdate = (override: GeoOverride): void => {
-    const spoofed = { lat: override.latitude, lng: override.longitude };
-    if (lastLocationRequest) {
-      try {
-        const body = JSON.parse((lastLocationRequest.init.body as string) ?? "{}") as Record<
-          string,
-          unknown
-        >;
-        body.virtualLocation = spoofed;
-        body.physicalLocation = spoofed;
-        void nativeFetch(lastLocationRequest.url, {
-          ...lastLocationRequest.init,
-          body: JSON.stringify(body),
-        });
-        return;
-      } catch {
-        // fall through to proactive request
-      }
-    }
-    if (apiBase) {
-      void nativeFetch(`${apiBase}/api/visitor/current/location?state=loaded`, {
-        method: "PUT",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          virtualLocation: spoofed,
-          physicalLocation: spoofed,
-          homeDistanceInMiles: null,
-        }),
-      });
-    }
-  };
-
-  window.fetch = async (input, init) => {
-    const url =
-      typeof input === "string"
-        ? input
-        : input instanceof URL
-          ? input.href
-          : (input as Request).url;
-    const baseMatch = url.match(/^(https?:\/\/[^/]*sniffies\.com)/);
-    if (baseMatch && !apiBase) {
-      apiBase = baseMatch[1] ?? null;
-    }
-    if (url.includes("/api/visitor/current/location")) {
-      lastLocationRequest = { url, init: { ...init } };
-      if (currentOverride.enabled) {
-        try {
-          const body = JSON.parse((init?.body as string) ?? "{}") as Record<string, unknown>;
-          const spoofed = { lat: currentOverride.latitude, lng: currentOverride.longitude };
-          body.virtualLocation = spoofed;
-          body.physicalLocation = spoofed;
-          init = { ...init, body: JSON.stringify(body) };
-        } catch {
-          // leave unmodified if parsing fails
-        }
-      }
-    }
-    return nativeFetch(input, init);
-  };
+  const geoController = installLocationOverrideController({
+    initialOverride: getGeoOverride(),
+    onOverrideChanged: setGeoOverride,
+  });
 
   let currentProfileBorderOpen: ProfileBorderOpen = getProfileBorderOpen();
   installProfileBorderRedirect(() => currentProfileBorderOpen);
@@ -166,11 +120,20 @@ function installHooks(): HookState {
     currentProfileBorderOpen = next;
   };
 
+  const initialOverride = geoController.getOverride();
+  log("init", {
+    version: VERSION,
+    reportingBuildFlag: REPORTING_ENABLED,
+    geoSpoofing: {
+      enabled: initialOverride.enabled,
+      hasLocation: hasCapturedCoords(initialOverride),
+    },
+    profileBorderOpen: currentProfileBorderOpen.enabled,
+    botBlocking: reportState.botBlockState.enabled,
+  });
+
   return {
-    currentOverride,
-    hook,
-    nativeGetCurrentPosition,
-    sendLocationUpdate,
+    geoController,
     currentProfileBorderOpen,
     updateProfileBorderOpen,
     reportState,
@@ -180,14 +143,7 @@ function installHooks(): HookState {
 // ── UI (runs after DOMContentLoaded) ─────────────────────────────────────────
 
 export function mountUI(state: HookState | null): void {
-  const hook = state?.hook ?? null;
-  const nativeGetCurrentPosition =
-    state?.nativeGetCurrentPosition ??
-    (() => {
-      throw new Error("geolocation unavailable");
-    });
-  const sendLocationUpdate = state?.sendLocationUpdate ?? (() => {});
-  let currentOverride = state?.currentOverride ?? { ...DEFAULT_GEO_OVERRIDE };
+  const geoController = state?.geoController ?? null;
   const updateProfileBorderOpen = state?.updateProfileBorderOpen ?? (() => {});
   const currentProfileBorderOpen = state?.currentProfileBorderOpen ?? {
     ...DEFAULT_PROFILE_BORDER_OPEN,
@@ -220,7 +176,11 @@ export function mountUI(state: HookState | null): void {
   const fab = document.createElement("button");
   fab.id = "snp-fab";
   fab.title = "Sniffies Tools";
-  fab.textContent = "📍";
+  const fabIcon = document.createElement("i");
+  fabIcon.id = "snp-fab-icon";
+  fabIcon.classList.add("fa", "snp-fab-icon-base-size");
+  fabIcon.style.backgroundImage = `url("${FAB_ICON_PNG}")`;
+  fab.appendChild(fabIcon);
   mountFab(fab);
 
   const panel = document.createElement("div");
@@ -229,24 +189,28 @@ export function mountUI(state: HookState | null): void {
   panel.innerHTML = PANEL_HTML;
   document.body.appendChild(panel);
 
-  wireVersionBadge(panel, VERSION);
+  const versionRoot = panel.querySelector<HTMLElement>("#snp-version-root")!;
+  versionRoot.innerHTML = VERSION_BADGE_HTML;
+  wireVersionBadge(versionRoot, VERSION);
 
   const geoRoot = panel.querySelector<HTMLElement>("#snp-geo-root")!;
   geoRoot.innerHTML = GEO_OVERRIDE_HTML;
 
-  wireGeoOverrideForm(geoRoot, {
-    initial: currentOverride,
+  const geoFormHandle = wireGeoOverrideForm(geoRoot, {
+    initial: geoController?.getOverride() ?? { ...DEFAULT_GEO_OVERRIDE },
     onSave: (next) => {
-      setGeoOverride(next);
-      currentOverride = next;
-      hook?.refreshWatches();
+      geoController?.setOverride(next);
       if (next.enabled) {
-        sendLocationUpdate(next);
+        void geoController?.sendLocationUpdate(next);
       }
     },
-    getNativePosition: nativeGetCurrentPosition,
-    initialOpen: false,
-    onToggle: () => {},
+    onClear: (next) => geoController?.setOverride(next),
+    initialOpen: getGeoSectionOpen(),
+    onToggle: setGeoSectionOpen,
+  });
+
+  geoController?.subscribeChange((next) => {
+    geoFormHandle.setOverride(next);
   });
 
   const profileBorderRoot = panel.querySelector<HTMLElement>("#snp-profile-border-root")!;
@@ -258,8 +222,8 @@ export function mountUI(state: HookState | null): void {
       setProfileBorderOpen(next);
       updateProfileBorderOpen(next);
     },
-    initialOpen: false,
-    onToggle: () => {},
+    initialOpen: getProfileBorderSectionOpen(),
+    onToggle: setProfileBorderSectionOpen,
   });
 
   const botBlockRoot = panel.querySelector<HTMLElement>("#snp-bot-block-root")!;
@@ -267,7 +231,7 @@ export function mountUI(state: HookState | null): void {
 
   wireBotBlockForm(botBlockRoot, {
     reportingEnabled: REPORTING_ENABLED,
-    initialEnabled: getBotBlockingEnabled(),
+    userEnabledReporting: getBotBlockingEnabled(),
     initialCount: countDistinctBlockedBotsLast24h(getBlockedBotEventsByDay()),
     initialOpen: getBotBlockingSectionOpen(),
     onToggle: setBotBlockingSectionOpen,

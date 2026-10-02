@@ -1,8 +1,8 @@
-import BOT_BLOCK_HTML from "./bot-block.html";
+import type { BotBlockFormContract } from "./contracts.js";
 import BOT_BLOCK_CSS from "./bot-block.css";
-import type { BotBlockFormContract } from "./bot-block-form-contract.js";
+import BOT_BLOCK_HTML from "./bot-block.html";
 
-export { BOT_BLOCK_HTML, BOT_BLOCK_CSS };
+export { BOT_BLOCK_CSS, BOT_BLOCK_HTML };
 export type { BotBlockFormContract };
 
 export const wireBotBlockForm = (container: Element, options: BotBlockFormContract): void => {
@@ -27,7 +27,7 @@ export const wireBotBlockForm = (container: Element, options: BotBlockFormContra
     return;
   }
 
-  enabledCheckbox.checked = options.initialEnabled;
+  enabledCheckbox.checked = options.userEnabledReporting;
   hintEl.textContent =
     "Hide profiles that have been confirmed as bots from the map and live updates.";
   countEl.textContent =
