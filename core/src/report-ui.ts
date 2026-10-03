@@ -24,8 +24,9 @@ export const wireReportModal = (
 
   backdrop.style.display = "none";
 
-  const setStatus = (text: string): void => {
+  const setStatus = (text: string, isError = false): void => {
     statusEl.textContent = text;
+    statusEl.classList.toggle("error", isError);
   };
 
   let generation = 0;
@@ -73,7 +74,7 @@ export const wireReportModal = (
         if (generation !== submittedGeneration) {
           return;
         }
-        setStatus("Failed to submit report. Try again.");
+        setStatus("Failed to submit report. Try again.", true);
         submitBtn.disabled = false;
       });
   });

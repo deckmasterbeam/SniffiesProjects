@@ -1,16 +1,12 @@
 import {
   BlockedBotDailyLog,
   DEFAULT_GEO_OVERRIDE,
-  DEFAULT_PROFILE_BORDER_OPEN,
   GeoOverride,
-  ProfileBorderOpen,
   recordBlockedBotIds,
 } from "@sniffies-projects/core";
 
 const GEO_STORAGE_KEY = "sniffies-geo";
 const GEO_SECTION_OPEN_STORAGE_KEY = "sniffies-geo-section-open";
-const PROFILE_BORDER_STORAGE_KEY = "sniffies-profile-border";
-const PROFILE_BORDER_SECTION_OPEN_STORAGE_KEY = "sniffies-profile-border-section-open";
 const BLOCKED_BOTS_STORAGE_KEY = "sniffies-blocked-bots";
 const BLOCKED_BOTS_FETCHED_AT_STORAGE_KEY = "sniffies-blocked-bots-fetched-at";
 const BOT_BLOCKING_ENABLED_STORAGE_KEY = "sniffies-bot-blocking-enabled";
@@ -36,29 +32,6 @@ export const getGeoSectionOpen = (): boolean => {
 
 export const setGeoSectionOpen = (open: boolean): void => {
   localStorage.setItem(GEO_SECTION_OPEN_STORAGE_KEY, String(open));
-};
-
-export const getProfileBorderOpen = (): ProfileBorderOpen => {
-  try {
-    const raw = localStorage.getItem(PROFILE_BORDER_STORAGE_KEY);
-    return raw
-      ? { ...DEFAULT_PROFILE_BORDER_OPEN, ...JSON.parse(raw) }
-      : { ...DEFAULT_PROFILE_BORDER_OPEN };
-  } catch {
-    return { ...DEFAULT_PROFILE_BORDER_OPEN };
-  }
-};
-
-export const setProfileBorderOpen = (next: ProfileBorderOpen): void => {
-  localStorage.setItem(PROFILE_BORDER_STORAGE_KEY, JSON.stringify(next));
-};
-
-export const getProfileBorderSectionOpen = (): boolean => {
-  return localStorage.getItem(PROFILE_BORDER_SECTION_OPEN_STORAGE_KEY) === "true";
-};
-
-export const setProfileBorderSectionOpen = (open: boolean): void => {
-  localStorage.setItem(PROFILE_BORDER_SECTION_OPEN_STORAGE_KEY, String(open));
 };
 
 export const getBlockedBots = (): string[] => {

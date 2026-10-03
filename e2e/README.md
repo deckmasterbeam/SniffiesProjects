@@ -62,6 +62,17 @@ persistent context, installing the `.user.js` through it) — tracked as a follo
 strategy for actual feature testing either way; the manager-based test exists to catch drift in the
 install/match/run-at pipeline itself, which direct injection can't.
 
+## Fixture-based bookmarklet tests
+
+```bash
+yarn test:bookmarklet
+```
+
+Loads the built `bookmarklet/dist/inject.js` as a `<script>` tag **after** the shared fixture page
+has loaded — the way tapping the bookmark does — so a second injection is a second tap. Rebuild
+first if you've changed `bookmarklet/` or `core/` source (`cd bookmarklet && yarn build`). See
+[`fixtures/bookmarklet.ts`](fixtures/bookmarklet.ts).
+
 ## Running everything
 
 ```bash

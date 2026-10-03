@@ -5,7 +5,7 @@ export interface Logger {
 }
 
 // All console tags have "[sniffies-<name>]" format.
-const formatTag =(name: string): string => `[sniffies-${name}]`;
+const formatTag = (name: string): string => `[sniffies-${name}]`;
 
 export const createLogger = (name: string): Logger => {
   const tag = formatTag(name);

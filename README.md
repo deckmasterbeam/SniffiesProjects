@@ -47,7 +47,7 @@ Location spoofing packaged as a userscript for the [Userscripts](https://apps.ap
 
 ### `bookmarklet/` — iOS Safari Bookmarklet
 
-Failed attempt to do location spoofing for iOS Safari without any app required. While this path could've been viable, it had unique engineering challenges from the chrome extension (which is what I first built this functionality for). Rather than rewrite the location spoofing from scratch, and in an attempt to give the user an easier install/startup experience, I pivoted to the userscript approach. Keeping this version around just in case I want to come back to this for some reason
+Reduced-feature version for iOS Safari with no app required. A bookmarklet can't hook the page's init behavior, so it supports opening profiles outside your boundary but not location spoofing or bot filtering — use the userscript for those.
 
 **Install:** Create a Safari bookmark and replace its URL with the bookmarklet code from `bookmarklet/README.md`.
 

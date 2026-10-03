@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { installReportFeature, refreshBlockedBotsIfStale } from "./report.js";
-import { getBlockedBots, setBlockedBots, setBotBlockingEnabled } from "./shared/settings.js";
+import { getBlockedBots, setBlockedBots, setBotBlockingEnabled } from "./shared/local-storage.js";
 
 vi.mock("./shared/env.js", () => ({
   SERVER_BASE: "https://server.example",
@@ -9,10 +9,7 @@ vi.mock("./shared/env.js", () => ({
   REPORTING_ENABLED: true,
 }));
 
-// installBotBlockHook (called by installReportFeature) patches the global
-// WebSocket/XMLHttpRequest constructors and no-ops on a second call within
-// the same globals — swap in fresh mocks per test so each test gets a clean
-// install, mirroring core/src/bot-block-hook.test.ts's approach.
+// installBotBlockHook
 const makeMockWebSocketCtor = (): typeof WebSocket => {
   class MockWebSocket {
     static CONNECTING = 0;

@@ -17,6 +17,14 @@ export { installProfileBorderRedirect } from "./profile-border-hook.js";
 export { logInit } from "./log-init.js";
 export { GEO_OVERRIDE_HTML, GEO_OVERRIDE_CSS, wireGeoOverrideForm } from "./geo-override-ui.js";
 export type { GeoOverrideFormHandle } from "./geo-override-ui.js";
+export { mountFab } from "./mount-fab.js";
+export { default as PANEL_CSS } from "./panel.css";
+export {
+  getProfileBorderOpen,
+  setProfileBorderOpen,
+  getProfileBorderSectionOpen,
+  setProfileBorderSectionOpen,
+} from "./local-storage.js";
 export { VERSION_BADGE_HTML, VERSION_BADGE_CSS, wireVersionBadge } from "./version-badge.js";
 export type { TravelClickArmer } from "./travel-capture-hook.js";
 export { installTravelClickArmer, extractTravelDestination } from "./travel-capture-hook.js";
@@ -58,7 +66,6 @@ export {
   APP_SCREEN_SELECTOR,
   NAME_LABEL_SELECTOR,
   PIN_BUTTON_SELECTOR,
-  SITELINKS_NAV_SELECTOR,
   ICON_HOLDER_RIGHT_BOTTOM_SELECTOR,
   TRAVEL_HERE_BUTTON_SELECTOR,
   CITIES_INPUT_SELECTOR,

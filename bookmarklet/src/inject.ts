@@ -3,17 +3,19 @@
 //   javascript:(function(){var s=document.createElement('script');s.src='https://YOUR_VERCEL_URL/inject.js?t='+Date.now();document.head.appendChild(s);})();
 
 import {
-  installGeoHook,
-  type GeoOverride,
-  DEFAULT_GEO_OVERRIDE,
-  GEO_OVERRIDE_HTML,
-  GEO_OVERRIDE_CSS,
-  wireGeoOverrideForm,
-  createLogger,
+  getProfileBorderOpen,
+  getProfileBorderSectionOpen,
+  installProfileBorderRedirect,
+  mountFab,
+  PANEL_CSS,
+  PROFILE_BORDER_CSS,
+  PROFILE_BORDER_HTML,
+  setProfileBorderOpen,
+  setProfileBorderSectionOpen,
+  wireProfileBorderForm,
 } from "@sniffies-projects/core";
-import PANEL_CSS from "./panel.css";
+import FAB_ICON_PNG from "../../client/icons/icon48.png";
 import PANEL_HTML from "./panel.html";
-import { mountFab, isSniffiesDomain } from "./mount-fab.js";
 
 // ── Guard ────────────────────────────────────────────────────────────────────
 
@@ -23,125 +25,35 @@ declare global {
   }
 }
 
-// ── Storage — localStorage adapter ───────────────────────────────────────────
-
-const STORAGE_KEY = "sniffies-geo";
-
-const loadGeoOverride = (): GeoOverride => {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? { ...DEFAULT_GEO_OVERRIDE, ...JSON.parse(raw) } : { ...DEFAULT_GEO_OVERRIDE };
-  } catch {
-    return { ...DEFAULT_GEO_OVERRIDE };
-  }
-};
-
-const saveGeoOverride = (override: GeoOverride): void => {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(override));
-};
-
 // ── Main ─────────────────────────────────────────────────────────────────────
 
-const log = createLogger("geo");
-
 function main(): void {
-  if (!isSniffiesDomain()) {
+  if (!location.hostname.endsWith("sniffies.com")) {
     return;
   }
-  alert("Sniffies Tools loaded! Tap the 📍 button in the nav bar to open the location panel.");
+  alert("Sniffies Tools loaded! Tap the Sniffies Tools button on the map to open the panel.");
 
-  let currentOverride: GeoOverride = loadGeoOverride();
-  log("initial override", currentOverride);
-  const hook = installGeoHook(() => currentOverride);
-  log("hook installed", hook ? "yes" : "already patched");
-
-  // Intercept fetch so pre-existing watchPosition watchers (registered before this
-  // bookmarklet loaded) also send spoofed coords to the Sniffies location API.
-  // Also capture the last location request so we can replay it immediately when
-  // the user saves new coords (Sniffies won't re-send otherwise).
-  const nativeFetch = window.fetch.bind(window);
-  let lastLocationRequest: { url: string; init: RequestInit } | null = null;
-  let apiBase: string | null = null;
-
-  const sendLocationUpdate = (override: typeof currentOverride): void => {
-    const spoofed = { lat: override.latitude, lng: override.longitude };
-    if (lastLocationRequest) {
-      try {
-        const body = JSON.parse((lastLocationRequest.init.body as string) ?? "{}") as Record<
-          string,
-          unknown
-        >;
-        body.virtualLocation = spoofed;
-        body.physicalLocation = spoofed;
-        log("replaying location request with new coords", spoofed);
-        void nativeFetch(lastLocationRequest.url, {
-          ...lastLocationRequest.init,
-          body: JSON.stringify(body),
-        });
-        return;
-      } catch {
-        // fall through to proactive request
-      }
-    }
-    if (apiBase) {
-      log("proactively sending location update", spoofed);
-      void nativeFetch(`${apiBase}/api/visitor/current/location?state=loaded`, {
-        method: "PUT",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          virtualLocation: spoofed,
-          physicalLocation: spoofed,
-          homeDistanceInMiles: null,
-        }),
-      });
-    }
-  };
-
-  window.fetch = async (input, init) => {
-    const url =
-      typeof input === "string"
-        ? input
-        : input instanceof URL
-          ? input.href
-          : (input as Request).url;
-    const baseMatch = url.match(/^(https?:\/\/[^/]*sniffies\.com)/);
-    if (baseMatch && !apiBase) {
-      apiBase = baseMatch[1] || null;
-    }
-    if (url.includes("/api/visitor/current/location")) {
-      lastLocationRequest = { url, init: { ...init } };
-      if (currentOverride.enabled) {
-        try {
-          const body = JSON.parse((init?.body as string) ?? "{}") as Record<string, unknown>;
-          const spoofed = { lat: currentOverride.latitude, lng: currentOverride.longitude };
-          body.virtualLocation = spoofed;
-          body.physicalLocation = spoofed;
-          log("intercepting location request", spoofed);
-          init = { ...init, body: JSON.stringify(body) };
-        } catch {
-          // leave the request unmodified if parsing fails
-        }
-      }
-    }
-    return nativeFetch(input, init);
-  };
+  let currentProfileBorderOpen = getProfileBorderOpen();
+  installProfileBorderRedirect(() => currentProfileBorderOpen);
 
   // Inject shell styles (FAB + panel chrome)
   const shellStyle = document.createElement("style");
   shellStyle.textContent = PANEL_CSS;
   document.head.appendChild(shellStyle);
 
-  // Inject geo form styles from core
-  const geoStyle = document.createElement("style");
-  geoStyle.textContent = GEO_OVERRIDE_CSS;
-  document.head.appendChild(geoStyle);
+  const profileBorderStyle = document.createElement("style");
+  profileBorderStyle.textContent = PROFILE_BORDER_CSS;
+  document.head.appendChild(profileBorderStyle);
 
-  // Inject trigger button into the Sniffies nav bar
+  // Inject trigger button into the map's icon row
   const fab = document.createElement("button");
   fab.id = "snp-fab";
   fab.title = "Sniffies Tools";
-  fab.textContent = "📍"; // TODO: change out with my icon, could stand to make it even more custom
+  const fabIcon = document.createElement("i");
+  fabIcon.id = "snp-fab-icon";
+  fabIcon.classList.add("fa", "snp-fab-icon-base-size");
+  fabIcon.style.backgroundImage = `url("${FAB_ICON_PNG}")`;
+  fab.appendChild(fabIcon);
   mountFab(fab);
 
   // Inject panel shell
@@ -151,29 +63,17 @@ function main(): void {
   panel.innerHTML = PANEL_HTML;
   document.body.appendChild(panel);
 
-  // Inject geo form from core into placeholder
-  const geoRoot = panel.querySelector<HTMLElement>("#snp-geo-root")!;
-  geoRoot.innerHTML = GEO_OVERRIDE_HTML;
+  const profileBorderRoot = panel.querySelector<HTMLElement>("#snp-profile-border-root")!;
+  profileBorderRoot.innerHTML = PROFILE_BORDER_HTML;
 
-  wireGeoOverrideForm(geoRoot, {
-    initial: currentOverride,
+  wireProfileBorderForm(profileBorderRoot, {
+    initial: currentProfileBorderOpen,
     onSave: (next) => {
-      log("override saved", next);
-      saveGeoOverride(next);
-      currentOverride = next;
-      hook?.refreshWatches();
-      if (next.enabled) {
-        sendLocationUpdate(next);
-      }
+      setProfileBorderOpen(next);
+      currentProfileBorderOpen = next;
     },
-    onClear: (cleared) => {
-      log("override cleared", cleared);
-      saveGeoOverride(cleared);
-      currentOverride = cleared;
-      hook?.refreshWatches();
-    },
-    initialOpen: false,
-    onToggle: () => {},
+    initialOpen: getProfileBorderSectionOpen(),
+    onToggle: setProfileBorderSectionOpen,
   });
 
   // Shell interaction
@@ -187,7 +87,6 @@ function main(): void {
 }
 
 // ── Entry point ───────────────────────────────────────────────────────────────
-// Must run after all const/function declarations above are initialized.
 
 if (window.__sniffiesInjected) {
   const panel = document.getElementById("snp-panel");

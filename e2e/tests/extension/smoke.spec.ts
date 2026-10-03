@@ -1,7 +1,6 @@
 import { test, expect, SNIFFIES_ORIGIN } from "../../fixtures/extension.js";
 import { setExtensionStorage } from "../../fixtures/storage.js";
 
-
 test("extension loads and injects on the fixture page", async ({ context, extensionId }) => {
   expect(extensionId).toMatch(/^[a-p]{32}$/);
 
@@ -34,7 +33,6 @@ test("extension loads and injects on the fixture page", async ({ context, extens
 });
 
 test("marker outside the free radius redirects instead of opening a panel", async ({ context }) => {
-
   await setExtensionStorage(context, {
     profileBorderOpen: { enabled: true, openInNewTab: false },
   });
