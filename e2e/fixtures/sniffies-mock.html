@@ -62,18 +62,20 @@
               <button data-testid="threedotButton" type="button"><i class="fa fa-ellipsis-h"></i></button>
             `;
             // Like real Sniffies, the options menu only exists once opened.
-            document.querySelector('[data-testid="threedotButton"]').addEventListener("click", () => {
-              const menu = document.createElement("div");
-              menu.className = "tooltip-container";
-              menu.innerHTML = `
+            document
+              .querySelector('[data-testid="threedotButton"]')
+              .addEventListener("click", () => {
+                const menu = document.createElement("div");
+                menu.className = "tooltip-container";
+                menu.innerHTML = `
                 <div data-testid="profileOptionsContainer" class="tooltip-content">
                   <button data-testid="reportCruiserButton"><span><i class="fa fa-exclamation-triangle"></i>Report Cruiser </span></button>
                   <button data-testid="blockUserButton"><span><i class="fa fa-ban"></i>Block Cruiser</span></button>
                   <button data-testid="copyPageLink"><span><i class="fa fa-link"></i>Copy link</span></button>
                 </div>
               `;
-              document.getElementById("app-screen").appendChild(menu);
-            });
+                document.getElementById("app-screen").appendChild(menu);
+              });
           }, 200);
         });
       });

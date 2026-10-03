@@ -1,9 +1,5 @@
 import { test, expect } from "@playwright/test";
-import {
-  SNIFFIES_ORIGIN,
-  mockSniffiesPage,
-  tapBookmarklet,
-} from "../../fixtures/bookmarklet.js";
+import { SNIFFIES_ORIGIN, mockSniffiesPage, tapBookmarklet } from "../../fixtures/bookmarklet.js";
 
 test("full pass produces no console or page errors", async ({ page, context }) => {
   const errors: string[] = [];

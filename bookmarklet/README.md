@@ -5,9 +5,11 @@ Injects features into sniffies.com on browsers where extensions aren't available
 A bookmarklet only runs after the page has loaded, so it can never hook the page's init behavior. Features that need that live in `userscript/` only.
 
 Supported features:
+
 - Open profiles outside your boundary
 
 Not supported (use the userscript):
+
 - Location spoofing
 - Bot filtering
 
@@ -18,7 +20,7 @@ Prod:
 
 javascript:(function(){var s=document.createElement('script');s.src='https://sniffies-projects-bookmarklet.vercel.app/inject.js?t='+Date.now();document.head.appendChild(s);})();
 
-Preview: 
+Preview:
 
 javascript:(function(){var s=document.createElement('script');s.src='https://sniffies-projects-bookm-git-eb641a-joshbarnettcs-5719s-projects.vercel.app/inject.js?t='+Date.now();document.head.appendChild(s);})();
 ```
