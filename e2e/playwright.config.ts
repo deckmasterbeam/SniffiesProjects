@@ -2,6 +2,7 @@ import { defineConfig, devices } from "@playwright/test";
 
 const AUTH_FILE = ".auth/user.json";
 
+// TOOD: clean up comments
 export default defineConfig({
   testDir: "./tests",
   fullyParallel: false,
@@ -66,6 +67,13 @@ export default defineConfig({
       // needed), so devices["Desktop Chrome"] applies here.
       name: "userscript",
       testDir: "./tests/userscript",
+      use: { ...devices["Desktop Chrome"] },
+    },
+    {
+      // Fixture-based bookmarklet tests — see fixtures/bookmarklet.ts. Same
+      // fixture page as "userscript", but the script is injected after load.
+      name: "bookmarklet",
+      testDir: "./tests/bookmarklet",
       use: { ...devices["Desktop Chrome"] },
     },
   ],

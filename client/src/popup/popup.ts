@@ -18,12 +18,15 @@ import {
 } from "@sniffies-projects/core";
 import { FAVORITES_NOTIFICATIONS_ENABLED, REPORTING_ENABLED } from "../shared/env.js";
 import {
-  SETTINGS_KEYS,
   getLocalSettings,
   setBotBlockingEnabled,
+  setBotBlockingSectionOpen,
   setFavoritesEnabled,
+  setFavoritesSectionOpen,
   setGeoOverride,
+  setGeoSectionOpen,
   setProfileBorderOpen,
+  setProfileBorderSectionOpen,
 } from "../shared/settings.js";
 
 const log = createLogger("popup");
@@ -70,7 +73,7 @@ const init = async (): Promise<void> => {
     onClear: setGeoOverride,
     initialOpen: settings.geoSectionOpen,
     onToggle: (open) => {
-      void chrome.storage.local.set({ [SETTINGS_KEYS.geoSectionOpen]: open });
+      void setGeoSectionOpen(open);
     },
   });
 
@@ -82,7 +85,7 @@ const init = async (): Promise<void> => {
     onSave: setProfileBorderOpen,
     initialOpen: settings.profileBorderSectionOpen,
     onToggle: (open) => {
-      void chrome.storage.local.set({ [SETTINGS_KEYS.profileBorderSectionOpen]: open });
+      void setProfileBorderSectionOpen(open);
     },
   });
 
@@ -108,7 +111,7 @@ const init = async (): Promise<void> => {
     initialCount: countDistinctBlockedBotsLast24h(settings.blockedBotEventsByDay),
     initialOpen: settings.botBlockingSectionOpen,
     onToggle: (open) => {
-      void chrome.storage.local.set({ [SETTINGS_KEYS.botBlockingSectionOpen]: open });
+      void setBotBlockingSectionOpen(open);
     },
     onToggleEnabled: setBotBlockingEnabled,
   });
@@ -117,7 +120,7 @@ const init = async (): Promise<void> => {
 // ── Event listeners ───────────────────────────────────────────────────────────
 
 favoritesDetails?.addEventListener("toggle", () => {
-  void chrome.storage.local.set({ [SETTINGS_KEYS.favoritesSectionOpen]: favoritesDetails.open });
+  void setFavoritesSectionOpen(favoritesDetails.open);
 });
 
 favoritesEnabledCheckbox.addEventListener("change", () => {

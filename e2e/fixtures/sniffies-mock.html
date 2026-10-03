@@ -5,11 +5,6 @@
     <title>Sniffies mock</title>
   </head>
   <body>
-    <!-- FAB mount anchor for the bookmarklet — see SITELINKS_NAV_SELECTOR. -->
-    <nav>
-      <a title="Sitelinks" href="#">Sitelinks</a>
-    </nav>
-
     <div id="map">
       <!-- Within the free radius: a normal click should open the profile
            panel and get the star/report injection. -->
@@ -43,6 +38,12 @@
           "
         ></div>
       </div>
+    </div>
+
+    <!-- Map's travel-mode/hide-me/find-me icon row — the FAB docks here
+         (ICON_HOLDER_RIGHT_BOTTOM_SELECTOR). -->
+    <div data-testid="iconHolderRightBottom">
+      <button class="lower-map-icon" type="button"><i class="fa fa-location-arrow"></i></button>
     </div>
 
     <div id="app-screen"></div>

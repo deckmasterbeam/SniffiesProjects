@@ -1,11 +1,15 @@
 # Sniffies Bookmarklet
 
-> **Note:** New features go in `userscript/`, not here. This package is not under active development — avoid making changes to it.
-
 Injects features into sniffies.com on browsers where extensions aren't available (e.g. iOS Safari) without 3rd party apps.
 
+A bookmarklet only runs after the page has loaded, so it can never hook the page's init behavior. Features that need that live in `userscript/` only.
+
 Supported features:
-- Location spoofing (doesn't work well)
+- Open profiles outside your boundary
+
+Not supported (use the userscript):
+- Location spoofing
+- Bot filtering
 
 ## Bookmarklet code
 
@@ -29,4 +33,4 @@ You can't type a `javascript:` URL directly into Safari on iOS — you have to c
 4. Replace the URL with the bookmarklet code above
 5. Save
 
-**To use:** navigate to sniffies.com in Safari, open your bookmarks, and tap "Sniffies Tools". A FAB button will appear on the page.
+**To use:** navigate to sniffies.com in Safari, open your bookmarks, and tap "Sniffies Tools". A Sniffies Tools button will appear in the map's icon row. You need to tap the bookmark again after every page load.

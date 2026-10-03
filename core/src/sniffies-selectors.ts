@@ -12,9 +12,7 @@ export const SNIFFIES_SELECTORS = {
   PIN_BUTTON_SELECTOR: '[data-testid="pinUserButton"]',
   /** Profile three-dot options menu (only in the DOM while open) — the report button mounts inside it. */
   PROFILE_OPTIONS_MENU_SELECTOR: '[data-testid="profileOptionsContainer"]',
-  /** Sidebar nav link used as the FAB's mount anchor (bookmarklet only). */
-  SITELINKS_NAV_SELECTOR: '[title="Sitelinks"]',
-  /** Map's own travel-mode/hide-me/find-me icon row — the FAB's preferred mount target (userscript only). */
+  /** Map's own travel-mode/hide-me/find-me icon row — the FAB's preferred mount target. */
   ICON_HOLDER_RIGHT_BOTTOM_SELECTOR: '[data-testid="iconHolderRightBottom"]',
   /** Confirm button in Sniffies' own Travel Mode UI — clicking it PUTs the picked pin to the location API. */
   TRAVEL_HERE_BUTTON_SELECTOR: '[data-testid="travelHereButton"]',
@@ -31,7 +29,6 @@ export const {
   NAME_LABEL_SELECTOR,
   PIN_BUTTON_SELECTOR,
   PROFILE_OPTIONS_MENU_SELECTOR,
-  SITELINKS_NAV_SELECTOR,
   ICON_HOLDER_RIGHT_BOTTOM_SELECTOR,
   TRAVEL_HERE_BUTTON_SELECTOR,
   CITIES_INPUT_SELECTOR,

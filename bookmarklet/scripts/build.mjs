@@ -24,6 +24,7 @@ const buildOptions = {
   loader: {
     ".css": "text",
     ".html": "text",
+    ".png": "dataurl",
   },
   define: {
     __DEBUG__: String(process.env.DEBUG === "true"),

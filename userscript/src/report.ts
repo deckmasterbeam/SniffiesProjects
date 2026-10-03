@@ -1,12 +1,3 @@
-// Wires the report-button injection (core/src/report-button-hook.ts, shared
-// verbatim with the Chrome client's src/content/sniffies-profile-id.ts — see
-// that module's header for the panel-switch/deep-link/no-photo race handling
-// it covers) and the bot-blocking network filter. The userscript runs
-// entirely in the page's own world (no isolated-world relay needed, see
-// user-id-logger.ts), so both install directly here rather than needing a
-// postMessage bridge. Favorites/star injection is excluded — the userscript
-// has no favorites feature.
-
 import {
   installBotBlockHook,
   installReportButtonInjection,
@@ -20,7 +11,7 @@ import {
   getBotBlockingEnabled,
   recordBlockedBotEvent,
   setBlockedBots,
-} from "./shared/settings.js";
+} from "./shared/local-storage.js";
 
 export interface ReportFeatureState {
   currentSniffiesUserId: string;
@@ -32,13 +23,7 @@ const clientHeaders = (): Record<string, string> => ({
   Authorization: `Bearer ${CLIENT_SECRET}`,
 });
 
-/**
- * Installs the bot-block network hook (always, mirroring the Chrome client's
- * MAIN-world hook script) and, if REPORTING_ENABLED, the report-button
- * injection machinery. Returns the mutable state object — the caller wires
- * currentSniffiesUserId from installUserIdLogging's callback, and the
- * bot-block panel UI reads/writes botBlockState directly.
- */
+/** Installs the bot-block network hook */
 export const installReportFeature = (): ReportFeatureState => {
   const state: ReportFeatureState = {
     currentSniffiesUserId: "",

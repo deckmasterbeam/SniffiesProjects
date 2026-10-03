@@ -32,6 +32,35 @@ export const setProfileBorderOpen = async (next: ProfileBorderOpen): Promise<voi
   await chrome.storage.local.set({ [SETTINGS_KEYS.profileBorderOpen]: next });
 };
 
+export const setGeoSectionOpen = async (open: boolean): Promise<void> => {
+  await chrome.storage.local.set({ [SETTINGS_KEYS.geoSectionOpen]: open });
+};
+
+export const setProfileBorderSectionOpen = async (open: boolean): Promise<void> => {
+  await chrome.storage.local.set({ [SETTINGS_KEYS.profileBorderSectionOpen]: open });
+};
+
+export const setBotBlockingSectionOpen = async (open: boolean): Promise<void> => {
+  await chrome.storage.local.set({ [SETTINGS_KEYS.botBlockingSectionOpen]: open });
+};
+
+export const setFavoritesSectionOpen = async (open: boolean): Promise<void> => {
+  await chrome.storage.local.set({ [SETTINGS_KEYS.favoritesSectionOpen]: open });
+};
+
+export const setPhone = async (phone: string): Promise<void> => {
+  await chrome.storage.local.set({ [SETTINGS_KEYS.phone]: phone });
+};
+
+export const setGuid = async (guid: string): Promise<void> => {
+  await chrome.storage.local.set({ [SETTINGS_KEYS.guid]: guid });
+};
+
+export const resetLocalSettings = async (): Promise<void> => {
+  await chrome.storage.local.clear();
+  await chrome.storage.local.set(DEFAULT_LOCAL_SETTINGS);
+};
+
 export const setFavoritesEnabled = async (enabled: boolean): Promise<void> => {
   await chrome.storage.local.set({ [SETTINGS_KEYS.favoritesEnabled]: enabled });
 };
