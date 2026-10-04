@@ -19,6 +19,7 @@ const POPUP_HTML = `
   <div id="snp-geo-root"></div>
   <div id="snp-profile-border-root"></div>
   <div id="snp-bot-block-root"></div>
+  <div id="snp-profile-filters-root"></div>
 `;
 
 const flushPromises = () => new Promise<void>((r) => setTimeout(r, 0));
@@ -72,6 +73,26 @@ const loadModuleWithReportingEnabled = async () => {
   await import("./popup.js");
   await flushPromises();
 };
+
+describe("popup — settings button", () => {
+  it("is hidden outside debug builds", async () => {
+    await loadModule();
+    expect(document.getElementById("open-settings")!.style.display).toBe("none");
+  });
+
+  it("is shown in debug builds", async () => {
+    vi.resetModules();
+    vi.doMock("../shared/env.js", async () => {
+      const actual = await vi.importActual<typeof import("../shared/env.js")>("../shared/env.js");
+      return { ...actual, DEBUG: true };
+    });
+    document.body.innerHTML = POPUP_HTML;
+    await import("./popup.js");
+    await flushPromises();
+    vi.doUnmock("../shared/env.js");
+    expect(document.getElementById("open-settings")!.style.display).toBe("");
+  });
+});
 
 describe("popup — version badge", () => {
   beforeEach(loadModule);
@@ -399,5 +420,24 @@ describe("popup — section persistence", () => {
     profileBorderDetails.open = true;
     profileBorderDetails.dispatchEvent(new Event("toggle"));
     expect(chrome.storage.local.set).toHaveBeenCalledWith({ profileBorderSectionOpen: true });
+  });
+});
+
+describe("popup — profile filters", () => {
+  beforeEach(loadModule);
+
+  it("is off by default and saves the switch when toggled", () => {
+    const enabled = document.getElementById("profile-filters-enabled") as HTMLInputElement;
+    expect(enabled.checked).toBe(false);
+    enabled.checked = true;
+    enabled.dispatchEvent(new Event("change"));
+    expect(chrome.storage.local.set).toHaveBeenCalledWith({ profileFiltersEnabled: true });
+  });
+
+  it("saves the section open state on toggle", () => {
+    const details = document.getElementById("profile-filters-details") as HTMLDetailsElement;
+    details.open = true;
+    details.dispatchEvent(new Event("toggle"));
+    expect(chrome.storage.local.set).toHaveBeenCalledWith({ profileFiltersSectionOpen: true });
   });
 });

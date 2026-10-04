@@ -1,4 +1,5 @@
 import type { BlockedBotDailyLog } from "./blocked-bot-log.js";
+import { DEFAULT_PROFILE_FILTERS, type ProfileFilters } from "./profile-filter.js";
 
 export interface GeoOverride {
   enabled: boolean;
@@ -47,6 +48,9 @@ export const SETTINGS_KEYS = {
   botBlockingEnabled: "botBlockingEnabled",
   botBlockingSectionOpen: "botBlockingSectionOpen",
   blockedBotEventsByDay: "blockedBotEventsByDay",
+  profileFilters: "profileFilters",
+  profileFiltersEnabled: "profileFiltersEnabled",
+  profileFiltersSectionOpen: "profileFiltersSectionOpen",
 } as const;
 
 export interface ExtensionLocalSettings {
@@ -64,6 +68,9 @@ export interface ExtensionLocalSettings {
   botBlockingEnabled: boolean;
   botBlockingSectionOpen: boolean;
   blockedBotEventsByDay: BlockedBotDailyLog;
+  profileFilters: ProfileFilters;
+  profileFiltersEnabled: boolean;
+  profileFiltersSectionOpen: boolean;
 }
 
 export const DEFAULT_LOCAL_SETTINGS: ExtensionLocalSettings = {
@@ -81,4 +88,7 @@ export const DEFAULT_LOCAL_SETTINGS: ExtensionLocalSettings = {
   botBlockingEnabled: true,
   botBlockingSectionOpen: false,
   blockedBotEventsByDay: {},
+  profileFilters: DEFAULT_PROFILE_FILTERS,
+  profileFiltersEnabled: false,
+  profileFiltersSectionOpen: false,
 };

@@ -18,6 +18,8 @@ export const SNIFFIES_SELECTORS = {
   TRAVEL_HERE_BUTTON_SELECTOR: '[data-testid="travelHereButton"]',
   /** Travel Mode's city search box — anchors the pending-capture status message next to it. */
   CITIES_INPUT_SELECTOR: '[data-testid="citiesInput"]',
+  /** "Profile Type" row in the Map Layers → Cruisers filter menu (only in the DOM while open) — our filter rows mount after it. */
+  PROFILE_TYPE_FILTER_LABEL_SELECTOR: 'label[for="IS_PROFILE_TYPE"]',
 } as const;
 
 export type SniffiesSelectorName = keyof typeof SNIFFIES_SELECTORS;
@@ -32,4 +34,5 @@ export const {
   ICON_HOLDER_RIGHT_BOTTOM_SELECTOR,
   TRAVEL_HERE_BUTTON_SELECTOR,
   CITIES_INPUT_SELECTOR,
+  PROFILE_TYPE_FILTER_LABEL_SELECTOR,
 } = SNIFFIES_SELECTORS;

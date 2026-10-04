@@ -1,174 +1,116 @@
-import type { BotBlockState } from "./contracts.js";
 import { createLogger, type Logger } from "./log.js";
+import {
+  createProfileMatcher,
+  type ProfileFilterRule,
+  type ProfileMatcher,
+} from "./profile-filter.js";
+import {
+  CHAT_DATA_PATH,
+  MESSAGES_PATH,
+  POST_AUTH_PATH,
+  SOFT_RELOAD_PATH,
+  WS_HOST,
+  WS_USER_ID_PARAM,
+  isSniffiesApiHost,
+  type ChatDataPayload,
+  type Conversation,
+  type FilterableProfile,
+  type MessagesPayload,
+  type NearbyVisitorsPayload,
+  type NewConversationFrame,
+  type NewMsgFrame,
+} from "./sniffies-api.js";
 
-type OnBotsFiltered = (ids: string[]) => void;
+type FilterKind = "post-authentication" | "soft-reload" | "chat-data" | "messages";
 
-const POST_AUTH_PATH = "/api/post-authentication";
-const CHAT_DATA_PATH = "/api/v2/post-authentication/chat-data";
-const MESSAGES_PATH = "/api/messages";
-const WS_HOST = "prod.ws.sniffies.com";
+const filterProfiles = (
+  items: FilterableProfile[] | undefined,
+  matcher: ProfileMatcher,
+): FilterableProfile[] | undefined => items?.filter((item) => !matcher.hidesProfile(item));
 
-type FilterKind = "post-authentication" | "chat-data" | "messages";
-
-interface WithId {
-  _id: string;
-}
-
-interface NearbyVisitorsPayload {
-  nearbyVisitors?: { visitors?: WithId[] };
-  partialVisitorData?: WithId[];
-  [key: string]: unknown;
-}
-
-interface Conversation {
-  participants?: string;
-  author1?: string;
-  author2?: string | null;
-  [key: string]: unknown;
-}
-
-interface ChatDataPayload {
-  conversationData?: {
-    conversations?: Conversation[];
-    userIds?: string[];
-    [key: string]: unknown;
-  };
-  partialVisitorData?: WithId[];
-  [key: string]: unknown;
-}
-
-interface Message {
-  author?: string;
-  [key: string]: unknown;
-}
-
-interface MessagesPayload {
-  messages?: Message[];
-  partialUsers?: WithId[];
-  [key: string]: unknown;
-}
-
-const filterById = <T extends WithId>(
-  items: T[] | undefined,
-  blockedIds: ReadonlySet<string>,
-  removed?: Set<string>,
-): T[] | undefined =>
-  items?.filter((item) => {
-    if (!blockedIds.has(item._id)) {
-      return true;
-    }
-    removed?.add(item._id);
-    return false;
-  });
-
-/** Removes blocked accounts from the map init */
+/** Removes hidden accounts from the map init */
 export const filterPostAuthenticationPayload = (
   payload: NearbyVisitorsPayload,
-  blockedIds: ReadonlySet<string>,
-  removed?: Set<string>,
+  matcher: ProfileMatcher,
 ): NearbyVisitorsPayload => {
-  if (blockedIds.size === 0) {
-    return payload;
-  }
   if (payload.nearbyVisitors?.visitors) {
-    payload.nearbyVisitors.visitors = filterById(
-      payload.nearbyVisitors.visitors,
-      blockedIds,
-      removed,
-    );
+    payload.nearbyVisitors.visitors = filterProfiles(payload.nearbyVisitors.visitors, matcher);
   }
   if (payload.partialVisitorData) {
-    payload.partialVisitorData = filterById(payload.partialVisitorData, blockedIds, removed);
+    payload.partialVisitorData = filterProfiles(payload.partialVisitorData, matcher);
   }
   return payload;
 };
 
-/** Removes blocked accounts from the chat init payload's conversation lists. */
+/** Removes hidden accounts from the chat init payload's conversation lists. */
 export const filterChatDataPayload = (
   payload: ChatDataPayload,
-  blockedIds: ReadonlySet<string>,
-  removed?: Set<string>,
+  matcher: ProfileMatcher,
 ): ChatDataPayload => {
-  if (blockedIds.size === 0) {
-    return payload;
+  if (payload.partialVisitorData) {
+    payload.partialVisitorData = filterProfiles(payload.partialVisitorData, matcher);
   }
-  const isBlockedConversation = (c: Conversation): boolean => {
-    let blocked = false;
+  const isHiddenConversation = (c: Conversation): boolean => {
+    let hidden = false;
     for (const id of [c.participants, c.author1, c.author2]) {
-      if (id && blockedIds.has(id)) {
-        removed?.add(id);
-        blocked = true;
+      if (id && matcher.hidesId(id)) {
+        hidden = true;
       }
     }
-    return blocked;
+    return hidden;
   };
 
   if (payload.conversationData?.conversations) {
     payload.conversationData.conversations = payload.conversationData.conversations.filter(
-      (c) => !isBlockedConversation(c),
+      (c) => !isHiddenConversation(c),
     );
   }
   if (payload.conversationData?.userIds) {
-    payload.conversationData.userIds = payload.conversationData.userIds.filter((id) => {
-      if (!blockedIds.has(id)) {
-        return true;
-      }
-      removed?.add(id);
-      return false;
-    });
-  }
-  if (payload.partialVisitorData) {
-    payload.partialVisitorData = filterById(payload.partialVisitorData, blockedIds, removed);
+    payload.conversationData.userIds = payload.conversationData.userIds.filter(
+      (id) => !matcher.hidesId(id),
+    );
   }
   return payload;
 };
 
-/** Removes a blocked account's messages (and profile card) from an opened chat thread. */
+/** Removes a hidden account's messages (and profile card) from an opened chat thread. */
 export const filterMessagesPayload = (
   payload: MessagesPayload,
-  blockedIds: ReadonlySet<string>,
-  removed?: Set<string>,
+  matcher: ProfileMatcher,
 ): MessagesPayload => {
-  if (blockedIds.size === 0) {
-    return payload;
+  if (payload.partialUsers) {
+    payload.partialUsers = filterProfiles(payload.partialUsers, matcher);
   }
   if (payload.messages) {
-    payload.messages = payload.messages.filter((m) => {
-      if (!(m.author && blockedIds.has(m.author))) {
-        return true;
-      }
-      removed?.add(m.author);
-      return false;
-    });
-  }
-  if (payload.partialUsers) {
-    payload.partialUsers = filterById(payload.partialUsers, blockedIds, removed);
+    payload.messages = payload.messages.filter((m) => !(m.author && matcher.hidesId(m.author)));
   }
   return payload;
 };
 
-const applyFilter = (
-  kind: FilterKind,
-  payload: unknown,
-  blockedIds: ReadonlySet<string>,
-  removed?: Set<string>,
-): unknown => {
+const applyFilter = (kind: FilterKind, payload: unknown, matcher: ProfileMatcher): unknown => {
   switch (kind) {
     case "post-authentication":
-      return filterPostAuthenticationPayload(payload as NearbyVisitorsPayload, blockedIds, removed);
+    case "soft-reload":
+      return filterPostAuthenticationPayload(payload as NearbyVisitorsPayload, matcher);
     case "chat-data":
-      return filterChatDataPayload(payload as ChatDataPayload, blockedIds, removed);
+      return filterChatDataPayload(payload as ChatDataPayload, matcher);
     case "messages":
-      return filterMessagesPayload(payload as MessagesPayload, blockedIds, removed);
+      return filterMessagesPayload(payload as MessagesPayload, matcher);
   }
 };
 
 interface WsFrameInfo {
   eventName: string;
-  id: string | null;
+  /** The account the frame is about: a profile when the frame carries one, else a bare id. */
+  subject: FilterableProfile | string | null;
 }
 
-/** Pulls the event name + subject user id (if any) out of a raw WS frame. */
+const asProfile = (value: unknown): FilterableProfile | null =>
+  typeof (value as { _id?: unknown } | undefined)?._id === "string"
+    ? (value as FilterableProfile)
+    : null;
+
+/** Pulls the event name + subject account (if any) out of a raw WS frame. */
 const parseWsFrame = (raw: string): WsFrameInfo | null => {
   let obj: { eventName?: unknown; data?: unknown };
   try {
@@ -179,39 +121,43 @@ const parseWsFrame = (raw: string): WsFrameInfo | null => {
   if (typeof obj.eventName !== "string") {
     return null;
   }
-  if (obj.eventName === "userJoined" || obj.eventName === "userUpdated") {
-    const id = (obj.data as { _id?: unknown } | undefined)?._id;
-    return { eventName: obj.eventName, id: typeof id === "string" ? id : null };
+  if (obj.eventName === "userJoined") {
+    return { eventName: obj.eventName, subject: asProfile(obj.data) };
+  }
+  if (obj.eventName === "userUpdated") {
+    // Carries only the changed fields, so it's judged by id against the last full profile.
+    return { eventName: obj.eventName, subject: asProfile(obj.data)?._id ?? null };
   }
   if (
     obj.eventName === "userAwake" ||
     obj.eventName === "userDisconnected" ||
     obj.eventName === "userRemoved"
   ) {
-    return { eventName: obj.eventName, id: typeof obj.data === "string" ? obj.data : null };
+    return { eventName: obj.eventName, subject: typeof obj.data === "string" ? obj.data : null };
   }
   if (obj.eventName === "newMsg") {
-    const author = (obj.data as { message?: { author?: unknown } } | undefined)?.message?.author;
-    return { eventName: obj.eventName, id: typeof author === "string" ? author : null };
+    const author = (obj.data as NewMsgFrame["data"] | undefined)?.message?.author;
+    return { eventName: obj.eventName, subject: typeof author === "string" ? author : null };
   }
   if (obj.eventName === "newConversation") {
-    const id = (obj.data as { partialUser?: { _id?: unknown } } | undefined)?.partialUser?._id;
-    return { eventName: obj.eventName, id: typeof id === "string" ? id : null };
+    const partialUser = (obj.data as NewConversationFrame["data"] | undefined)?.partialUser;
+    return { eventName: obj.eventName, subject: asProfile(partialUser) };
   }
-  return { eventName: obj.eventName, id: null };
+  return { eventName: obj.eventName, subject: null };
 };
 
-/** Decides whether a single live WebSocket frame carries a blocked account. */
-export const shouldFilterWebSocketFrame = (
-  raw: string,
-  blockedIds: ReadonlySet<string>,
-): boolean => {
-  if (blockedIds.size === 0) {
+const hidesFrame = (frame: WsFrameInfo | null, matcher: ProfileMatcher): boolean => {
+  if (!frame?.subject) {
     return false;
   }
-  const frame = parseWsFrame(raw);
-  return !!frame?.id && blockedIds.has(frame.id);
+  return typeof frame.subject === "string"
+    ? matcher.hidesId(frame.subject)
+    : matcher.hidesProfile(frame.subject);
 };
+
+/** Decides whether a single live WebSocket frame carries a hidden account. */
+export const shouldFilterWebSocketFrame = (raw: string, matcher: ProfileMatcher): boolean =>
+  matcher.isActive() && hidesFrame(parseWsFrame(raw), matcher);
 
 // ── XHR ────────────────────────────────────────────────────────────────────
 
@@ -219,10 +165,6 @@ type PatchedXHRPrototype = typeof XMLHttpRequest.prototype & {
   __sniffiesBotBlockPatched?: boolean;
 };
 type XhrWithFilterKind = XMLHttpRequest & { __sniffiesFilterKind?: FilterKind | null };
-
-// Matched by path only, not hostname — see the file header on why.
-const isSniffiesApiHost = (host: string): boolean =>
-  host === "sniffies.com" || host.endsWith(".sniffies.com");
 
 const classifyXhrUrl = (url: string): FilterKind | null => {
   try {
@@ -232,6 +174,9 @@ const classifyXhrUrl = (url: string): FilterKind | null => {
     }
     if (parsed.pathname === POST_AUTH_PATH) {
       return "post-authentication";
+    }
+    if (parsed.pathname === SOFT_RELOAD_PATH) {
+      return "soft-reload";
     }
     if (parsed.pathname === CHAT_DATA_PATH) {
       return "chat-data";
@@ -245,11 +190,7 @@ const classifyXhrUrl = (url: string): FilterKind | null => {
   }
 };
 
-const installXhrFilter = (
-  getState: () => BotBlockState,
-  onFiltered: OnBotsFiltered | undefined,
-  log: Logger,
-): boolean => {
+const installXhrFilter = (matcher: ProfileMatcher, log: Logger): boolean => {
   const proto = XMLHttpRequest.prototype as PatchedXHRPrototype;
   if (proto.__sniffiesBotBlockPatched) {
     log("XHR filter not installed (already patched)");
@@ -285,8 +226,11 @@ const installXhrFilter = (
           if (cached) {
             return cached;
           }
-          const state = getState();
-          const shouldFilter = state.enabled && state.blockedIds.size > 0;
+          const shouldFilter = matcher.isActive();
+          log(`${kind} response read`, {
+            filtering: shouldFilter,
+            ms: Math.round(performance.now()),
+          });
           let json: unknown;
           let text = "";
           if (responseType === "json") {
@@ -303,12 +247,9 @@ const installXhrFilter = (
             }
           }
           if (shouldFilter) {
-            const removed = new Set<string>();
-            json = applyFilter(kind, json, state.blockedIds, removed);
-            if (removed.size > 0) {
-              const matchedIds = [...removed];
-              log.warn(`filtered blocked account(s) from ${kind} response:`, matchedIds);
-              onFiltered?.(matchedIds);
+            json = applyFilter(kind, json, matcher);
+            for (const { rule, ids } of matcher.flush()) {
+              log.warn(`${rule} filtered account(s) from ${kind} response:`, ids);
             }
             if (responseType !== "json") {
               text = JSON.stringify(json);
@@ -354,8 +295,7 @@ const isWsTargetHost = (url: string | URL): boolean => {
 
 const patchSocketInstance = (
   socket: WebSocket,
-  getState: () => BotBlockState,
-  onFiltered: OnBotsFiltered | undefined,
+  matcher: ProfileMatcher,
   nativeOnMessageDescriptor: PropertyDescriptor | undefined,
   log: Logger,
 ): void => {
@@ -363,17 +303,17 @@ const patchSocketInstance = (
     if (!(event instanceof MessageEvent) || typeof event.data !== "string") {
       return false;
     }
-    const state = getState();
-    if (!state.enabled || state.blockedIds.size === 0) {
+    if (!matcher.isActive()) {
       return false;
     }
     const frame = parseWsFrame(event.data);
-    if (frame?.id && state.blockedIds.has(frame.id)) {
-      log.warn(`filtered blocked account from WS ${frame.eventName} frame:`, frame.id);
-      onFiltered?.([frame.id]);
-      return true;
+    if (!hidesFrame(frame, matcher)) {
+      return false;
     }
-    return false;
+    for (const { rule, ids } of matcher.flush()) {
+      log.warn(`${rule} filtered account from WS ${frame!.eventName} frame:`, ...ids);
+    }
+    return true;
   };
 
   const nativeAddEventListener = socket.addEventListener.bind(socket) as (
@@ -452,11 +392,7 @@ const patchSocketInstance = (
   }
 };
 
-const installWebSocketFilter = (
-  getState: () => BotBlockState,
-  onFiltered: OnBotsFiltered | undefined,
-  log: Logger,
-): boolean => {
+const installWebSocketFilter = (matcher: ProfileMatcher, log: Logger): boolean => {
   const NativeWebSocket = (typeof WebSocket !== "undefined" ? WebSocket : undefined) as
     | PatchedWebSocketCtor
     | undefined;
@@ -478,7 +414,9 @@ const installWebSocketFilter = (
     const socket =
       protocols === undefined ? new NativeWebSocket(url) : new NativeWebSocket(url, protocols);
     if (isWsTargetHost(url)) {
-      patchSocketInstance(socket, getState, onFiltered, nativeOnMessageDescriptor, log);
+      // Sniffies connects with ?userId=<own id> — never hide the user from themselves.
+      matcher.setSelfId(new URL(url, location.href).searchParams.get(WS_USER_ID_PARAM) ?? "");
+      patchSocketInstance(socket, matcher, nativeOnMessageDescriptor, log);
     }
     return socket;
   } as unknown as PatchedWebSocketCtor;
@@ -496,23 +434,19 @@ const installWebSocketFilter = (
   return true;
 };
 
-export interface BotBlockHookResult {
+export interface ProfileFilterHookResult {
   xhrInstalled: boolean;
   wsInstalled: boolean;
 }
 
-/**
- * Installs bot filters
- * @param getState
- * @param onFiltered
- */
-export const installBotBlockHook = (
-  getState: () => BotBlockState,
-  onFiltered?: OnBotsFiltered,
-): BotBlockHookResult => {
-  const log = createLogger("bot-block");
+/** Installs the network filters that hide every profile one of `rules` rejects. */
+export const installProfileFilterHook = (
+  rules: readonly ProfileFilterRule[],
+): ProfileFilterHookResult => {
+  const log = createLogger("profile-filter");
+  const matcher = createProfileMatcher(rules);
   return {
-    xhrInstalled: installXhrFilter(getState, onFiltered, log),
-    wsInstalled: installWebSocketFilter(getState, onFiltered, log),
+    xhrInstalled: installXhrFilter(matcher, log),
+    wsInstalled: installWebSocketFilter(matcher, log),
   };
 };

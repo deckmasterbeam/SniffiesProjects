@@ -1,12 +1,37 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { BotBlockState } from "./contracts.js";
+import {
+  botBlockRule,
+  createProfileMatcher,
+  gateProfileFilters,
+  genderRule,
+  parseProfileFilters,
+  profileFilterRules,
+  type Gender,
+  type ProfileFilters,
+} from "./profile-filter.js";
 import {
   filterChatDataPayload,
   filterMessagesPayload,
   filterPostAuthenticationPayload,
-  installBotBlockHook,
+  installProfileFilterHook,
   shouldFilterWebSocketFrame,
-  type BotBlockState,
-} from "./bot-block-hook.js";
+} from "./profile-filter-hook.js";
+import type { SniffiesGender } from "./sniffies-api.js";
+
+const blocking = (ids: string[]) =>
+  createProfileMatcher([botBlockRule(() => ({ blockedIds: new Set(ids), enabled: true }))]);
+
+const allowingGenders = (genders: Gender[], enabled = true) =>
+  createProfileMatcher([genderRule(() => ({ enabled, genders }))]);
+
+const withGender = (_id: string, gender: SniffiesGender) => ({
+  _id,
+  data: { profile: { extended: { sexuality: { gender } } } },
+});
+
+const installBotBlockHook = (getState: () => BotBlockState, onFiltered?: (ids: string[]) => void) =>
+  installProfileFilterHook([botBlockRule(getState, onFiltered)]);
 
 const sniffiesPostAuth = "https://uswapi2.sniffies.com/api/post-authentication";
 
@@ -20,18 +45,18 @@ describe("filterPostAuthenticationPayload", () => {
       },
       partialVisitorData: [{ _id: "blocked1" }, { _id: "ok2" }],
     };
-    const result = filterPostAuthenticationPayload(payload, new Set(["blocked1"]));
+    const result = filterPostAuthenticationPayload(payload, blocking(["blocked1"]));
     expect(result.nearbyVisitors?.visitors).toEqual([{ _id: "ok1" }]);
     expect(result.partialVisitorData).toEqual([{ _id: "ok2" }]);
   });
 
   it("is a no-op when the blocklist is empty", () => {
     const payload = { nearbyVisitors: { visitors: [{ _id: "a" }] } };
-    expect(filterPostAuthenticationPayload(payload, new Set())).toBe(payload);
+    expect(filterPostAuthenticationPayload(payload, blocking([]))).toBe(payload);
   });
 
   it("tolerates missing fields", () => {
-    expect(filterPostAuthenticationPayload({}, new Set(["a"]))).toEqual({});
+    expect(filterPostAuthenticationPayload({}, blocking(["a"]))).toEqual({});
   });
 });
 
@@ -49,7 +74,7 @@ describe("filterChatDataPayload", () => {
       },
       partialVisitorData: [{ _id: "blocked1" }, { _id: "friend" }],
     };
-    const result = filterChatDataPayload(payload, new Set(["blocked1", "blocked2", "blocked3"]));
+    const result = filterChatDataPayload(payload, blocking(["blocked1", "blocked2", "blocked3"]));
     expect(result.conversationData?.conversations).toEqual([{ author1: "me", author2: "friend" }]);
     expect(result.conversationData?.userIds).toEqual(["friend"]);
     expect(result.partialVisitorData).toEqual([{ _id: "friend" }]);
@@ -57,7 +82,7 @@ describe("filterChatDataPayload", () => {
 
   it("is a no-op when the blocklist is empty", () => {
     const payload = { conversationData: { conversations: [{ participants: "a" }] } };
-    expect(filterChatDataPayload(payload, new Set())).toBe(payload);
+    expect(filterChatDataPayload(payload, blocking([]))).toBe(payload);
   });
 });
 
@@ -70,19 +95,167 @@ describe("filterMessagesPayload", () => {
       ],
       partialUsers: [{ _id: "blocked1" }, { _id: "me" }],
     };
-    const result = filterMessagesPayload(payload, new Set(["blocked1"]));
+    const result = filterMessagesPayload(payload, blocking(["blocked1"]));
     expect(result.messages).toEqual([{ author: "me", body: "hi" }]);
     expect(result.partialUsers).toEqual([{ _id: "me" }]);
   });
 
   it("is a no-op when the blocklist is empty", () => {
     const payload = { messages: [{ author: "a" }] };
-    expect(filterMessagesPayload(payload, new Set())).toBe(payload);
+    expect(filterMessagesPayload(payload, blocking([]))).toBe(payload);
+  });
+});
+
+describe("gender rule", () => {
+  it("removes profiles whose gender isn't allowed, treating null/missing as undefined", () => {
+    const payload = {
+      nearbyVisitors: {
+        visitors: [
+          withGender("m", "man"),
+          withGender("f", "woman"),
+          withGender("nb", "nonbinary"),
+          withGender("u", null),
+          { _id: "missing", data: { profile: { extended: {} } } },
+        ],
+      },
+    };
+    const ids = (allowed: Gender[]) =>
+      filterPostAuthenticationPayload(
+        structuredClone(payload),
+        allowingGenders(allowed),
+      ).nearbyVisitors?.visitors?.map((v) => v._id);
+    expect(ids(["female", "nonbinary"])).toEqual(["f", "nb"]);
+    expect(ids(["male"])).toEqual(["m"]);
+    expect(ids(["undefined"])).toEqual(["u", "missing"]);
+  });
+
+  it("is inactive when every gender (or, defensively, none) is allowed", () => {
+    expect(allowingGenders(["male", "female", "nonbinary", "undefined"]).isActive()).toBe(false);
+    expect(allowingGenders([]).isActive()).toBe(false);
+    expect(allowingGenders(["male"]).isActive()).toBe(true);
+  });
+
+  it("is inactive while switched off, whatever is selected", () => {
+    expect(allowingGenders(["male"], false).isActive()).toBe(false);
+  });
+
+  it("hides id-only chat entries using the profile seen in the same payload", () => {
+    const payload = {
+      conversationData: {
+        conversations: [{ participants: "m" }, { participants: "f" }, { participants: "unseen" }],
+        userIds: ["m", "f", "unseen"],
+      },
+      partialVisitorData: [withGender("m", "man"), withGender("f", "woman")],
+    };
+    const result = filterChatDataPayload(payload, allowingGenders(["female"]));
+    expect(result.conversationData?.conversations).toEqual([
+      { participants: "f" },
+      { participants: "unseen" },
+    ]);
+    expect(result.conversationData?.userIds).toEqual(["f", "unseen"]);
+    expect(result.partialVisitorData).toEqual([withGender("f", "woman")]);
+  });
+
+  it("remembers a userJoined profile for later id-only frames", () => {
+    const matcher = allowingGenders(["female"]);
+    const frame = (eventName: string, data: unknown) => JSON.stringify({ eventName, data });
+    expect(shouldFilterWebSocketFrame(frame("userAwake", "m"), matcher)).toBe(false);
+    expect(shouldFilterWebSocketFrame(frame("userJoined", withGender("m", "man")), matcher)).toBe(
+      true,
+    );
+    expect(shouldFilterWebSocketFrame(frame("userAwake", "m"), matcher)).toBe(true);
+    // userUpdated only carries changed fields — it must not be read as "gender undefined".
+    expect(
+      shouldFilterWebSocketFrame(
+        frame("userUpdated", { _id: "f", data: { profile: {} } }),
+        matcher,
+      ),
+    ).toBe(false);
+  });
+
+  it("never hides the logged-in user", () => {
+    const matcher = allowingGenders(["female"]);
+    matcher.setSelfId("me");
+    const payload = {
+      messages: [{ author: "me" }, { author: "m" }],
+      partialUsers: [withGender("me", "man"), withGender("m", "man")],
+    };
+    const result = filterMessagesPayload(payload, matcher);
+    expect(result.messages).toEqual([{ author: "me" }]);
+    expect(result.partialUsers).toEqual([withGender("me", "man")]);
+  });
+
+  it("reports hidden ids to the rule that hid them, once per flush", () => {
+    const onBots = vi.fn();
+    const matcher = createProfileMatcher([
+      botBlockRule(() => ({ blockedIds: new Set(["bot"]), enabled: true }), onBots),
+      genderRule(() => ({ enabled: true, genders: ["female"] })),
+    ]);
+    filterPostAuthenticationPayload(
+      { partialVisitorData: [withGender("bot", "man"), withGender("m", "man")] },
+      matcher,
+    );
+    expect(matcher.flush()).toEqual([
+      { rule: "bot-block", ids: ["bot"] },
+      { rule: "gender", ids: ["m"] },
+    ]);
+    expect(onBots).toHaveBeenCalledExactlyOnceWith(["bot"]);
+    expect(matcher.flush()).toEqual([]);
+  });
+});
+
+describe("height and weight rules", () => {
+  const withStats = (_id: string, heightInCm: number | null, weightInKg: number | null) => ({
+    _id,
+    data: { profile: { extended: { stats: { heightInCm, weightInKg } } } },
+  });
+  const visitors = [
+    withStats("short-light", 165, 60),
+    withStats("mid", 178, 75),
+    withStats("tall-heavy", 196, 110),
+    withStats("no-height", null, 75),
+    withStats("no-weight", 178, null),
+    { _id: "no-stats", data: { profile: { extended: {} } } },
+  ];
+  const shownWith = (overrides: Partial<ProfileFilters>, enabled = true) => {
+    const filters = gateProfileFilters({ ...parseProfileFilters(null), ...overrides }, enabled);
+    const matcher = createProfileMatcher(profileFilterRules(() => filters));
+    return filterPostAuthenticationPayload(
+      { nearbyVisitors: { visitors: structuredClone(visitors) } },
+      matcher,
+    ).nearbyVisitors?.visitors?.map((v) => v._id);
+  };
+  const all = visitors.map((v) => v._id);
+  const range = (min: number | null, max: number | null, enabled = true) => ({
+    enabled,
+    min,
+    max,
+    metric: true,
+  });
+
+  it("keeps only profiles inside the inclusive range, hiding ones that don't state a value", () => {
+    expect(shownWith({ height: range(178, 196) })).toEqual(["mid", "tall-heavy", "no-weight"]);
+    expect(shownWith({ weight: range(60, 75) })).toEqual(["short-light", "mid", "no-height"]);
+  });
+
+  it("treats a missing bound as unbounded", () => {
+    expect(shownWith({ height: range(170, null) })).toEqual(["mid", "tall-heavy", "no-weight"]);
+    expect(shownWith({ weight: range(null, 75) })).toEqual(["short-light", "mid", "no-height"]);
+  });
+
+  it("combines with the other filters: a profile has to pass all of them", () => {
+    expect(shownWith({ height: range(170, null), weight: range(null, 100) })).toEqual(["mid"]);
+  });
+
+  it("hides nothing while off, without bounds, or with the master switch off", () => {
+    expect(shownWith({ height: range(178, 196, false) })).toEqual(all);
+    expect(shownWith({ height: range(null, null) })).toEqual(all);
+    expect(shownWith({ height: range(178, 196) }, false)).toEqual(all);
   });
 });
 
 describe("shouldFilterWebSocketFrame", () => {
-  const blocked = new Set(["blocked1"]);
+  const blocked = blocking(["blocked1"]);
 
   it("filters userJoined/userUpdated when data._id is blocked", () => {
     expect(
@@ -184,7 +357,7 @@ describe("shouldFilterWebSocketFrame", () => {
     expect(
       shouldFilterWebSocketFrame(
         JSON.stringify({ eventName: "userAwake", data: "blocked1" }),
-        new Set(),
+        blocking([]),
       ),
     ).toBe(false);
   });
@@ -496,6 +669,26 @@ describe("installBotBlockHook — XHR", () => {
     expect(JSON.parse(xhr.responseText)).toEqual({
       messages: [{ author: "ok1", body: "hi" }],
       partialUsers: [{ _id: "ok1" }],
+    });
+  });
+
+  it("filters the softReload (Cruise this area) response like the map init", () => {
+    installBotBlockHook(() => state);
+    const xhr = new window.XMLHttpRequest() as XMLHttpRequest & {
+      __setRawResponse: (t: string) => void;
+    };
+    xhr.open("POST", "https://uswapi.sniffies.com/api/softReload");
+    xhr.__setRawResponse(
+      JSON.stringify({
+        nearbyVisitors: { visitors: [{ _id: "blocked1" }, { _id: "ok1" }] },
+        partialVisitorData: [{ _id: "blocked1" }, { _id: "ok2" }],
+      }),
+    );
+    xhr.send();
+
+    expect(JSON.parse(xhr.responseText)).toEqual({
+      nearbyVisitors: { visitors: [{ _id: "ok1" }] },
+      partialVisitorData: [{ _id: "ok2" }],
     });
   });
 

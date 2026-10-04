@@ -1,0 +1,52 @@
+.snp-filter-row .snp-filter-body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 4px 0;
+  font-size: 12px;
+  color: #7a90a4;
+}
+
+.snp-filter-row .snp-gender-option,
+.snp-filter-row .snp-range-select,
+.snp-filter-row .snp-filter-apply {
+  border: 1px solid #7a90a4;
+  border-radius: 12px;
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  background: transparent;
+  color: #7a90a4;
+}
+
+.snp-filter-row .snp-range-select {
+  color: #ffffff;
+}
+
+/* The dropdown list itself is drawn by the browser, on its own (light) background. */
+.snp-filter-row .snp-range-select option {
+  color: #000000;
+}
+
+.snp-filter-row .snp-gender-option.active {
+  border-color: #ff5500;
+  background: #ff5500;
+  color: #ffffff;
+}
+
+.snp-filter-row .snp-filter-apply {
+  border-color: #ffffff;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.snp-filter-row .snp-filter-apply[hidden] {
+  display: none;
+}
+
+.snp-filter-row .snp-filter-off .snp-gender-option,
+.snp-filter-row .snp-filter-off .snp-range-select {
+  opacity: 0.5;
+}

@@ -3,6 +3,7 @@ import { installCitySearchXhrObserver } from "./city-search-hook.js";
 import { installCitySearchStatusUI } from "./city-search-status-hook.js";
 import { installGeoHook } from "./geo-hook.js";
 import { hasCapturedCoords, type GeoOverride } from "./settings.js";
+import { LOCATION_PATH, type LocationPutBody } from "./sniffies-api.js";
 import { extractTravelDestination, installTravelClickArmer } from "./travel-capture-hook.js";
 import { createLogger } from "./log.js";
 
@@ -50,10 +51,9 @@ export const installLocationOverrideController = (
     const spoofed = { lat: override.latitude, lng: override.longitude };
     if (lastLocationRequest) {
       try {
-        const body = JSON.parse((lastLocationRequest.init.body as string) ?? "{}") as Record<
-          string,
-          unknown
-        >;
+        const body = JSON.parse(
+          (lastLocationRequest.init.body as string) ?? "{}",
+        ) as LocationPutBody;
         body.virtualLocation = spoofed;
         body.physicalLocation = spoofed;
         return nativeFetch(lastLocationRequest.url, {
@@ -65,7 +65,7 @@ export const installLocationOverrideController = (
       }
     }
     if (apiBase) {
-      return nativeFetch(`${apiBase}/api/visitor/current/location?state=loaded`, {
+      return nativeFetch(`${apiBase}${LOCATION_PATH}?state=loaded`, {
         method: "PUT",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -73,7 +73,7 @@ export const installLocationOverrideController = (
           virtualLocation: spoofed,
           physicalLocation: spoofed,
           homeDistanceInMiles: null,
-        }),
+        } satisfies LocationPutBody),
       }).then(() => undefined);
     }
     return Promise.resolve();
@@ -136,7 +136,7 @@ export const installLocationOverrideController = (
     if (baseMatch && !apiBase) {
       apiBase = baseMatch[1] ?? null;
     }
-    if (url.includes("/api/visitor/current/location")) {
+    if (url.includes(LOCATION_PATH)) {
       lastLocationRequest = { url, init: { ...init } };
       const wasArmed = travelArmer.consume();
 
@@ -144,7 +144,7 @@ export const installLocationOverrideController = (
 
       if (wasArmed && currentOverride.enabled) {
         try {
-          const body = JSON.parse((init?.body as string) ?? "{}") as Record<string, unknown>;
+          const body = JSON.parse((init?.body as string) ?? "{}") as LocationPutBody;
           const captured = extractTravelDestination(body);
           log("parsed travel PUT body", { body, captured });
           if (captured) {
@@ -158,7 +158,7 @@ export const installLocationOverrideController = (
         }
       } else if (currentOverride.enabled && hasCapturedCoords(currentOverride)) {
         try {
-          const body = JSON.parse((init?.body as string) ?? "{}") as Record<string, unknown>;
+          const body = JSON.parse((init?.body as string) ?? "{}") as LocationPutBody;
           const spoofed = { lat: currentOverride.latitude, lng: currentOverride.longitude };
           body.virtualLocation = spoofed;
           body.physicalLocation = spoofed;

@@ -2,6 +2,7 @@ import {
   DEFAULT_LOCAL_SETTINGS,
   DEFAULT_PROFILE_BORDER_OPEN,
   ExtensionLocalSettings,
+  ProfileFilters,
   GeoOverride,
   PHONE_E164_REGEX,
   ProfileBorderOpen,
@@ -78,6 +79,18 @@ export const setBlockedBots = async (userIds: string[], fetchedAt: number): Prom
 
 export const setBotBlockingEnabled = async (enabled: boolean): Promise<void> => {
   await chrome.storage.local.set({ [SETTINGS_KEYS.botBlockingEnabled]: enabled });
+};
+
+export const setProfileFilters = async (next: ProfileFilters): Promise<void> => {
+  await chrome.storage.local.set({ [SETTINGS_KEYS.profileFilters]: next });
+};
+
+export const setProfileFiltersEnabled = async (enabled: boolean): Promise<void> => {
+  await chrome.storage.local.set({ [SETTINGS_KEYS.profileFiltersEnabled]: enabled });
+};
+
+export const setProfileFiltersSectionOpen = async (open: boolean): Promise<void> => {
+  await chrome.storage.local.set({ [SETTINGS_KEYS.profileFiltersSectionOpen]: open });
 };
 
 // Chains calls so concurrent invocations (bot-block filtering can fire

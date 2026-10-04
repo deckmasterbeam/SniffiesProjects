@@ -1,4 +1,5 @@
 import { createLogger } from "./log.js";
+import type { LocationPutBody } from "./sniffies-api.js";
 import { TRAVEL_HERE_BUTTON_SELECTOR } from "./sniffies-selectors.js";
 
 const log = createLogger("travel-capture");
@@ -64,9 +65,7 @@ export const extractTravelDestination = (
   if (!body || typeof body !== "object") {
     return null;
   }
-  const loc = (body as Record<string, unknown>).virtualLocation as
-    | { lat?: unknown; lng?: unknown }
-    | undefined;
+  const loc = (body as LocationPutBody).virtualLocation;
   if (!loc || typeof loc.lat !== "number" || typeof loc.lng !== "number") {
     return null;
   }

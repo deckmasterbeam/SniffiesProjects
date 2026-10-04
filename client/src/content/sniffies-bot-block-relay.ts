@@ -1,41 +1,86 @@
-// Isolated world. Reads the blocked-bots list + toggle from extension storage
-// and forwards them to the MAIN-world bot-block hook via window.postMessage,
-// both on load and whenever either setting changes. Also listens for the
-// hook reporting back which accounts it actually filtered, and records them
-// into the day-bucketed log the popup reads for its "N bots blocked in the
-// last 24 hours" count.
-
-import { createLogger } from "@sniffies-projects/core";
-import { SETTINGS_KEYS, getLocalSettings, recordBlockedBotEvent } from "../shared/settings.js";
+import {
+  createLogger,
+  gateProfileFilters,
+  installProfileFiltersMenu,
+  parseProfileFilters,
+  type ExtensionLocalSettings,
+  type ProfileFilters,
+} from "@sniffies-projects/core";
+import {
+  SETTINGS_KEYS,
+  getLocalSettings,
+  recordBlockedBotEvent,
+  setProfileFilters,
+} from "../shared/settings.js";
 
 const log = createLogger("bot-block-relay");
 
-const postState = (blockedIds: string[], enabled: boolean): void => {
+const postState = (
+  blockedIds: string[],
+  enabled: boolean,
+  profileFilters: ProfileFilters,
+): void => {
   window.postMessage(
     {
       source: "sniffies-bot-block-relay",
       blockedIds,
       enabled,
+      profileFilters,
     },
     "*",
   );
 };
 
-void getLocalSettings().then(({ blockedBots, botBlockingEnabled }) => {
-  log("relaying initial state", { count: blockedBots.length, enabled: botBlockingEnabled });
-  postState(blockedBots, botBlockingEnabled);
+// The filters the hook was given when the page loaded.
+let appliedFilters: ProfileFilters | null = null;
+let removeFiltersMenu: (() => void) | null = null;
+
+const relay = (settings: ExtensionLocalSettings): void => {
+  const { blockedBots, botBlockingEnabled, profileFiltersEnabled } = settings;
+  const stored = parseProfileFilters(settings.profileFilters);
+
+  const effective = gateProfileFilters(stored, profileFiltersEnabled);
+  appliedFilters ??= effective;
+  postState(blockedBots, botBlockingEnabled, effective);
+
+  if (profileFiltersEnabled && !removeFiltersMenu) {
+    removeFiltersMenu = installProfileFiltersMenu({
+      initial: stored,
+      applied: appliedFilters,
+      onChange: setProfileFilters,
+    });
+  } else if (!profileFiltersEnabled && removeFiltersMenu) {
+    removeFiltersMenu();
+    removeFiltersMenu = null;
+  }
+};
+
+void getLocalSettings().then((settings) => {
+  log("relaying initial state", {
+    count: settings.blockedBots.length,
+    enabled: settings.botBlockingEnabled,
+  });
+  relay(settings);
 });
 
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area !== "local") {
     return;
   }
-  if (!changes[SETTINGS_KEYS.blockedBots] && !changes[SETTINGS_KEYS.botBlockingEnabled]) {
+  if (
+    !changes[SETTINGS_KEYS.blockedBots] &&
+    !changes[SETTINGS_KEYS.botBlockingEnabled] &&
+    !changes[SETTINGS_KEYS.profileFilters] &&
+    !changes[SETTINGS_KEYS.profileFiltersEnabled]
+  ) {
     return;
   }
-  void getLocalSettings().then(({ blockedBots, botBlockingEnabled }) => {
-    log("relaying updated state", { count: blockedBots.length, enabled: botBlockingEnabled });
-    postState(blockedBots, botBlockingEnabled);
+  void getLocalSettings().then((settings) => {
+    log("relaying updated state", {
+      count: settings.blockedBots.length,
+      enabled: settings.botBlockingEnabled,
+    });
+    relay(settings);
   });
 });
 

@@ -15,8 +15,11 @@ import {
   BOT_BLOCK_HTML,
   BOT_BLOCK_CSS,
   wireBotBlockForm,
+  PROFILE_FILTERS_HTML,
+  PROFILE_FILTERS_CSS,
+  wireProfileFiltersForm,
 } from "@sniffies-projects/core";
-import { FAVORITES_NOTIFICATIONS_ENABLED, REPORTING_ENABLED } from "../shared/env.js";
+import { DEBUG, FAVORITES_NOTIFICATIONS_ENABLED, REPORTING_ENABLED } from "../shared/env.js";
 import {
   getLocalSettings,
   setBotBlockingEnabled,
@@ -27,11 +30,13 @@ import {
   setGeoSectionOpen,
   setProfileBorderOpen,
   setProfileBorderSectionOpen,
+  setProfileFiltersEnabled,
+  setProfileFiltersSectionOpen,
 } from "../shared/settings.js";
 
 const log = createLogger("popup");
 
-// Inject geo form, profile border form, bot-block form, and version badge styles from core
+// Inject geo form, profile border form, bot-block form, profile filters form, and version badge styles from core
 const geoStyle = document.createElement("style");
 geoStyle.textContent = GEO_OVERRIDE_CSS;
 document.head.appendChild(geoStyle);
@@ -44,6 +49,10 @@ const botBlockStyle = document.createElement("style");
 botBlockStyle.textContent = BOT_BLOCK_CSS;
 document.head.appendChild(botBlockStyle);
 
+const profileFiltersStyle = document.createElement("style");
+profileFiltersStyle.textContent = PROFILE_FILTERS_CSS;
+document.head.appendChild(profileFiltersStyle);
+
 const versionStyle = document.createElement("style");
 versionStyle.textContent = VERSION_BADGE_CSS;
 document.head.appendChild(versionStyle);
@@ -54,6 +63,10 @@ const favoritesDetails = document.getElementById("favorites-details") as HTMLDet
 const favoritesEnabledCheckbox = document.getElementById("favorites-enabled") as HTMLInputElement;
 
 const openSettingsBtn = document.getElementById("open-settings");
+// The settings page is a debug tool.
+if (!DEBUG && openSettingsBtn) {
+  openSettingsBtn.style.display = "none";
+}
 
 // ── Init ─────────────────────────────────────────────────────────────────────
 
@@ -114,6 +127,18 @@ const init = async (): Promise<void> => {
       void setBotBlockingSectionOpen(open);
     },
     onToggleEnabled: setBotBlockingEnabled,
+  });
+
+  // Profile filters form — inject HTML from core and wire up logic
+  const profileFiltersRoot = document.getElementById("snp-profile-filters-root")!;
+  profileFiltersRoot.innerHTML = PROFILE_FILTERS_HTML;
+  wireProfileFiltersForm(profileFiltersRoot, {
+    initialEnabled: settings.profileFiltersEnabled,
+    onToggleEnabled: setProfileFiltersEnabled,
+    initialOpen: settings.profileFiltersSectionOpen,
+    onToggle: (open) => {
+      void setProfileFiltersSectionOpen(open);
+    },
   });
 };
 

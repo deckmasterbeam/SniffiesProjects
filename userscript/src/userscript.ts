@@ -3,6 +3,7 @@ import {
   BOT_BLOCK_HTML,
   countDistinctBlockedBotsLast24h,
   createLogger,
+  DEFAULT_PROFILE_FILTERS,
   DEFAULT_GEO_OVERRIDE,
   DEFAULT_PROFILE_BORDER_OPEN,
   GEO_OVERRIDE_CSS,
@@ -10,12 +11,15 @@ import {
   getProfileBorderOpen,
   getProfileBorderSectionOpen,
   hasCapturedCoords,
+  installProfileFiltersMenu,
   installLocationOverrideController,
   installProfileBorderRedirect,
   mountFab,
   PANEL_CSS,
   PROFILE_BORDER_CSS,
   PROFILE_BORDER_HTML,
+  PROFILE_FILTERS_CSS,
+  PROFILE_FILTERS_HTML,
   setProfileBorderOpen,
   setProfileBorderSectionOpen,
   VERSION_BADGE_CSS,
@@ -23,6 +27,7 @@ import {
   wireBotBlockForm,
   wireGeoOverrideForm,
   wireProfileBorderForm,
+  wireProfileFiltersForm,
   wireVersionBadge,
   type LocationOverrideController,
   type ProfileBorderOpen,
@@ -39,12 +44,18 @@ import {
   getBlockedBotEventsByDay,
   getBotBlockingEnabled,
   getBotBlockingSectionOpen,
+  getProfileFilters,
   getGeoOverride,
   getGeoSectionOpen,
+  getProfileFiltersEnabled,
+  getProfileFiltersSectionOpen,
   setBotBlockingEnabled,
   setBotBlockingSectionOpen,
+  setProfileFilters,
   setGeoOverride,
   setGeoSectionOpen,
+  setProfileFiltersEnabled,
+  setProfileFiltersSectionOpen,
 } from "./shared/local-storage.js";
 import { installUserIdLogging } from "./user-id-logger.js";
 
@@ -93,6 +104,7 @@ function installHooks(): HookState {
     },
     profileBorderOpen: currentProfileBorderOpen.enabled,
     botBlocking: reportState.botBlockState.enabled,
+    profileFilters: reportState.appliedProfileFilters,
   });
 
   return {
@@ -114,6 +126,7 @@ export function mountUI(state: HookState | null): void {
   const reportState = state?.reportState ?? {
     currentSniffiesUserId: "",
     botBlockState: { blockedIds: new Set<string>(), enabled: true },
+    appliedProfileFilters: DEFAULT_PROFILE_FILTERS,
   };
 
   const shellStyle = document.createElement("style");
@@ -131,6 +144,10 @@ export function mountUI(state: HookState | null): void {
   const botBlockStyle = document.createElement("style");
   botBlockStyle.textContent = BOT_BLOCK_CSS;
   document.head.appendChild(botBlockStyle);
+
+  const profileFiltersStyle = document.createElement("style");
+  profileFiltersStyle.textContent = PROFILE_FILTERS_CSS;
+  document.head.appendChild(profileFiltersStyle);
 
   const versionStyle = document.createElement("style");
   versionStyle.textContent = VERSION_BADGE_CSS;
@@ -202,6 +219,34 @@ export function mountUI(state: HookState | null): void {
       setBotBlockingEnabled(enabled);
       reportState.botBlockState = { ...reportState.botBlockState, enabled };
     },
+  });
+
+  const profileFiltersRoot = panel.querySelector<HTMLElement>("#snp-profile-filters-root")!;
+  profileFiltersRoot.innerHTML = PROFILE_FILTERS_HTML;
+
+  let removeFiltersMenu: (() => void) | null = null;
+  const syncFiltersMenu = (enabled: boolean): void => {
+    if (enabled && !removeFiltersMenu) {
+      removeFiltersMenu = installProfileFiltersMenu({
+        initial: getProfileFilters(),
+        applied: reportState.appliedProfileFilters,
+        onChange: setProfileFilters,
+      });
+    } else if (!enabled && removeFiltersMenu) {
+      removeFiltersMenu();
+      removeFiltersMenu = null;
+    }
+  };
+  syncFiltersMenu(getProfileFiltersEnabled());
+
+  wireProfileFiltersForm(profileFiltersRoot, {
+    initialEnabled: getProfileFiltersEnabled(),
+    onToggleEnabled: (enabled) => {
+      setProfileFiltersEnabled(enabled);
+      syncFiltersMenu(enabled);
+    },
+    initialOpen: getProfileFiltersSectionOpen(),
+    onToggle: setProfileFiltersSectionOpen,
   });
 
   const closeBtn = panel.querySelector<HTMLButtonElement>("#snp-close")!;

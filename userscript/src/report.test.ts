@@ -1,3 +1,4 @@
+import { DEFAULT_PROFILE_FILTERS } from "@sniffies-projects/core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { installReportFeature, refreshBlockedBotsIfStale } from "./report.js";
 import { getBlockedBots, setBlockedBots, setBotBlockingEnabled } from "./shared/local-storage.js";
@@ -94,6 +95,7 @@ describe("refreshBlockedBotsIfStale", () => {
     const state = {
       currentSniffiesUserId: "",
       botBlockState: { blockedIds: new Set<string>(), enabled: true },
+      appliedProfileFilters: DEFAULT_PROFILE_FILTERS,
     };
     refreshBlockedBotsIfStale(state);
     await Promise.resolve();
@@ -113,6 +115,7 @@ describe("refreshBlockedBotsIfStale", () => {
     const state = {
       currentSniffiesUserId: "",
       botBlockState: { blockedIds: new Set<string>(), enabled: true },
+      appliedProfileFilters: DEFAULT_PROFILE_FILTERS,
     };
     refreshBlockedBotsIfStale(state);
     expect(fetchMock).not.toHaveBeenCalled();
@@ -124,6 +127,7 @@ describe("refreshBlockedBotsIfStale", () => {
     const state = {
       currentSniffiesUserId: "",
       botBlockState: { blockedIds: new Set<string>(), enabled: true },
+      appliedProfileFilters: DEFAULT_PROFILE_FILTERS,
     };
     refreshBlockedBotsIfStale(state);
     expect(fetchMock).toHaveBeenCalled();

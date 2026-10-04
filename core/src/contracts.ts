@@ -1,3 +1,4 @@
+import type { ProfileFilters } from "./profile-filter.js";
 import type { GeoOverride, ProfileBorderOpen } from "./settings.js";
 
 // ---- UI forms ----
@@ -29,6 +30,18 @@ export interface BotBlockFormContract extends CollapsibleSectionContract {
 export interface ReportFormContract {
   onSubmit: (message: string) => void | Promise<void>;
   onCancel?: () => void;
+}
+
+export interface ProfileFiltersFormContract extends CollapsibleSectionContract {
+  initialEnabled: boolean;
+  onToggleEnabled: (enabled: boolean) => void | Promise<void>;
+}
+
+export interface ProfileFiltersMenuContract {
+  initial: ProfileFilters;
+  applied: ProfileFilters;
+  onChange: (next: ProfileFilters) => void | Promise<void>;
+  reloadPage?: () => void;
 }
 
 // ---- Hooks ----
