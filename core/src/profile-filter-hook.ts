@@ -1,6 +1,7 @@
 import { createLogger, type Logger } from "./log.js";
 import {
   createProfileMatcher,
+  type ProfileChecks,
   type ProfileFilterRule,
   type ProfileMatcher,
 } from "./profile-filter.js";
@@ -25,8 +26,8 @@ type FilterKind = "post-authentication" | "soft-reload" | "chat-data" | "message
 
 const filterProfiles = (
   items: FilterableProfile[] | undefined,
-  matcher: ProfileMatcher,
-): FilterableProfile[] | undefined => items?.filter((item) => !matcher.hidesProfile(item));
+  checks: ProfileChecks,
+): FilterableProfile[] | undefined => items?.filter((item) => !checks.hidesProfile(item));
 
 /** Removes hidden accounts from the map init */
 export const filterPostAuthenticationPayload = (
@@ -36,8 +37,9 @@ export const filterPostAuthenticationPayload = (
   if (payload.nearbyVisitors?.visitors) {
     payload.nearbyVisitors.visitors = filterProfiles(payload.nearbyVisitors.visitors, matcher);
   }
+  // The profile cards behind the chat list, not map markers.
   if (payload.partialVisitorData) {
-    payload.partialVisitorData = filterProfiles(payload.partialVisitorData, matcher);
+    payload.partialVisitorData = filterProfiles(payload.partialVisitorData, matcher.chat);
   }
   return payload;
 };
@@ -45,15 +47,15 @@ export const filterPostAuthenticationPayload = (
 /** Removes hidden accounts from the chat init payload's conversation lists. */
 export const filterChatDataPayload = (
   payload: ChatDataPayload,
-  matcher: ProfileMatcher,
+  { chat }: ProfileMatcher,
 ): ChatDataPayload => {
   if (payload.partialVisitorData) {
-    payload.partialVisitorData = filterProfiles(payload.partialVisitorData, matcher);
+    payload.partialVisitorData = filterProfiles(payload.partialVisitorData, chat);
   }
   const isHiddenConversation = (c: Conversation): boolean => {
     let hidden = false;
     for (const id of [c.participants, c.author1, c.author2]) {
-      if (id && matcher.hidesId(id)) {
+      if (id && chat.hidesId(id)) {
         hidden = true;
       }
     }
@@ -67,7 +69,7 @@ export const filterChatDataPayload = (
   }
   if (payload.conversationData?.userIds) {
     payload.conversationData.userIds = payload.conversationData.userIds.filter(
-      (id) => !matcher.hidesId(id),
+      (id) => !chat.hidesId(id),
     );
   }
   return payload;
@@ -76,13 +78,13 @@ export const filterChatDataPayload = (
 /** Removes a hidden account's messages (and profile card) from an opened chat thread. */
 export const filterMessagesPayload = (
   payload: MessagesPayload,
-  matcher: ProfileMatcher,
+  { chat }: ProfileMatcher,
 ): MessagesPayload => {
   if (payload.partialUsers) {
-    payload.partialUsers = filterProfiles(payload.partialUsers, matcher);
+    payload.partialUsers = filterProfiles(payload.partialUsers, chat);
   }
   if (payload.messages) {
-    payload.messages = payload.messages.filter((m) => !(m.author && matcher.hidesId(m.author)));
+    payload.messages = payload.messages.filter((m) => !(m.author && chat.hidesId(m.author)));
   }
   return payload;
 };
@@ -103,6 +105,8 @@ interface WsFrameInfo {
   eventName: string;
   /** The account the frame is about: a profile when the frame carries one, else a bare id. */
   subject: FilterableProfile | string | null;
+  /** A chat event rather than someone's presence on the map. */
+  chat?: boolean;
 }
 
 const asProfile = (value: unknown): FilterableProfile | null =>
@@ -137,11 +141,15 @@ const parseWsFrame = (raw: string): WsFrameInfo | null => {
   }
   if (obj.eventName === "newMsg") {
     const author = (obj.data as NewMsgFrame["data"] | undefined)?.message?.author;
-    return { eventName: obj.eventName, subject: typeof author === "string" ? author : null };
+    return {
+      eventName: obj.eventName,
+      subject: typeof author === "string" ? author : null,
+      chat: true,
+    };
   }
   if (obj.eventName === "newConversation") {
     const partialUser = (obj.data as NewConversationFrame["data"] | undefined)?.partialUser;
-    return { eventName: obj.eventName, subject: asProfile(partialUser) };
+    return { eventName: obj.eventName, subject: asProfile(partialUser), chat: true };
   }
   return { eventName: obj.eventName, subject: null };
 };
@@ -150,9 +158,10 @@ const hidesFrame = (frame: WsFrameInfo | null, matcher: ProfileMatcher): boolean
   if (!frame?.subject) {
     return false;
   }
+  const checks = frame.chat ? matcher.chat : matcher;
   return typeof frame.subject === "string"
-    ? matcher.hidesId(frame.subject)
-    : matcher.hidesProfile(frame.subject);
+    ? checks.hidesId(frame.subject)
+    : checks.hidesProfile(frame.subject);
 };
 
 /** Decides whether a single live WebSocket frame carries a hidden account. */

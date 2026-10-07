@@ -139,21 +139,46 @@ describe("gender rule", () => {
     expect(allowingGenders(["male"], false).isActive()).toBe(false);
   });
 
-  it("hides id-only chat entries using the profile seen in the same payload", () => {
-    const payload = {
+  it("only hides map markers: chats, messages and their profile cards are left alone", () => {
+    const matcher = allowingGenders(["female"]);
+    const frame = (eventName: string, data: unknown) => JSON.stringify({ eventName, data });
+
+    const map = filterPostAuthenticationPayload(
+      {
+        nearbyVisitors: { visitors: [withGender("m", "man"), withGender("f", "woman")] },
+        partialVisitorData: [withGender("m", "man"), withGender("f", "woman")],
+      },
+      matcher,
+    );
+    expect(map.nearbyVisitors?.visitors).toEqual([withGender("f", "woman")]);
+    expect(map.partialVisitorData).toHaveLength(2);
+
+    const chatData = {
       conversationData: {
-        conversations: [{ participants: "m" }, { participants: "f" }, { participants: "unseen" }],
-        userIds: ["m", "f", "unseen"],
+        conversations: [{ participants: "m" }, { participants: "f" }],
+        userIds: ["m", "f"],
       },
       partialVisitorData: [withGender("m", "man"), withGender("f", "woman")],
     };
-    const result = filterChatDataPayload(payload, allowingGenders(["female"]));
-    expect(result.conversationData?.conversations).toEqual([
-      { participants: "f" },
-      { participants: "unseen" },
-    ]);
-    expect(result.conversationData?.userIds).toEqual(["f", "unseen"]);
-    expect(result.partialVisitorData).toEqual([withGender("f", "woman")]);
+    expect(filterChatDataPayload(structuredClone(chatData), matcher)).toEqual(chatData);
+
+    const thread = {
+      messages: [{ author: "m" }, { author: "f" }],
+      partialUsers: [withGender("m", "man")],
+    };
+    expect(filterMessagesPayload(structuredClone(thread), matcher)).toEqual(thread);
+
+    expect(shouldFilterWebSocketFrame(frame("newMsg", { message: { author: "m" } }), matcher)).toBe(
+      false,
+    );
+    expect(
+      shouldFilterWebSocketFrame(
+        frame("newConversation", { partialUser: withGender("m", "man") }),
+        matcher,
+      ),
+    ).toBe(false);
+    expect(shouldFilterWebSocketFrame(frame("userAwake", "m"), matcher)).toBe(true);
+    expect(matcher.flush()).toEqual([{ rule: "gender", ids: ["m"] }]);
   });
 
   it("remembers a userJoined profile for later id-only frames", () => {
@@ -177,12 +202,10 @@ describe("gender rule", () => {
     const matcher = allowingGenders(["female"]);
     matcher.setSelfId("me");
     const payload = {
-      messages: [{ author: "me" }, { author: "m" }],
-      partialUsers: [withGender("me", "man"), withGender("m", "man")],
+      nearbyVisitors: { visitors: [withGender("me", "man"), withGender("m", "man")] },
     };
-    const result = filterMessagesPayload(payload, matcher);
-    expect(result.messages).toEqual([{ author: "me" }]);
-    expect(result.partialUsers).toEqual([withGender("me", "man")]);
+    const result = filterPostAuthenticationPayload(payload, matcher);
+    expect(result.nearbyVisitors?.visitors).toEqual([withGender("me", "man")]);
   });
 
   it("reports hidden ids to the rule that hid them, once per flush", () => {
@@ -192,7 +215,7 @@ describe("gender rule", () => {
       genderRule(() => ({ enabled: true, genders: ["female"] })),
     ]);
     filterPostAuthenticationPayload(
-      { partialVisitorData: [withGender("bot", "man"), withGender("m", "man")] },
+      { nearbyVisitors: { visitors: [withGender("bot", "man"), withGender("m", "man")] } },
       matcher,
     );
     expect(matcher.flush()).toEqual([
@@ -226,16 +249,33 @@ describe("height and weight rules", () => {
     ).nearbyVisitors?.visitors?.map((v) => v._id);
   };
   const all = visitors.map((v) => v._id);
-  const range = (min: number | null, max: number | null, enabled = true) => ({
-    enabled,
-    min,
-    max,
-    metric: true,
-  });
+  const range = (
+    min: number | null,
+    max: number | null,
+    enabled = true,
+    includeUnspecified = false,
+  ) => ({ enabled, min, max, metric: true, includeUnspecified });
 
   it("keeps only profiles inside the inclusive range, hiding ones that don't state a value", () => {
     expect(shownWith({ height: range(178, 196) })).toEqual(["mid", "tall-heavy", "no-weight"]);
     expect(shownWith({ weight: range(60, 75) })).toEqual(["short-light", "mid", "no-height"]);
+  });
+
+  it("keeps profiles that don't state a value when asked to include them", () => {
+    expect(shownWith({ height: range(178, 196, true, true) })).toEqual([
+      "mid",
+      "tall-heavy",
+      "no-height",
+      "no-weight",
+      "no-stats",
+    ]);
+    expect(shownWith({ weight: range(60, 75, true, true) })).toEqual([
+      "short-light",
+      "mid",
+      "no-height",
+      "no-weight",
+      "no-stats",
+    ]);
   });
 
   it("treats a missing bound as unbounded", () => {

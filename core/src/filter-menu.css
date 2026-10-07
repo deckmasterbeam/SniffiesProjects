@@ -115,6 +115,22 @@
   padding: 12px 16px 20px;
 }
 
+.snp-flyout-option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 16px 20px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.snp-flyout-option input {
+  accent-color: #ff5500;
+  width: 14px;
+  height: 14px;
+}
+
 .snp-wheel-column {
   flex: 1;
   max-width: 140px;

@@ -75,6 +75,7 @@ const range = (overrides: Partial<RangeFilter>): RangeFilter => ({
   min: null,
   max: null,
   metric: false,
+  includeUnspecified: false,
   ...overrides,
 });
 
@@ -421,6 +422,26 @@ describe("installProfileFiltersMenu", () => {
       pick("max", "175lb");
       sheetButton("Done").click();
       expect(lastChange().weight).toEqual(range({ min: 68, max: 79 }));
+    });
+
+    it("has an include-unspecified checkbox, off by default, saved with Done", () => {
+      install(filters({ height: range({ min: 178 }) }));
+      openSheet("height");
+      const checkbox = sheet()!.querySelector<HTMLInputElement>(".snp-flyout-option input")!;
+      expect(sheet()!.querySelector(".snp-flyout-option")!.textContent).toBe(
+        " Include profiles with no height listed",
+      );
+      expect(checkbox.checked).toBe(false);
+      checkbox.click();
+      sheetButton("Done").click();
+      expect(lastChange().height).toEqual(range({ min: 178, includeUnspecified: true }));
+      // It changes who is shown, so it needs a reload like any other change.
+      expect(applyButton("height").hidden).toBe(false);
+
+      openSheet("height");
+      expect(sheet()!.querySelector<HTMLInputElement>(".snp-flyout-option input")!.checked).toBe(
+        true,
+      );
     });
 
     it("reopens on the current range", () => {

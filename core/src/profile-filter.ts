@@ -12,13 +12,18 @@ export interface ProfileFilterRule {
   name: string;
   isActive: () => boolean;
   hides: (profile: FilterableProfile) => boolean;
+  mapOnly?: boolean;
   onFiltered?: (ids: string[]) => void;
 }
 
-export interface ProfileMatcher {
-  isActive: () => boolean;
+export interface ProfileChecks {
   hidesProfile: (profile: FilterableProfile) => boolean;
   hidesId: (id: string) => boolean;
+}
+
+export interface ProfileMatcher extends ProfileChecks {
+  isActive: () => boolean;
+  chat: ProfileChecks;
   setSelfId: (id: string) => void;
   flush: () => { rule: string; ids: string[] }[];
 }
@@ -28,11 +33,11 @@ export const createProfileMatcher = (rules: readonly ProfileFilterRule[]): Profi
   const hidden = new Map<ProfileFilterRule, Set<string>>();
   let selfId = "";
 
-  const hides = (profile: FilterableProfile): boolean => {
+  const hides = (profile: FilterableProfile, inChat: boolean): boolean => {
     if (profile._id === selfId) {
       return false;
     }
-    const rule = rules.find((r) => r.isActive() && r.hides(profile));
+    const rule = rules.find((r) => r.isActive() && !(inChat && r.mapOnly) && r.hides(profile));
     if (!rule) {
       return false;
     }
@@ -43,15 +48,20 @@ export const createProfileMatcher = (rules: readonly ProfileFilterRule[]): Profi
     return true;
   };
 
-  return {
-    isActive: () => rules.some((r) => r.isActive()),
+  const checks = (inChat: boolean): ProfileChecks => ({
     hidesProfile: (profile) => {
       if (profile.data) {
         seen.set(profile._id, profile);
       }
-      return hides(profile);
+      return hides(profile, inChat);
     },
-    hidesId: (id) => hides(seen.get(id) ?? { _id: id }),
+    hidesId: (id) => hides(seen.get(id) ?? { _id: id }, inChat),
+  });
+
+  return {
+    isActive: () => rules.some((r) => r.isActive()),
+    ...checks(false),
+    chat: checks(true),
     setSelfId: (id) => {
       selfId = id;
     },
@@ -115,6 +125,7 @@ export const profileGender = (profile: FilterableProfile): Gender | null => {
 
 export const genderRule = (getFilter: () => GenderFilter): ProfileFilterRule => ({
   name: "gender",
+  mapOnly: true,
   isActive: () => {
     const { enabled, genders } = getFilter();
     return enabled && genders.length > 0 && genders.length < GENDERS.length;
@@ -132,6 +143,8 @@ export interface RangeFilter {
   min: number | null;
   max: number | null;
   metric: boolean;
+  /** Also show profiles that don't list the value at all. */
+  includeUnspecified: boolean;
 }
 
 const prefersMetric = (): boolean =>
@@ -142,6 +155,7 @@ const defaultRangeFilter = (): RangeFilter => ({
   min: null,
   max: null,
   metric: prefersMetric(),
+  includeUnspecified: false,
 });
 
 const parseRangeFilter = (value: unknown): RangeFilter => {
@@ -152,12 +166,13 @@ const parseRangeFilter = (value: unknown): RangeFilter => {
     min: bound(raw.min),
     max: bound(raw.max),
     metric: typeof raw.metric === "boolean" ? raw.metric : prefersMetric(),
+    includeUnspecified: raw.includeUnspecified === true,
   };
 };
 
 export const rangeKey = (filter: RangeFilter): string =>
   filter.enabled && (filter.min !== null || filter.max !== null)
-    ? `${filter.min ?? ""}-${filter.max ?? ""}`
+    ? `${filter.min ?? ""}-${filter.max ?? ""}${filter.includeUnspecified ? "+unspecified" : ""}`
     : "";
 
 export const rangeRule = (
@@ -166,16 +181,18 @@ export const rangeRule = (
   read: (profile: FilterableProfile) => number | null | undefined,
 ): ProfileFilterRule => ({
   name,
+  mapOnly: true,
   isActive: () => rangeKey(getFilter()) !== "",
   hides: (profile) => {
     if (!profile.data) {
       return false;
     }
     const value = read(profile);
-    const { min, max } = getFilter();
-    return (
-      typeof value !== "number" || (min !== null && value < min) || (max !== null && value > max)
-    );
+    const { min, max, includeUnspecified } = getFilter();
+    if (typeof value !== "number") {
+      return !includeUnspecified;
+    }
+    return (min !== null && value < min) || (max !== null && value > max);
   },
 });
 

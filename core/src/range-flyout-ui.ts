@@ -88,7 +88,7 @@ const createWheel = <T>(name: string, title: string, onChange?: () => void): Whe
   };
 };
 
-type RangeChoice = Pick<RangeFilter, "min" | "max" | "metric">;
+type RangeChoice = Pick<RangeFilter, "min" | "max" | "metric" | "includeUnspecified">;
 
 export const openRangeFlyout = (
   title: string,
@@ -179,7 +179,12 @@ export const openRangeFlyout = (
     heading,
     action("Done", "right", () => {
       close();
-      onDone({ min: min.value(), max: max.value(), metric: unit.value() });
+      onDone({
+        min: min.value(),
+        max: max.value(),
+        metric: unit.value(),
+        includeUnspecified: unspecified.checked,
+      });
     }),
   );
 
@@ -189,7 +194,14 @@ export const openRangeFlyout = (
   const body = document.createElement("div");
   body.className = "snp-wheel-container";
   body.append(unit.el, min.el, to, max.el);
-  sheet.append(header, body);
+  const unspecified = document.createElement("input");
+  unspecified.type = "checkbox";
+  unspecified.checked = current.includeUnspecified;
+  const unspecifiedLabel = document.createElement("label");
+  unspecifiedLabel.className = "snp-flyout-option";
+  unspecifiedLabel.append(unspecified, ` Include profiles with no ${title.toLowerCase()} listed`);
+
+  sheet.append(header, body, unspecifiedLabel);
 
   backdrop.addEventListener("click", (event) => {
     if (event.target === backdrop) {
