@@ -30,6 +30,8 @@ describe("bookmarklet", () => {
   // Empty the page while `document` still exists, so mountFab's observer
   // doesn't fire during environment teardown.
   afterAll(async () => {
+    delete (Object.prototype as Record<string, unknown>).maxSelections;
+    delete (Object.prototype as Record<string, unknown>)["sexuality.attitude"];
     document.body.innerHTML = "";
     await new Promise((resolve) => setTimeout(resolve, 0));
   });
@@ -67,6 +69,24 @@ describe("bookmarklet", () => {
 
     document.querySelector<HTMLElement>("#abc123 img")!.click();
     expect(open).toHaveBeenCalledWith("https://sniffies.com/profile/abc123", "_blank");
+  });
+
+  it("lifts the selection cap on Sniffies' own stat filters once Profile Filters is enabled", () => {
+    const option = { name: "PROFILE.STATS.STATS.BODY_TYPE", key: "stats.body" };
+    const cap = (): number | undefined => (option as { maxSelections?: number }).maxSelections;
+    expect(cap()).toBeUndefined();
+
+    const checkbox = document.querySelector<HTMLInputElement>("#profile-filters-enabled")!;
+    expect(checkbox.checked).toBe(false);
+    expect(document.querySelector("#profile-filters-hint")!.textContent).toContain("Position");
+    checkbox.checked = true;
+    checkbox.dispatchEvent(new Event("change"));
+    expect(localStorage.getItem("sniffies-profile-filters-enabled")).toBe("true");
+    expect(cap()).toBe(99);
+
+    checkbox.checked = false;
+    checkbox.dispatchEvent(new Event("change"));
+    expect(cap()).toBeUndefined();
   });
 
   it("toggles the existing panel instead of mounting again when re-run", async () => {

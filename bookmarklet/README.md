@@ -7,11 +7,15 @@ A bookmarklet only runs after the page has loaded, so it can never hook the page
 Supported features:
 
 - Open profiles outside your boundary
+- No cap on how many options you can pick in Sniffies' own Sexuality, Body Type and Position filters (enable "Profile Filters" in the panel, then open the filter menu)
 
 Not supported (use the userscript):
 
 - Location spoofing
 - Bot filtering
+- Gender, Height and Weight filters
+
+See the "Profile filter support" table in the root `README.md` for every build.
 
 ## Bookmarklet code
 

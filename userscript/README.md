@@ -6,6 +6,7 @@ Supported features:
 
 - Location spoofing
 - Bot reporting/blocking
+- Profile filters: Gender, Height and Weight filters, and no cap on how many options you can pick in Sniffies' own Sexuality, Body Type and Position filters
 
 ## Usage
 
@@ -14,6 +15,8 @@ Open [sniffies.com](https://sniffies.com) in Safari. A 📍 button will appear i
 Location spoofing: Enable, enter coordinates, and save. It may take a moment for Sniffies to pick up the location change. If it takes longer than a moment, reload the sniffies site, the location change should be picked up on reload.
 
 Bot reporting/blocking: a "Sniffies Project: Report" entry is added to the three-dot options menu on any open profile — tap it to flag the profile as a suspected bot (reports go to manual review, same as the Chrome client). The "Block Bot Accounts" section in the panel hides confirmed bots from the map, chat, and live updates — toggle it on/off; the blocked-account list itself is fetched from the server automatically and isn't editable from the panel.
+
+Profile filters: enable "Profile Filters" in the panel, then open the Cruisers section of Sniffies' Map Layers menu. Gender, Height and Weight need a page reload after each change ("Reload to apply"). See the "Profile filter support" table in the root `README.md`.
 
 Settings are persisted to `localStorage` under keys prefixed `sniffies-` (e.g. `sniffies-geo`, `sniffies-blocked-bots`) and survive page reloads.
 

@@ -58,6 +58,11 @@ const SELECTOR_METADATA: Record<SniffiesSelectorName, SelectorMeta> = {
     description: "Profile Type row in the Cruisers filter menu — our filter rows mount after it",
     source: "core/src/filter-menu-ui.ts",
   },
+  ENDOWMENT_FILTER_LABEL_SELECTOR: {
+    description:
+      "Endowment line under Cruiser Stats in the filter menu — our Height and Weight lines mount after it",
+    source: "core/src/filter-menu-ui.ts",
+  },
 };
 
 export interface SelectorContractEntry {

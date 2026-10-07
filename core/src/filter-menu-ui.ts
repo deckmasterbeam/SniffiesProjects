@@ -6,35 +6,48 @@ import {
   WEIGHT_OPTIONS,
   allowedGenders,
   rangeKey,
+  rangeLabel,
   type Gender,
   type ProfileFilters,
   type RangeFilter,
   type RangeOptions,
 } from "./profile-filter.js";
-import { PROFILE_TYPE_FILTER_LABEL_SELECTOR } from "./sniffies-selectors.js";
+import { openRangeFlyout } from "./range-flyout-ui.js";
+import {
+  ENDOWMENT_FILTER_LABEL_SELECTOR,
+  PROFILE_TYPE_FILTER_LABEL_SELECTOR,
+} from "./sniffies-selectors.js";
 
 const STYLE_ID = "snp-filter-menu-style";
 
-interface RowBody {
-  el: HTMLElement;
-  /** Re-reads the filter into the controls. */
-  sync: () => void;
+interface MountedRow {
+  root: HTMLElement;
+  /** Re-reads the filters into the row. `needsReload`: the "Reload to apply" button is showing. */
+  sync: (needsReload: boolean) => void;
+  /** place the row's "Reload to apply" button */
+  placeApply: (apply: HTMLElement) => void;
 }
 
 /** One row we add to Sniffies' Cruisers filter menu. Add an entry to ROWS for a new filter. */
 interface Row {
   id: string;
-  title: string;
-  /** Font Awesome class for the row's leading icon. */
-  icon: string;
-  filter: (filters: ProfileFilters) => { enabled: boolean };
+  /** The Sniffies row this one is cloned from and placed after; null while it isn't on screen. */
+  anchor: () => Element | null;
   /** What the row currently filters for — a different value than at page load needs a reload. */
   key: (filters: ProfileFilters) => string;
-  /** Builds the controls under the title. They edit `filters` in place, then call `changed`. */
-  body: (filters: ProfileFilters, changed: () => void) => RowBody;
+  /** Clones `anchor` into our row. Its controls edit `filters` in place, then call `changed`. */
+  build: (anchor: Element, filters: ProfileFilters, changed: () => void) => MountedRow | null;
 }
 
-// ── Gender: one on/off button per gender ─────────────────────────────────────
+const stripTestIds = (root: Element): void => {
+  for (const el of root.querySelectorAll("[data-testid]")) {
+    el.removeAttribute("data-testid");
+  }
+};
+
+// ── Gender: a switch row like "Profile Type", with one on/off button per gender ──
+
+const GENDER_ROW_ID = "snp-gender-filter";
 
 const GENDER_LABELS: Record<Gender, string> = {
   male: "Male",
@@ -43,9 +56,36 @@ const GENDER_LABELS: Record<Gender, string> = {
   undefined: "Not specified",
 };
 
-const genderBody = (filters: ProfileFilters, changed: () => void): RowBody => {
-  const el = document.createElement("div");
-  el.className = "snp-filter-body";
+const buildGenderRow = (
+  anchor: Element,
+  filters: ProfileFilters,
+  changed: () => void,
+): MountedRow | null => {
+  // Cloning Sniffies "Profile Type" row carries its (Angular-scoped) styling along.
+  const root = anchor.cloneNode(true) as HTMLElement;
+  const header = root.querySelector(".list-item-level-2");
+  const label = root.querySelector("label");
+  const title = root.querySelector("p");
+  const toggle = root.querySelector<HTMLInputElement>('.trailing input[type="checkbox"]');
+  const optionsContainer = root.querySelector(".options-container");
+  if (!label || !title || !toggle || !optionsContainer) {
+    return null;
+  }
+  root.classList.remove("last");
+  stripTestIds(root);
+
+  toggle.id = `${GENDER_ROW_ID}-enabled`;
+  toggle.disabled = false;
+  label.htmlFor = toggle.id;
+  label.querySelector("i")?.classList.replace("fa-user", "fa-venus-mars");
+  title.textContent = " Gender";
+  toggle.addEventListener("change", () => {
+    filters.gender.enabled = toggle.checked;
+    changed();
+  });
+
+  const body = document.createElement("div");
+  body.className = "snp-filter-body";
   const buttons = GENDERS.map((gender) => {
     const button = document.createElement("button");
     button.type = "button";
@@ -64,14 +104,21 @@ const genderBody = (filters: ProfileFilters, changed: () => void): RowBody => {
       }
       changed();
     });
-    el.appendChild(button);
+    body.appendChild(button);
     return button;
   });
+  optionsContainer.replaceChildren(body);
+
   return {
-    el,
+    root,
+    placeApply: (apply) => body.appendChild(apply),
     sync: () => {
+      const { enabled, genders } = filters.gender;
+      toggle.checked = enabled;
+      header?.classList.toggle("active", enabled);
+      body.classList.toggle("snp-filter-off", !enabled);
       for (const button of buttons) {
-        const on = filters.gender.genders.includes(button.dataset.gender as Gender);
+        const on = genders.includes(button.dataset.gender as Gender);
         button.classList.toggle("active", on);
         button.setAttribute("aria-pressed", String(on));
       }
@@ -79,127 +126,102 @@ const genderBody = (filters: ProfileFilters, changed: () => void): RowBody => {
   };
 };
 
-// ── Height / weight: min and max dropdowns plus a unit switch ────────────────
+// ── Height / weight ──
 
-const rangeBody =
-  (pick: (filters: ProfileFilters) => RangeFilter, options: RangeOptions) =>
-  (filters: ProfileFilters, changed: () => void): RowBody => {
+const buildStatRow =
+  (title: string, pick: (filters: ProfileFilters) => RangeFilter, options: RangeOptions) =>
+  (anchor: Element, filters: ProfileFilters, changed: () => void): MountedRow | null => {
+    const root = anchor.cloneNode(true) as HTMLElement;
+    const group = root.querySelector(".menu-item-group");
+    const item = root.querySelector(".list-item");
+    const label = root.querySelector("label");
+    const checkbox = label?.querySelector("i");
+    const name = label?.querySelector("span");
+    const statButton = root.querySelector(".stat-button");
+    const button = statButton?.querySelector("button");
+    const text = button?.querySelector(".text-value");
+    if (!group || !item || !label || !checkbox || !name || !statButton || !button || !text) {
+      return null;
+    }
     const filter = pick(filters);
-    const el = document.createElement("div");
-    el.className = "snp-filter-body";
+    stripTestIds(root);
 
-    const select = (bound: string): HTMLSelectElement => {
-      const node = document.createElement("select");
-      node.className = "snp-range-select";
-      node.dataset.bound = bound;
-      return node;
-    };
-    const min = select("min");
-    const max = select("max");
-    const unit = select("unit");
-    unit.append(
-      new Option(options.imperial.unit, "imperial"),
-      new Option(options.metric.unit, "metric"),
-    );
-    const to = document.createElement("span");
-    to.textContent = "to";
-    el.append(min, to, max, unit);
+    group.classList.remove("no-border-bottom");
+    item.classList.remove("last");
+    item.classList.add("parent-enabled");
+    label.removeAttribute("for");
+    name.textContent = title;
 
-    const choices = (): { value: number; label: string }[] =>
-      (filter.metric ? options.metric : options.imperial).choices;
-    // The stored bounds are in Sniffies' own units (cm/kg); show whichever choice is closest.
-    const nearest = (value: number | null): number | null =>
-      value === null
-        ? null
-        : choices().reduce((a, b) =>
-            Math.abs(b.value - value) < Math.abs(a.value - value) ? b : a,
-          ).value;
-
-    const fill = (): void => {
-      const list = choices();
-      min.replaceChildren(
-        new Option("No min", ""),
-        // Sniffies' top value means "or more".
-        ...list.map(
-          (c, i) => new Option(i === list.length - 1 ? `${c.label} +` : c.label, `${c.value}`),
-        ),
+    const openSheet = (): void =>
+      openRangeFlyout(
+        title,
+        options,
+        filter,
+        (next) => {
+          Object.assign(filter, next);
+          filter.enabled = next.min !== null || next.max !== null;
+          changed();
+        },
+        root.closest("smart-select-filter"),
       );
-      max.replaceChildren(
-        new Option("No max", ""),
-        ...list.map((c) => new Option(c.label, `${c.value}`)),
-      );
-    };
-    const read = (node: HTMLSelectElement): number | null =>
-      node.value === "" ? null : Number(node.value);
-
-    min.addEventListener("change", () => {
-      filter.min = read(min);
-      if (filter.min !== null && filter.max !== null && filter.min > filter.max) {
-        filter.max = filter.min;
+    label.addEventListener("click", (event) => {
+      event.preventDefault();
+      if (!filter.enabled && filter.min === null && filter.max === null) {
+        openSheet();
+        return;
       }
+      filter.enabled = !filter.enabled;
       changed();
     });
-    max.addEventListener("change", () => {
-      filter.max = read(max);
-      if (filter.min !== null && filter.max !== null && filter.min > filter.max) {
-        filter.min = filter.max;
-      }
-      changed();
-    });
-    unit.addEventListener("change", () => {
-      filter.metric = unit.value === "metric";
-      fill();
-      // What's shown is what's applied: move the bounds onto the new unit's choices.
-      filter.min = nearest(filter.min);
-      filter.max = nearest(filter.max);
-      changed();
-    });
+    statButton.addEventListener("click", openSheet);
 
-    fill();
     return {
-      el,
-      sync: () => {
-        unit.value = filter.metric ? "metric" : "imperial";
-        min.value = `${nearest(filter.min) ?? ""}`;
-        max.value = `${nearest(filter.max) ?? ""}`;
+      root,
+      // While there's something to apply, the apply button takes the range button's place
+      placeApply: (apply) => button.after(apply),
+      sync: (needsReload) => {
+        button.style.display = needsReload ? "none" : "";
+        label.classList.toggle("active", filter.enabled);
+        checkbox.classList.toggle("fa-check-square", filter.enabled);
+        checkbox.classList.toggle("fa-square", !filter.enabled);
+        statButton.classList.toggle("active", filter.enabled);
+        const value = rangeLabel(filter, options);
+        button.className = value ? "range" : "select";
+        text.classList.toggle("placeholder", !value);
+        text.textContent = ` ${value ?? "Select"} `;
       },
     };
   };
 
+const profileTypeRow = (): Element | null =>
+  document.querySelector(PROFILE_TYPE_FILTER_LABEL_SELECTOR)?.closest("filter-type-component") ??
+  null;
+const endowmentLine = (): Element | null =>
+  document.querySelector(ENDOWMENT_FILTER_LABEL_SELECTOR)?.closest("ui-menu-item-group") ?? null;
+
 const ROWS: Row[] = [
   {
-    id: "snp-gender-filter",
-    title: "Gender",
-    icon: "fa-venus-mars",
-    filter: (f) => f.gender,
+    id: GENDER_ROW_ID,
+    anchor: profileTypeRow,
     key: (f) => allowedGenders(f.gender).join(),
-    body: genderBody,
+    build: buildGenderRow,
   },
   {
     id: "snp-height-filter",
-    title: "Height",
-    icon: "fa-ruler-vertical",
-    filter: (f) => f.height,
+    anchor: endowmentLine,
     key: (f) => rangeKey(f.height),
-    body: rangeBody((f) => f.height, HEIGHT_OPTIONS),
+    build: buildStatRow("Height", (f) => f.height, HEIGHT_OPTIONS),
   },
   {
     id: "snp-weight-filter",
-    title: "Weight",
-    icon: "fa-weight",
-    filter: (f) => f.weight,
+    anchor: endowmentLine,
     key: (f) => rangeKey(f.weight),
-    body: rangeBody((f) => f.weight, WEIGHT_OPTIONS),
+    build: buildStatRow("Weight", (f) => f.weight, WEIGHT_OPTIONS),
   },
 ];
 
-/**
- * Adds our filter rows (gender, height, weight) to Sniffies Cruisers filter menu, each with an
- * on/off switch like Sniffies' own rows. Returns a function that removes them again.
- */
 export const installProfileFiltersMenu = (options: ProfileFiltersMenuContract): (() => void) => {
   const filters = structuredClone(options.initial);
-  // Each mounted row's sync, so a change re-syncs them all (they're rebuilt whenever the menu reopens).
   const syncs = new Map<string, () => void>();
 
   const changed = (): void => {
@@ -210,87 +232,59 @@ export const installProfileFiltersMenu = (options: ProfileFiltersMenuContract): 
   };
 
   const build = (anchor: Element, row: Row): HTMLElement | null => {
-    // Cloning Sniffies "Profile Type" row carries its (Angular-scoped) styling along.
-    const root = anchor.cloneNode(true) as HTMLElement;
-    const header = root.querySelector(".list-item-level-2");
-    const label = root.querySelector("label");
-    const title = root.querySelector("p");
-    const toggle = root.querySelector<HTMLInputElement>('.trailing input[type="checkbox"]');
-    const optionsContainer = root.querySelector(".options-container");
-    if (!label || !title || !toggle || !optionsContainer) {
+    const mounted = row.build(anchor, filters, changed);
+    if (!mounted) {
       return null;
     }
-    root.id = row.id;
-    root.classList.add("snp-filter-row");
-    root.classList.remove("last");
-    for (const el of root.querySelectorAll("[data-testid]")) {
-      el.removeAttribute("data-testid");
-    }
-    // The clone still points at Sniffies' Profile Type switch — give it its own. Sniffies keeps
-    // its switch inputs disabled and drives them from Angular; ours is a plain checkbox.
-    toggle.id = `${row.id}-enabled`;
-    toggle.disabled = false;
-    label.htmlFor = toggle.id;
-    label.querySelector("i")?.classList.replace("fa-user", row.icon);
-    title.textContent = ` ${row.title}`;
+    mounted.root.id = row.id;
+    mounted.root.classList.add("snp-filter-row");
 
-    const body = row.body(filters, changed);
     const apply = document.createElement("button");
     apply.type = "button";
     apply.className = "snp-filter-apply";
     apply.textContent = "Reload to apply";
-    apply.addEventListener("click", () => (options.reloadPage ?? (() => location.reload()))());
-    body.el.appendChild(apply);
+    apply.addEventListener("click", (event) => {
+      event.stopPropagation();
+      (options.reloadPage ?? (() => location.reload()))();
+    });
+    mounted.placeApply(apply);
 
     const sync = (): void => {
-      const { enabled } = row.filter(filters);
-      toggle.checked = enabled;
-      header?.classList.toggle("active", enabled);
-      body.el.classList.toggle("snp-filter-off", !enabled);
-      body.sync();
       apply.hidden = row.key(filters) === row.key(options.applied);
+      mounted.sync(!apply.hidden);
     };
-    toggle.addEventListener("change", () => {
-      row.filter(filters).enabled = toggle.checked;
-      changed();
-    });
-
     syncs.set(row.id, sync);
     sync();
-    optionsContainer.replaceChildren(body.el);
-    return root;
+    return mounted.root;
   };
 
   const render = (): void => {
     if (ROWS.every((row) => document.getElementById(row.id))) {
       return;
     }
-    const anchor = document
-      .querySelector(PROFILE_TYPE_FILTER_LABEL_SELECTOR)
-      ?.closest("filter-type-component");
-    if (!anchor) {
-      return;
-    }
-    if (!document.getElementById(STYLE_ID)) {
-      const style = document.createElement("style");
-      style.id = STYLE_ID;
-      style.textContent = FILTER_MENU_CSS;
-      document.head.appendChild(style);
-    }
-    let previous = anchor;
+    const lastAfter = new Map<Element, Element>();
     for (const row of ROWS) {
+      const anchor = row.anchor();
+      if (!anchor) {
+        continue;
+      }
       const root = document.getElementById(row.id) ?? build(anchor, row);
       if (!root) {
-        return;
+        continue;
       }
       if (!root.isConnected) {
-        previous.after(root);
+        if (!document.getElementById(STYLE_ID)) {
+          const style = document.createElement("style");
+          style.id = STYLE_ID;
+          style.textContent = FILTER_MENU_CSS;
+          document.head.appendChild(style);
+        }
+        (lastAfter.get(anchor) ?? anchor).after(root);
       }
-      previous = root;
+      lastAfter.set(anchor, root);
     }
   };
 
-  // The menu only exists in the DOM while open, and Angular rebuilds it each time.
   const observer = new MutationObserver(render);
   const start = (): void => {
     observer.observe(document.body, { childList: true, subtree: true });

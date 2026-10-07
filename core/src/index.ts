@@ -35,6 +35,7 @@ export {
   profileGender,
 } from "./profile-filter.js";
 export { installProfileFiltersMenu } from "./filter-menu-ui.js";
+export { installSelectionLimitOverride } from "./selection-limit-hook.js";
 export {
   PROFILE_FILTERS_HTML,
   PROFILE_FILTERS_CSS,
@@ -54,6 +55,10 @@ export {
   setProfileBorderOpen,
   getProfileBorderSectionOpen,
   setProfileBorderSectionOpen,
+  getProfileFiltersEnabled,
+  setProfileFiltersEnabled,
+  getProfileFiltersSectionOpen,
+  setProfileFiltersSectionOpen,
 } from "./local-storage.js";
 export { VERSION_BADGE_HTML, VERSION_BADGE_CSS, wireVersionBadge } from "./version-badge.js";
 export type { TravelClickArmer } from "./travel-capture-hook.js";
@@ -100,5 +105,6 @@ export {
   TRAVEL_HERE_BUTTON_SELECTOR,
   CITIES_INPUT_SELECTOR,
   PROFILE_TYPE_FILTER_LABEL_SELECTOR,
+  ENDOWMENT_FILTER_LABEL_SELECTOR,
 } from "./sniffies-selectors.js";
 export type { SniffiesSelectorName } from "./sniffies-selectors.js";

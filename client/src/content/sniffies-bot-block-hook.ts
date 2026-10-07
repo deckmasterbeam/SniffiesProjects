@@ -2,6 +2,7 @@ import {
   botBlockRule,
   createLogger,
   installProfileFilterHook,
+  installSelectionLimitOverride,
   parseProfileFilters,
   profileFilterRules,
   type BotBlockState,
@@ -12,6 +13,7 @@ import {
 
   let state: BotBlockState = { blockedIds: new Set(), enabled: false };
   let profileFilters = parseProfileFilters(null);
+  let profileFiltersEnabled = false;
 
   window.addEventListener("message", (event) => {
     if (event.source !== window) {
@@ -24,6 +26,7 @@ import {
     const blockedIds = Array.isArray(msg.blockedIds) ? (msg.blockedIds as string[]) : [];
     state = { blockedIds: new Set(blockedIds), enabled: msg.enabled === true };
     profileFilters = parseProfileFilters(msg.profileFilters);
+    profileFiltersEnabled = msg.profileFiltersEnabled === true;
     log("state updated", {
       count: state.blockedIds.size,
       enabled: state.enabled,
@@ -42,4 +45,6 @@ import {
     ...profileFilterRules(() => profileFilters),
   ]);
   log("profile-filter hook installed", result);
+
+  installSelectionLimitOverride(() => profileFiltersEnabled);
 })();

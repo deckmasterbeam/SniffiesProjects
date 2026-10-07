@@ -17,6 +17,10 @@ export const wireProfileFiltersForm = (
     details.addEventListener("toggle", () => options.onToggle(details.open));
   }
 
+  if (options.hint) {
+    container.querySelector("#profile-filters-hint")!.textContent = options.hint;
+  }
+
   enabledCheckbox.checked = options.initialEnabled;
   enabledCheckbox.addEventListener("change", () => {
     void options.onToggleEnabled(enabledCheckbox.checked);

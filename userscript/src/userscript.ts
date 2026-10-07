@@ -12,6 +12,7 @@ import {
   getProfileBorderSectionOpen,
   hasCapturedCoords,
   installProfileFiltersMenu,
+  installSelectionLimitOverride,
   installLocationOverrideController,
   installProfileBorderRedirect,
   mountFab,
@@ -82,6 +83,7 @@ function installHooks(): HookState {
     reportState.currentSniffiesUserId = userId;
   });
   refreshBlockedBotsIfStale(reportState);
+  installSelectionLimitOverride(getProfileFiltersEnabled);
 
   const geoController = installLocationOverrideController({
     initialOverride: getGeoOverride(),

@@ -33,6 +33,7 @@ export interface ReportFormContract {
 }
 
 export interface ProfileFiltersFormContract extends CollapsibleSectionContract {
+  hint?: string;
   initialEnabled: boolean;
   onToggleEnabled: (enabled: boolean) => void | Promise<void>;
 }

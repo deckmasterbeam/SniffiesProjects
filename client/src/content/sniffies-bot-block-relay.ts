@@ -19,6 +19,7 @@ const postState = (
   blockedIds: string[],
   enabled: boolean,
   profileFilters: ProfileFilters,
+  profileFiltersEnabled: boolean,
 ): void => {
   window.postMessage(
     {
@@ -26,6 +27,7 @@ const postState = (
       blockedIds,
       enabled,
       profileFilters,
+      profileFiltersEnabled,
     },
     "*",
   );
@@ -41,7 +43,7 @@ const relay = (settings: ExtensionLocalSettings): void => {
 
   const effective = gateProfileFilters(stored, profileFiltersEnabled);
   appliedFilters ??= effective;
-  postState(blockedBots, botBlockingEnabled, effective);
+  postState(blockedBots, botBlockingEnabled, effective, profileFiltersEnabled);
 
   if (profileFiltersEnabled && !removeFiltersMenu) {
     removeFiltersMenu = installProfileFiltersMenu({

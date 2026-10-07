@@ -8,25 +8,18 @@ import {
   type SniffiesGender,
 } from "./sniffies-api.js";
 
-/** One reason to hide a profile. Add a rule here to filter on a new attribute. */
 export interface ProfileFilterRule {
   name: string;
-  /** False when the rule currently hides nothing, so responses can pass through unparsed. */
   isActive: () => boolean;
   hides: (profile: FilterableProfile) => boolean;
-  /** Called with the ids this rule hid from a single response or frame. */
   onFiltered?: (ids: string[]) => void;
 }
 
 export interface ProfileMatcher {
   isActive: () => boolean;
-  /** Checks a profile that carries its details, remembering them for later id-only checks. */
   hidesProfile: (profile: FilterableProfile) => boolean;
-  /** Checks an account known only by id, against its last seen details if there are any. */
   hidesId: (id: string) => boolean;
-  /** The logged-in user's own account is never hidden. */
   setSelfId: (id: string) => void;
-  /** Reports everything hidden since the last flush to each rule's onFiltered. */
   flush: () => { rule: string; ids: string[] }[];
 }
 
@@ -96,7 +89,6 @@ export interface GenderFilter {
 
 export const DEFAULT_GENDER_FILTER: GenderFilter = { enabled: false, genders: [...GENDERS] };
 
-/** Reads a stored/relayed gender filter, repairing anything that isn't a valid one. */
 export const parseGenderFilter = (value: unknown): GenderFilter => {
   const raw = (value ?? {}) as { enabled?: unknown; genders?: unknown };
   const { genders } = raw;
@@ -104,7 +96,6 @@ export const parseGenderFilter = (value: unknown): GenderFilter => {
   return { enabled: raw.enabled === true, genders: picked.length > 0 ? picked : [...GENDERS] };
 };
 
-/** The genders a filter lets through — all of them while it's switched off. */
 export const allowedGenders = (filter: GenderFilter): readonly Gender[] =>
   filter.enabled ? filter.genders : GENDERS;
 
@@ -114,17 +105,14 @@ const WIRE_GENDERS: Partial<Record<Exclude<SniffiesGender, null>, Gender>> = {
   nonbinary: "nonbinary",
 };
 
-/** The profile's gender, or null when its details haven't been seen yet. */
 export const profileGender = (profile: FilterableProfile): Gender | null => {
   if (!profile.data) {
     return null;
   }
   const raw = profile.data.profile?.extended?.sexuality?.gender;
-  // The fallback also catches a value Sniffies adds later that the type doesn't know about.
   return (raw && WIRE_GENDERS[raw]) || "undefined";
 };
 
-/** While the filter is enabled, hides profiles whose gender isn't one of the selected ones. */
 export const genderRule = (getFilter: () => GenderFilter): ProfileFilterRule => ({
   name: "gender",
   isActive: () => {
@@ -141,10 +129,8 @@ export const genderRule = (getFilter: () => GenderFilter): ProfileFilterRule => 
 
 export interface RangeFilter {
   enabled: boolean;
-  /** Inclusive bounds in Sniffies' own units (cm / kg); null means unbounded. */
   min: number | null;
   max: number | null;
-  /** Which units the menu shows the bounds in. */
   metric: boolean;
 }
 
@@ -237,6 +223,23 @@ export const WEIGHT_OPTIONS: RangeOptions = {
     unit: "kg",
     choices: steps(WEIGHT_LIMITS.kg, 5).map((kg) => ({ value: kg, label: `${kg}kg` })),
   },
+};
+
+type RangeChoice = RangeChoices["choices"][number];
+
+export const nearestChoice = (choices: RangeChoice[], value: number): RangeChoice =>
+  choices.reduce((a, b) => (Math.abs(b.value - value) < Math.abs(a.value - value) ? b : a));
+
+export const rangeLabel = (filter: RangeFilter, options: RangeOptions): string | null => {
+  const { choices } = filter.metric ? options.metric : options.imperial;
+  const label = (value: number): string => nearestChoice(choices, value).label;
+  if (filter.min !== null && filter.max !== null) {
+    return `${label(filter.min)} - ${label(filter.max)}`;
+  }
+  if (filter.min !== null) {
+    return `${label(filter.min)} +`;
+  }
+  return filter.max !== null ? `Up to ${label(filter.max)}` : null;
 };
 
 // ── All the filters the user sets from Sniffies filter menu ─────────────────

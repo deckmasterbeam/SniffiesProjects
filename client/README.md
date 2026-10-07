@@ -8,6 +8,7 @@ Supported features:
 - Opening profiles outside geofence
 - Profile online notification service _(in progress)_
 - Bot reporting and blocking _(in progress)_
+- Profile filters: Gender, Height and Weight filters, and no cap on how many options you can pick in Sniffies' own Sexuality, Body Type and Position filters. Enable "Profile Filters" in the popup, then use the Cruisers section of Sniffies' Map Layers menu. See the "Profile filter support" table in the root `README.md`.
 
 ## Building
 

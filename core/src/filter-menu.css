@@ -1,3 +1,5 @@
+/* ── Rows in Sniffies' filter menu ── */
+
 .snp-filter-row .snp-filter-body {
   display: flex;
   flex-wrap: wrap;
@@ -10,7 +12,6 @@
 }
 
 .snp-filter-row .snp-gender-option,
-.snp-filter-row .snp-range-select,
 .snp-filter-row .snp-filter-apply {
   border: 1px solid #7a90a4;
   border-radius: 12px;
@@ -19,15 +20,6 @@
   cursor: pointer;
   background: transparent;
   color: #7a90a4;
-}
-
-.snp-filter-row .snp-range-select {
-  color: #ffffff;
-}
-
-/* The dropdown list itself is drawn by the browser, on its own (light) background. */
-.snp-filter-row .snp-range-select option {
-  color: #000000;
 }
 
 .snp-filter-row .snp-gender-option.active {
@@ -46,7 +38,134 @@
   display: none;
 }
 
-.snp-filter-row .snp-filter-off .snp-gender-option,
-.snp-filter-row .snp-filter-off .snp-range-select {
+.snp-filter-row .snp-filter-off .snp-gender-option {
   opacity: 0.5;
+}
+
+.snp-flyout-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.snp-flyout {
+  width: 100%;
+  max-width: 480px;
+  min-height: 402px;
+  border-radius: 12px 12px 0 0;
+  background: #0e1825;
+  color: #ffffff;
+  font-family: inherit;
+}
+
+@media (min-width: 768px) {
+  .snp-flyout-backdrop {
+    align-items: center;
+  }
+
+  .snp-flyout {
+    border-radius: 12px;
+  }
+}
+
+.snp-flyout-header {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid #1c2b3a;
+}
+
+.snp-flyout-header h1 {
+  flex: 1;
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.snp-flyout-action {
+  flex: 0 0 72px;
+}
+
+.snp-flyout-action.right {
+  text-align: right;
+}
+
+.snp-flyout-action button {
+  border: 0;
+  padding: 4px 0;
+  background: transparent;
+  color: #ff5500;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.snp-flyout-action.right button {
+  font-weight: 700;
+}
+
+.snp-wheel-container {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  padding: 12px 16px 20px;
+}
+
+.snp-wheel-column {
+  flex: 1;
+  max-width: 140px;
+  text-align: center;
+}
+
+.snp-wheel-column p {
+  margin: 0 0 4px;
+  font-size: 12px;
+  color: #7a90a4;
+}
+
+.snp-wheel-middle {
+  align-self: center;
+  padding-top: 20px;
+  font-size: 13px;
+  color: #7a90a4;
+}
+
+.snp-wheel {
+  position: relative;
+  height: 238px;
+  overflow-y: scroll;
+  scroll-snap-type: y mandatory;
+  scrollbar-width: none;
+  background: linear-gradient(#1c2b3a, #1c2b3a) center / 100% 34px no-repeat;
+  border-radius: 8px;
+  mask-image: linear-gradient(transparent, #000 35%, #000 65%, transparent);
+}
+
+.snp-wheel::-webkit-scrollbar {
+  display: none;
+}
+
+.snp-wheel::before,
+.snp-wheel::after {
+  content: "";
+  display: block;
+  height: 102px;
+}
+
+.snp-wheel-item {
+  height: 34px;
+  line-height: 34px;
+  font-size: 18px;
+  color: #7a90a4;
+  cursor: pointer;
+  scroll-snap-align: center;
+  white-space: nowrap;
+}
+
+.snp-wheel-item.selected {
+  color: #ffffff;
 }
