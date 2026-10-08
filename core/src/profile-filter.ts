@@ -1,4 +1,5 @@
 import type { BotBlockState } from "./contracts.js";
+import { createLogger } from "./log.js";
 import {
   CM_PER_INCH,
   HEIGHT_LIMITS,
@@ -13,6 +14,8 @@ export interface ProfileFilterRule {
   isActive: () => boolean;
   hides: (profile: FilterableProfile) => boolean;
   mapOnly?: boolean;
+  /** Swallow `userDisconnected` / `userRemoved` frames while active */
+  keepsOnMap?: boolean;
   onFiltered?: (ids: string[]) => void;
 }
 
@@ -23,10 +26,45 @@ export interface ProfileChecks {
 
 export interface ProfileMatcher extends ProfileChecks {
   isActive: () => boolean;
+  keepsOnMap: () => boolean;
   chat: ProfileChecks;
   setSelfId: (id: string) => void;
+  /** Applies a partial `userUpdated` profile to the last full one: only its connect time. */
+  noteUpdate: (partial: FilterableProfile) => void;
   flush: () => { rule: string; ids: string[] }[];
 }
+
+const EXPECTED_PROFILE_PATHS = [
+  "data.connectUpdateTime",
+  "data.profile.extended.sexuality",
+  "data.profile.extended.stats.heightInCm",
+  "data.profile.extended.stats.weightInKg",
+];
+
+const hasPath = (root: unknown, path: string): boolean => {
+  let node = root;
+  for (const key of path.split(".")) {
+    if (typeof node !== "object" || node === null || !(key in node)) {
+      return false;
+    }
+    node = (node as Record<string, unknown>)[key];
+  }
+  return true;
+};
+
+const log = createLogger("profile-filter");
+const reportedGaps = new Set<string>();
+
+const warnIfIncomplete = (profile: FilterableProfile): void => {
+  for (const path of EXPECTED_PROFILE_PATHS) {
+    if (!reportedGaps.has(path) && !hasPath(profile, path)) {
+      reportedGaps.add(path);
+      log.warn(
+        `profile ${profile._id} has no ${path}; Sniffies may have changed its profile format`,
+      );
+    }
+  }
+};
 
 export const createProfileMatcher = (rules: readonly ProfileFilterRule[]): ProfileMatcher => {
   const seen = new Map<string, FilterableProfile>();
@@ -51,6 +89,7 @@ export const createProfileMatcher = (rules: readonly ProfileFilterRule[]): Profi
   const checks = (inChat: boolean): ProfileChecks => ({
     hidesProfile: (profile) => {
       if (profile.data) {
+        warnIfIncomplete(profile);
         seen.set(profile._id, profile);
       }
       return hides(profile, inChat);
@@ -60,10 +99,20 @@ export const createProfileMatcher = (rules: readonly ProfileFilterRule[]): Profi
 
   return {
     isActive: () => rules.some((r) => r.isActive()),
+    keepsOnMap: () => rules.some((r) => r.keepsOnMap && r.isActive()),
     ...checks(false),
     chat: checks(true),
     setSelfId: (id) => {
       selfId = id;
+    },
+    noteUpdate: ({ _id, data }) => {
+      const known = seen.get(_id);
+      if (known?.data && data?.connectUpdateTime) {
+        seen.set(_id, {
+          ...known,
+          data: { ...known.data, connectUpdateTime: data.connectUpdateTime },
+        });
+      }
     },
     flush: () => {
       const result = [...hidden].map(([rule, ids]) => ({ rule, ids: [...ids] }));
@@ -196,6 +245,38 @@ export const rangeRule = (
   },
 });
 
+// ── Last online ──────────────────────────────────────────────────────────────
+
+export interface OnlineFilter {
+  enabled: boolean;
+  since: number | null;
+}
+
+export const DEFAULT_ONLINE_FILTER: OnlineFilter = { enabled: false, since: null };
+
+const parseOnlineFilter = (value: unknown): OnlineFilter => {
+  const raw = (value ?? {}) as { enabled?: unknown; since?: unknown };
+  const since = typeof raw.since === "number" && isFinite(raw.since) ? raw.since : null;
+  return { enabled: raw.enabled === true && since !== null, since };
+};
+
+export const onlineKey = (filter: OnlineFilter): string =>
+  filter.enabled && filter.since !== null ? String(filter.since) : "";
+
+export const onlineRule = (getFilter: () => OnlineFilter): ProfileFilterRule => ({
+  name: "online",
+  mapOnly: true,
+  keepsOnMap: true,
+  isActive: () => onlineKey(getFilter()) !== "",
+  hides: (profile) => {
+    if (!profile.data) {
+      return false;
+    }
+    // A missing connect time is NaN, it wasn't online recently.
+    return !(Date.parse(profile.data.connectUpdateTime ?? "") >= getFilter().since!);
+  },
+});
+
 export interface RangeChoices {
   unit: string;
   choices: { value: number; label: string }[];
@@ -265,12 +346,14 @@ export interface ProfileFilters {
   gender: GenderFilter;
   height: RangeFilter;
   weight: RangeFilter;
+  online: OnlineFilter;
 }
 
 export const DEFAULT_PROFILE_FILTERS: ProfileFilters = {
   gender: DEFAULT_GENDER_FILTER,
   height: defaultRangeFilter(),
   weight: defaultRangeFilter(),
+  online: DEFAULT_ONLINE_FILTER,
 };
 
 export const parseProfileFilters = (value: unknown): ProfileFilters => {
@@ -279,6 +362,7 @@ export const parseProfileFilters = (value: unknown): ProfileFilters => {
     gender: parseGenderFilter(raw.gender),
     height: parseRangeFilter(raw.height),
     weight: parseRangeFilter(raw.weight),
+    online: parseOnlineFilter(raw.online),
   };
 };
 
@@ -289,6 +373,7 @@ export const gateProfileFilters = (filters: ProfileFilters, enabled: boolean): P
         gender: { ...filters.gender, enabled: false },
         height: { ...filters.height, enabled: false },
         weight: { ...filters.weight, enabled: false },
+        online: { ...filters.online, enabled: false },
       };
 
 export const profileFilterRules = (getFilters: () => ProfileFilters): ProfileFilterRule[] => [
@@ -303,4 +388,5 @@ export const profileFilterRules = (getFilters: () => ProfileFilters): ProfileFil
     () => getFilters().weight,
     (profile) => profile.data?.profile?.extended?.stats?.weightInKg,
   ),
+  onlineRule(() => getFilters().online),
 ];

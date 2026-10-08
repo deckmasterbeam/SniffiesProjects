@@ -20,6 +20,8 @@ export const SNIFFIES_SELECTORS = {
   CITIES_INPUT_SELECTOR: '[data-testid="citiesInput"]',
   /** "Profile Type" row in the Map Layers → Cruisers filter menu (only in the DOM while open) — our filter rows mount after it. */
   PROFILE_TYPE_FILTER_LABEL_SELECTOR: 'label[for="IS_PROFILE_TYPE"]',
+  /** "Cruising Now" row in the same menu — our Last Online row mounts after it. */
+  CONNECTED_NOW_FILTER_LABEL_SELECTOR: 'label[for="CONNECTED_NOW"]',
   /** "Endowment" line under Cruiser Stats in the stats menu. Height and Weight lines mount after it. */
   ENDOWMENT_FILTER_LABEL_SELECTOR: 'label[for="stats.endowment"]',
 } as const;
@@ -37,5 +39,6 @@ export const {
   TRAVEL_HERE_BUTTON_SELECTOR,
   CITIES_INPUT_SELECTOR,
   PROFILE_TYPE_FILTER_LABEL_SELECTOR,
+  CONNECTED_NOW_FILTER_LABEL_SELECTOR,
   ENDOWMENT_FILTER_LABEL_SELECTOR,
 } = SNIFFIES_SELECTORS;

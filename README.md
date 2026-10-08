@@ -19,6 +19,7 @@ A monorepo of tools to recreate and expand functionality for [sniffies.com](http
 | Filter       | What it does                                                                        | Chrome extension | Userscript | Bookmarklet |
 | ------------ | ----------------------------------------------------------------------------------- | ---------------- | ---------- | ----------- |
 | Gender       | New row with an on/off switch and Male / Female / Nonbinary / Not specified buttons | Yes              | Yes        | No          |
+| Last Online  | Row under Cruising Now: Now / 30 min / 1 hr; people stay after going offline        | Yes              | Yes        | No          |
 | Height       | New line under Cruiser Stats that opens a min/max range sheet                       | Yes              | Yes        | No          |
 | Weight       | New line under Cruiser Stats that opens a min/max range sheet                       | Yes              | Yes        | No          |
 | Sexuality    | Sniffies' own filter; "Choose up to 3" raised to 99                                 | Yes              | Yes        | Yes         |
@@ -28,7 +29,7 @@ A monorepo of tools to recreate and expand functionality for [sniffies.com](http
 
 Everything except Blocked bots is switched on by the "Profile Filters" section of the popup (Chrome extension) or panel (userscript, bookmarklet). It is off by default.
 
-Gender, Height, Weight and Blocked bots work by filtering Sniffies' network responses as the page loads, which a bookmarklet is too late for. Changing them needs a page reload to take effect.
+Gender, Height, Weight, Last Online and Blocked bots work by filtering Sniffies' network responses as the page loads, which a bookmarklet is too late for. Changing them needs a page reload to take effect.
 
 ## Packages
 
@@ -65,7 +66,7 @@ Location spoofing packaged as a userscript for the [Userscripts](https://apps.ap
 
 ### `bookmarklet/` — iOS Safari Bookmarklet
 
-Reduced-feature version for iOS Safari with no app required. A bookmarklet can't hook the page's init behavior, so it supports opening profiles outside your boundary and the raised selection caps on Sniffies' own stat filters, but not location spoofing, bot filtering, or the Gender / Height / Weight filters — use the userscript for those.
+Reduced-feature version for iOS Safari with no app required. A bookmarklet can't hook the page's init behavior, so it supports opening profiles outside your boundary and the raised selection caps on Sniffies' own stat filters, but not location spoofing, bot filtering, or the Gender / Height / Weight / Last Online filters — use the userscript for those.
 
 **Install:** Create a Safari bookmark and replace its URL with the bookmarklet code from `bookmarklet/README.md`.
 

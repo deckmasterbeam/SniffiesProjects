@@ -11,6 +11,25 @@
   color: #7a90a4;
 }
 
+.snp-filter-row .snp-online-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.snp-filter-row i.snp-online-clear {
+  color: #ff5500 !important;
+  cursor: pointer;
+}
+
+.snp-filter-row .snp-online-inline {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-left: 8px;
+}
+
 .snp-filter-row .snp-gender-option,
 .snp-filter-row .snp-filter-apply {
   border: 1px solid #7a90a4;

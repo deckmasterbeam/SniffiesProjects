@@ -18,6 +18,7 @@ export type SniffiesGender = "man" | "woman" | "nonbinary" | null;
 export interface FilterableProfile {
   _id: string;
   data?: {
+    connectUpdateTime?: string;
     profile?: {
       extended?: {
         sexuality?: { gender?: SniffiesGender };

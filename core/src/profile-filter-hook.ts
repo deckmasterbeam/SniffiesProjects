@@ -24,6 +24,17 @@ import {
 
 type FilterKind = "post-authentication" | "soft-reload" | "chat-data" | "messages";
 
+const shapeLog = createLogger("profile-filter");
+const reportedShapes = new Set<string>();
+
+/** Warns, once per page load, that a payload lacks something the filters read. */
+const expectShape = (ok: boolean, what: string): void => {
+  if (!ok && !reportedShapes.has(what)) {
+    reportedShapes.add(what);
+    shapeLog.warn(`${what}; Sniffies may have changed its API`);
+  }
+};
+
 const filterProfiles = (
   items: FilterableProfile[] | undefined,
   checks: ProfileChecks,
@@ -34,6 +45,11 @@ export const filterPostAuthenticationPayload = (
   payload: NearbyVisitorsPayload,
   matcher: ProfileMatcher,
 ): NearbyVisitorsPayload => {
+  expectShape(
+    Array.isArray(payload.nearbyVisitors?.visitors),
+    "map init has no nearbyVisitors.visitors list",
+  );
+  expectShape(Array.isArray(payload.partialVisitorData), "map init has no partialVisitorData list");
   if (payload.nearbyVisitors?.visitors) {
     payload.nearbyVisitors.visitors = filterProfiles(payload.nearbyVisitors.visitors, matcher);
   }
@@ -49,6 +65,15 @@ export const filterChatDataPayload = (
   payload: ChatDataPayload,
   { chat }: ProfileMatcher,
 ): ChatDataPayload => {
+  expectShape(
+    Array.isArray(payload.conversationData?.conversations) &&
+      Array.isArray(payload.conversationData?.userIds),
+    "chat init has no conversationData.conversations / userIds list",
+  );
+  expectShape(
+    Array.isArray(payload.partialVisitorData),
+    "chat init has no partialVisitorData list",
+  );
   if (payload.partialVisitorData) {
     payload.partialVisitorData = filterProfiles(payload.partialVisitorData, chat);
   }
@@ -80,6 +105,8 @@ export const filterMessagesPayload = (
   payload: MessagesPayload,
   { chat }: ProfileMatcher,
 ): MessagesPayload => {
+  expectShape(Array.isArray(payload.messages), "chat thread has no messages list");
+  expectShape(Array.isArray(payload.partialUsers), "chat thread has no partialUsers list");
   if (payload.partialUsers) {
     payload.partialUsers = filterProfiles(payload.partialUsers, chat);
   }
@@ -105,6 +132,8 @@ interface WsFrameInfo {
   eventName: string;
   /** The account the frame is about: a profile when the frame carries one, else a bare id. */
   subject: FilterableProfile | string | null;
+  /** The partial profile a `userUpdated` frame carries. */
+  update?: FilterableProfile;
   /** A chat event rather than someone's presence on the map. */
   chat?: boolean;
 }
@@ -126,17 +155,22 @@ const parseWsFrame = (raw: string): WsFrameInfo | null => {
     return null;
   }
   if (obj.eventName === "userJoined") {
-    return { eventName: obj.eventName, subject: asProfile(obj.data) };
+    const joined = asProfile(obj.data);
+    expectShape(joined !== null, "userJoined frame has no profile with an _id");
+    return { eventName: obj.eventName, subject: joined };
   }
   if (obj.eventName === "userUpdated") {
     // Carries only the changed fields, so it's judged by id against the last full profile.
-    return { eventName: obj.eventName, subject: asProfile(obj.data)?._id ?? null };
+    const update = asProfile(obj.data);
+    expectShape(update !== null, "userUpdated frame has no profile with an _id");
+    return { eventName: obj.eventName, subject: update?._id ?? null, update: update ?? undefined };
   }
   if (
     obj.eventName === "userAwake" ||
     obj.eventName === "userDisconnected" ||
     obj.eventName === "userRemoved"
   ) {
+    expectShape(typeof obj.data === "string", `${obj.eventName} frame has no string id`);
     return { eventName: obj.eventName, subject: typeof obj.data === "string" ? obj.data : null };
   }
   if (obj.eventName === "newMsg") {
@@ -155,8 +189,17 @@ const parseWsFrame = (raw: string): WsFrameInfo | null => {
 };
 
 const hidesFrame = (frame: WsFrameInfo | null, matcher: ProfileMatcher): boolean => {
+  if (
+    (frame?.eventName === "userDisconnected" || frame?.eventName === "userRemoved") &&
+    matcher.keepsOnMap()
+  ) {
+    return true;
+  }
   if (!frame?.subject) {
     return false;
+  }
+  if (frame.update) {
+    matcher.noteUpdate(frame.update);
   }
   const checks = frame.chat ? matcher.chat : matcher;
   return typeof frame.subject === "string"

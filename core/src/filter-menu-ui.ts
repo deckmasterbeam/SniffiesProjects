@@ -1,10 +1,12 @@
 import type { ProfileFiltersMenuContract } from "./contracts.js";
+import { createLogger } from "./log.js";
 import FILTER_MENU_CSS from "./filter-menu.css";
 import {
   GENDERS,
   HEIGHT_OPTIONS,
   WEIGHT_OPTIONS,
   allowedGenders,
+  onlineKey,
   rangeKey,
   rangeLabel,
   type Gender,
@@ -14,6 +16,7 @@ import {
 } from "./profile-filter.js";
 import { openRangeFlyout } from "./range-flyout-ui.js";
 import {
+  CONNECTED_NOW_FILTER_LABEL_SELECTOR,
   ENDOWMENT_FILTER_LABEL_SELECTOR,
   PROFILE_TYPE_FILTER_LABEL_SELECTOR,
 } from "./sniffies-selectors.js";
@@ -126,6 +129,107 @@ const buildGenderRow = (
   };
 };
 
+const ONLINE_ROW_ID = "snp-online-filter";
+const ONLINE_CHOICES = [
+  { label: "Now", minutes: 0 },
+  { label: "30 min", minutes: 30 },
+  { label: "1 hr", minutes: 60 },
+];
+
+const sinceLabel = (since: number): string => {
+  const date = new Date(since);
+  const time = { hour: "numeric", minute: "2-digit" } as const;
+  return date.toDateString() === new Date().toDateString()
+    ? date.toLocaleTimeString([], time)
+    : date.toLocaleString([], { weekday: "short", ...time });
+};
+
+const buildOnlineRow = (
+  anchor: Element,
+  filters: ProfileFilters,
+  changed: () => void,
+): MountedRow | null => {
+  // Cloning "Cruising Now" carries its styling
+  const root = anchor.cloneNode(true) as HTMLElement;
+  const header = root.querySelector(".list-item-level-2");
+  const titleLine = root.querySelector(".details-title");
+  const label = root.querySelector("label");
+  const icon = label?.querySelector("i");
+  const title = root.querySelector("p");
+  const toggle = root.querySelector<HTMLInputElement>('.trailing input[type="checkbox"]');
+  if (!header || !titleLine || !label || !icon || !title || !toggle) {
+    return null;
+  }
+  stripTestIds(root);
+
+  toggle.id = `${ONLINE_ROW_ID}-enabled`;
+  toggle.disabled = false;
+  label.removeAttribute("for");
+  icon.classList.replace("fa-plug", "fa-clock");
+  toggle.addEventListener("change", () => {
+    filters.online.enabled = toggle.checked;
+    changed();
+  });
+
+  const inline = document.createElement("span");
+  inline.className = "snp-online-inline";
+  const chips = ONLINE_CHOICES.map(({ label: text, minutes }) => {
+    const chip = document.createElement("button");
+    chip.type = "button";
+    chip.className = "snp-gender-option";
+    chip.textContent = text;
+    chip.addEventListener("click", () => {
+      filters.online = { enabled: true, since: Date.now() - minutes * 60_000 };
+      changed();
+    });
+    return chip;
+  });
+  
+  label.addEventListener("click", (event) => {
+    if (!(event.target as Element).closest("button")) {
+      event.preventDefault();
+    }
+  });
+  // With a time picked, the clock icon becomes the clear button.
+  icon.addEventListener("click", (event) => {
+    if (filters.online.since === null) {
+      return;
+    }
+    event.preventDefault();
+    filters.online = { enabled: false, since: null };
+    changed();
+  });
+  inline.append(...chips);
+  titleLine.classList.add("snp-online-title");
+  titleLine.appendChild(inline);
+
+  return {
+    root,
+    placeApply: (apply) => inline.appendChild(apply),
+    sync: () => {
+      const { enabled, since } = filters.online;
+      const picked = since !== null;
+      title.textContent = picked ? ` Last Online: ${sinceLabel(since)}` : " Last Online";
+      toggle.checked = enabled && picked;
+      toggle.disabled = !picked;
+      header.classList.toggle("active", enabled && picked);
+      for (const chip of chips) {
+        chip.hidden = picked;
+      }
+      icon.classList.toggle("fa-clock", !picked);
+      icon.classList.toggle("fa-times-circle", picked);
+      icon.classList.toggle("snp-online-clear", picked);
+      if (picked) {
+        icon.setAttribute("role", "button");
+        icon.setAttribute("aria-label", "Clear last online filter");
+      } else {
+        icon.removeAttribute("role");
+        icon.removeAttribute("aria-label");
+      }
+    },
+  };
+};
+
 // ── Height / weight ──
 
 const buildStatRow =
@@ -196,6 +300,9 @@ const buildStatRow =
 const profileTypeRow = (): Element | null =>
   document.querySelector(PROFILE_TYPE_FILTER_LABEL_SELECTOR)?.closest("filter-type-component") ??
   null;
+const cruisingNowRow = (): Element | null =>
+  document.querySelector(CONNECTED_NOW_FILTER_LABEL_SELECTOR)?.closest("ui-list-item-level-2") ??
+  null;
 const endowmentLine = (): Element | null =>
   document.querySelector(ENDOWMENT_FILTER_LABEL_SELECTOR)?.closest("ui-menu-item-group") ?? null;
 
@@ -205,6 +312,12 @@ const ROWS: Row[] = [
     anchor: profileTypeRow,
     key: (f) => allowedGenders(f.gender).join(),
     build: buildGenderRow,
+  },
+  {
+    id: ONLINE_ROW_ID,
+    anchor: cruisingNowRow,
+    key: (f) => onlineKey(f.online),
+    build: buildOnlineRow,
   },
   {
     id: "snp-height-filter",
@@ -219,6 +332,17 @@ const ROWS: Row[] = [
     build: buildStatRow("Weight", (f) => f.weight, WEIGHT_OPTIONS),
   },
 ];
+
+const log = createLogger("filter-menu");
+const reportedAnchors = new Set<string>();
+const warnOnce = (key: string, message: string): void => {
+  if (!reportedAnchors.has(key)) {
+    reportedAnchors.add(key);
+    log.warn(`${message}; Sniffies may have changed its markup`);
+  }
+};
+// Angular renders the menu in pieces, so a missing neighbour only counts once it stays missing.
+const NEIGHBOUR_GRACE_MS = 2000;
 
 export const installProfileFiltersMenu = (options: ProfileFiltersMenuContract): (() => void) => {
   const filters = structuredClone(options.initial);
@@ -270,6 +394,7 @@ export const installProfileFiltersMenu = (options: ProfileFiltersMenuContract): 
       }
       const root = document.getElementById(row.id) ?? build(anchor, row);
       if (!root) {
+        warnOnce(row.id, `${row.id}: found its anchor but not the parts to clone from it`);
         continue;
       }
       if (!root.isConnected) {
@@ -285,7 +410,28 @@ export const installProfileFiltersMenu = (options: ProfileFiltersMenuContract): 
     }
   };
 
-  const observer = new MutationObserver(render);
+  // Profile Type and Cruising Now sit in the same menu: one without the other means it changed.
+  let neighbourCheck: ReturnType<typeof setTimeout> | undefined;
+  const checkNeighbours = (): void => {
+    const [type, cruising] = [profileTypeRow(), cruisingNowRow()];
+    if (!type !== !cruising) {
+      neighbourCheck ??= setTimeout(() => {
+        neighbourCheck = undefined;
+        const [t, c] = [profileTypeRow(), cruisingNowRow()];
+        if (!t !== !c) {
+          warnOnce(
+            "menu-neighbours",
+            `filter menu has ${t ? "Profile Type" : "Cruising Now"} but not ${t ? "Cruising Now" : "Profile Type"}`,
+          );
+        }
+      }, NEIGHBOUR_GRACE_MS);
+    }
+  };
+
+  const observer = new MutationObserver(() => {
+    render();
+    checkNeighbours();
+  });
   const start = (): void => {
     observer.observe(document.body, { childList: true, subtree: true });
     render();
@@ -298,6 +444,7 @@ export const installProfileFiltersMenu = (options: ProfileFiltersMenuContract): 
   return () => {
     document.removeEventListener("DOMContentLoaded", start);
     observer.disconnect();
+    clearTimeout(neighbourCheck);
     for (const row of ROWS) {
       document.getElementById(row.id)?.remove();
     }

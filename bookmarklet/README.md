@@ -13,7 +13,7 @@ Not supported (use the userscript):
 
 - Location spoofing
 - Bot filtering
-- Gender, Height and Weight filters
+- Gender, Height, Weight and Last Online filters
 
 See the "Profile filter support" table in the root `README.md` for every build.
 

@@ -13,6 +13,7 @@ export {
 export type {
   Gender,
   GenderFilter,
+  OnlineFilter,
   ProfileFilterRule,
   ProfileFilters,
   ProfileMatcher,
@@ -24,10 +25,12 @@ export {
   botBlockRule,
   createProfileMatcher,
   DEFAULT_GENDER_FILTER,
+  DEFAULT_ONLINE_FILTER,
   DEFAULT_PROFILE_FILTERS,
   allowedGenders,
   gateProfileFilters,
   genderRule,
+  onlineRule,
   parseGenderFilter,
   parseProfileFilters,
   profileFilterRules,
@@ -105,6 +108,7 @@ export {
   TRAVEL_HERE_BUTTON_SELECTOR,
   CITIES_INPUT_SELECTOR,
   PROFILE_TYPE_FILTER_LABEL_SELECTOR,
+  CONNECTED_NOW_FILTER_LABEL_SELECTOR,
   ENDOWMENT_FILTER_LABEL_SELECTOR,
 } from "./sniffies-selectors.js";
 export type { SniffiesSelectorName } from "./sniffies-selectors.js";

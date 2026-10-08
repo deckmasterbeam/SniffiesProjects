@@ -5,6 +5,7 @@ import {
   createProfileMatcher,
   gateProfileFilters,
   genderRule,
+  onlineRule,
   parseProfileFilters,
   profileFilterRules,
   type Gender,
@@ -845,5 +846,130 @@ describe("installBotBlockHook — XHR", () => {
     expect(xhr.responseText).toBe(raw);
     expect(parseSpy).not.toHaveBeenCalled();
     parseSpy.mockRestore();
+  });
+});
+
+describe("online rule", () => {
+  const SINCE = Date.parse("2026-10-08T06:00:00Z");
+  const seenAt = (_id: string, connectUpdateTime?: string) => ({
+    _id,
+    data: { connectUpdateTime },
+  });
+  const matcher = () => createProfileMatcher([onlineRule(() => ({ enabled: true, since: SINCE }))]);
+  const frame = (eventName: string, data: unknown) => JSON.stringify({ eventName, data });
+
+  it("hides profiles last online before the cutoff, or with no time at all", () => {
+    const payload = {
+      nearbyVisitors: {
+        visitors: [
+          seenAt("recent", "2026-10-08T06:30:00Z"),
+          seenAt("exact", "2026-10-08T06:00:00Z"),
+          seenAt("old", "2026-10-08T05:59:59Z"),
+          seenAt("none"),
+        ],
+      },
+    };
+    const result = filterPostAuthenticationPayload(payload, matcher());
+    expect(result.nearbyVisitors?.visitors?.map((p) => p._id)).toEqual(["recent", "exact"]);
+  });
+
+  it("is inactive when disabled or empty", () => {
+    for (const filter of [
+      { enabled: false, since: SINCE },
+      { enabled: true, since: null },
+    ]) {
+      expect(createProfileMatcher([onlineRule(() => filter)]).isActive()).toBe(false);
+    }
+  });
+
+  it("lets a hidden account back in when a userUpdated frame shows it came online", () => {
+    const m = matcher();
+    expect(
+      shouldFilterWebSocketFrame(frame("userJoined", seenAt("a", "2026-10-08T05:00:00Z")), m),
+    ).toBe(true);
+    const update = { _id: "a", data: { connectUpdateTime: "2026-10-08T06:10:00Z", profile: {} } };
+    expect(shouldFilterWebSocketFrame(frame("userUpdated", update), m)).toBe(false);
+    expect(shouldFilterWebSocketFrame(frame("userAwake", "a"), m)).toBe(false);
+  });
+
+  it("swallows disconnects and removals so accounts that go offline after the cutoff stay on the map", () => {
+    const m = matcher();
+    shouldFilterWebSocketFrame(frame("userJoined", seenAt("a", "2026-10-08T06:10:00Z")), m);
+    expect(shouldFilterWebSocketFrame(frame("userDisconnected", "a"), m)).toBe(true);
+    expect(shouldFilterWebSocketFrame(frame("userDisconnected", "unseen"), m)).toBe(true);
+    expect(shouldFilterWebSocketFrame(frame("userRemoved", "a"), m)).toBe(true);
+    expect(shouldFilterWebSocketFrame(frame("userAwake", "a"), m)).toBe(false);
+    // Off, the app sees disconnects as usual.
+    const off = createProfileMatcher([onlineRule(() => ({ enabled: false, since: SINCE }))]);
+    expect(shouldFilterWebSocketFrame(frame("userDisconnected", "a"), off)).toBe(false);
+    expect(shouldFilterWebSocketFrame(frame("userRemoved", "a"), off)).toBe(false);
+  });
+
+  it("is saved with the other filters and gated off by the master switch", () => {
+    const parsed = parseProfileFilters({ online: { enabled: true, since: SINCE } });
+    expect(parsed.online).toEqual({ enabled: true, since: SINCE });
+    expect(parseProfileFilters({ online: { enabled: true } }).online).toEqual({
+      enabled: false,
+      since: null,
+    });
+    expect(gateProfileFilters(parsed, false).online).toEqual({ enabled: false, since: SINCE });
+  });
+});
+
+describe("unexpected profile shape", () => {
+  it("warns once per missing field, never for fields that are merely null", async () => {
+    vi.resetModules();
+    const { createProfileMatcher: create } = await import("./profile-filter.js");
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const full = (_id: string) => ({
+      _id,
+      data: {
+        connectUpdateTime: "2026-10-08T06:00:00Z",
+        profile: {
+          extended: { sexuality: { gender: null }, stats: { heightInCm: null, weightInKg: null } },
+        },
+      },
+    });
+    const matcher = create([]);
+    matcher.hidesProfile(full("ok"));
+    expect(warnSpy).not.toHaveBeenCalled();
+
+    matcher.hidesProfile({ _id: "a", data: { profile: {} } });
+    matcher.hidesProfile({ _id: "b", data: { profile: {} } });
+    const text = warnSpy.mock.calls.map((c) => c.join(" "));
+    expect(text).toHaveLength(4);
+    expect(text[0]).toContain("profile a has no data.connectUpdateTime");
+    warnSpy.mockRestore();
+  });
+});
+
+describe("unexpected payload shape", () => {
+  it("warns once per missing list or malformed frame", async () => {
+    vi.resetModules();
+    const hook = await import("./profile-filter-hook.js");
+    const { createProfileMatcher: create } = await import("./profile-filter.js");
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const matcher = create([]);
+    const texts = () => warnSpy.mock.calls.map((c) => c.join(" "));
+
+    hook.filterPostAuthenticationPayload(
+      { nearbyVisitors: { visitors: [] }, partialVisitorData: [] },
+      matcher,
+    );
+    hook.filterMessagesPayload({ messages: [], partialUsers: [] }, matcher);
+    expect(warnSpy).not.toHaveBeenCalled();
+
+    hook.filterPostAuthenticationPayload({}, matcher);
+    hook.filterPostAuthenticationPayload({}, matcher);
+    expect(texts()).toHaveLength(2);
+    expect(texts()[0]).toContain("no nearbyVisitors.visitors list");
+
+    const { genderRule: gender } = await import("./profile-filter.js");
+    const active = create([gender(() => ({ enabled: true, genders: ["female"] }))]);
+    hook.shouldFilterWebSocketFrame(JSON.stringify({ eventName: "userAwake", data: 5 }), active);
+    hook.shouldFilterWebSocketFrame(JSON.stringify({ eventName: "userJoined", data: {} }), active);
+    expect(texts()).toHaveLength(4);
+    expect(texts()[2]).toContain("userAwake frame has no string id");
+    warnSpy.mockRestore();
   });
 });

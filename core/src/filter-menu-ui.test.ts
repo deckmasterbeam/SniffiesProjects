@@ -36,6 +36,21 @@ const MENU_HTML = `
         ${statLine("sexuality.spectrum", "Sexuality", true)}
       </div>
     </smart-select-filter>
+    <ui-list-item-level-2>
+      <div class="list-item-level-2">
+        <div class="content">
+          <label for="CONNECTED_NOW" data-testid="connectedNowLabelundefined">
+            <i class="fa fa-md fa-plug leading-icon"></i>
+            <div class="content-details"><div class="details-title">
+              <p class="typography--body"> Cruising Now</p>
+            </div></div>
+          </label>
+        </div>
+        <div class="trailing">
+          <label class="switch filter-group"><input disabled="" type="checkbox" id="CONNECTED_NOW" /></label>
+        </div>
+      </div>
+    </ui-list-item-level-2>
     <filter-type-component _nghost-ng-c1="">
       <div>
         <div class="select-filter">
@@ -549,6 +564,117 @@ describe("installProfileFiltersMenu", () => {
       document.removeEventListener("click", outside);
       // Only the click that opened the sheet (inside Sniffies' menu) got through.
       expect(outside).toHaveBeenCalledOnce();
+    });
+  });
+
+  describe("last online", () => {
+    const NOW = new Date(2026, 9, 7, 23, 10).getTime();
+    const chipLabels = (): string[] =>
+      [...row("online").querySelectorAll<HTMLButtonElement>("button")]
+        .filter((b) => !b.hidden && !b.classList.contains("snp-filter-apply"))
+        .map((b) => b.textContent!);
+    const chip = (text: string): HTMLButtonElement =>
+      [...row("online").querySelectorAll("button")].find((b) => b.textContent === text)!;
+
+    beforeEach(() => {
+      vi.useFakeTimers({ toFake: ["Date"] });
+      vi.setSystemTime(NOW);
+    });
+    afterEach(() => vi.useRealTimers());
+
+    const toggle = (): HTMLInputElement =>
+      document.querySelector<HTMLInputElement>("#snp-online-filter-enabled")!;
+    const icon = (): HTMLElement => row("online").querySelector<HTMLElement>("label i")!;
+    const title = (): string => row("online").querySelector("p")!.textContent!.trim();
+
+    it("mounts right under Cruising Now, leaving its own switch alone", () => {
+      install(filters());
+      const cruising = document.querySelector("ui-list-item-level-2")!;
+      expect(cruising.nextElementSibling).toBe(row("online"));
+      expect(document.querySelectorAll("#CONNECTED_NOW")).toHaveLength(1);
+      expect(row("online").querySelector("label")?.hasAttribute("for")).toBe(false);
+      expect(row("online").querySelector("[data-testid]")).toBeNull();
+    });
+
+    it("offers the three presets inline with the title while empty, with its switch off", () => {
+      install(filters());
+      expect(title()).toBe("Last Online");
+      expect(chipLabels()).toEqual(["Now", "30 min", "1 hr"]);
+      // Same line as the title text, so the × never wraps below it.
+      expect(row("online").querySelector("p")!.parentElement).toBe(
+        row("online").querySelector(".snp-online-inline")!.parentElement,
+      );
+      expect(toggle().disabled).toBe(true);
+    });
+
+    it("fixes the cutoff when a preset is picked and shows it in the title", () => {
+      install(filters());
+      chip("1 hr").click();
+      expect(lastChange().online).toEqual({ enabled: true, since: NOW - 3_600_000 });
+      expect(title()).toBe("Last Online: 10:10 PM");
+      expect(chipLabels()).toEqual([]);
+      expect(icon().classList.contains("fa-times-circle")).toBe(true);
+      expect(icon().classList.contains("fa-clock")).toBe(false);
+      expect(toggle().checked).toBe(true);
+      expect(applyButton("online").hidden).toBe(false);
+    });
+
+    it("the switch turns the filter off and on without losing the cutoff", () => {
+      install(filters({ online: { enabled: true, since: NOW } }));
+      toggle().click();
+      expect(lastChange().online).toEqual({ enabled: false, since: NOW });
+      expect(title()).toBe("Last Online: 11:10 PM");
+      toggle().click();
+      expect(lastChange().online).toEqual({ enabled: true, since: NOW });
+    });
+
+    it("clearing empties and disables the filter", () => {
+      install(filters({ online: { enabled: true, since: NOW - 1_800_000 } }));
+      expect(chipLabels()).toEqual([]);
+      icon().click();
+      expect(lastChange().online).toEqual({ enabled: false, since: null });
+      expect(chipLabels()).toEqual(["Now", "30 min", "1 hr"]);
+      expect(toggle().disabled).toBe(true);
+      expect(icon().classList.contains("fa-clock")).toBe(true);
+      icon().click(); // nothing to clear, and it must not trigger the first chip
+      // Nor may a click on the label text.
+      row("online").querySelector("p")!.click();
+      expect(onChange).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("markup warnings", () => {
+    afterEach(() => vi.useRealTimers());
+
+    it("warns once when only one of Profile Type / Cruising Now stays in the menu", async () => {
+      vi.resetModules();
+      const { installProfileFiltersMenu: freshInstall } = await import("./filter-menu-ui.js");
+      vi.useFakeTimers();
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+      document.querySelector("ui-list-item-level-2")!.remove();
+      const off = freshInstall({ initial: filters(), applied: filters(), onChange });
+      document.body.append(document.createElement("div")); // any mutation
+      await vi.advanceTimersByTimeAsync(0);
+      expect(warnSpy).not.toHaveBeenCalled();
+      await vi.advanceTimersByTimeAsync(2500);
+      expect(warnSpy).toHaveBeenCalledTimes(1);
+      expect(warnSpy.mock.calls[0]!.join(" ")).toContain("Profile Type but not Cruising Now");
+      off();
+      warnSpy.mockRestore();
+    });
+
+    it("stays quiet when the menu isn't open at all", async () => {
+      vi.resetModules();
+      const { installProfileFiltersMenu: freshInstall } = await import("./filter-menu-ui.js");
+      vi.useFakeTimers();
+      const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+      document.body.innerHTML = "";
+      const off = freshInstall({ initial: filters(), applied: filters(), onChange });
+      document.body.append(document.createElement("div"));
+      await vi.advanceTimersByTimeAsync(5000);
+      expect(warnSpy).not.toHaveBeenCalled();
+      off();
+      warnSpy.mockRestore();
     });
   });
 });
