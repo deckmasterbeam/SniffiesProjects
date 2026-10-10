@@ -1,6 +1,6 @@
 {
   "name": "sniffies-notify-server",
-  "version": "0.3",
+  "version": "0.4",
   "private": true,
   "description": "Vercel function that sends an SMS via TextBelt on behalf of the Sniffies extension.",
   "type": "module",

@@ -6,7 +6,8 @@ Supported features:
 
 - Location spoofing
 - Bot reporting/blocking
-- Profile filters: Gender, Height, Weight and Last Online filters, and no cap on how many options you can pick in Sniffies' own Sexuality, Body Type and Position filters
+- New Profile filters: Gender, Height, Weight, and Last Online filters
+- Existing Profile filters: no cap on how many options you can pick in Sniffies' Sexuality, Body Type and Position filters
 
 ## Usage
 

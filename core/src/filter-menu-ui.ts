@@ -184,7 +184,7 @@ const buildOnlineRow = (
     });
     return chip;
   });
-  
+
   label.addEventListener("click", (event) => {
     if (!(event.target as Element).closest("button")) {
       event.preventDefault();
@@ -352,7 +352,9 @@ export const installProfileFiltersMenu = (options: ProfileFiltersMenuContract): 
     for (const sync of syncs.values()) {
       sync();
     }
-    void options.onChange(structuredClone(filters));
+    Promise.resolve(options.onChange(structuredClone(filters))).catch((error) => {
+      log.warn("couldn't save filters", error);
+    });
   };
 
   const build = (anchor: Element, row: Row): HTMLElement | null => {

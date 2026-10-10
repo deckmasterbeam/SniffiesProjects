@@ -18,13 +18,13 @@ A monorepo of tools to recreate and expand functionality for [sniffies.com](http
 
 | Filter       | What it does                                                                        | Chrome extension | Userscript | Bookmarklet |
 | ------------ | ----------------------------------------------------------------------------------- | ---------------- | ---------- | ----------- |
-| Gender       | New row with an on/off switch and Male / Female / Nonbinary / Not specified buttons | Yes              | Yes        | No          |
+| Gender       | New filter with: Male / Female / Nonbinary / Not specified buttons | Yes              | Yes        | No          |
 | Last Online  | Row under Cruising Now: Now / 30 min / 1 hr; people stay after going offline        | Yes              | Yes        | No          |
-| Height       | New line under Cruiser Stats that opens a min/max range sheet                       | Yes              | Yes        | No          |
-| Weight       | New line under Cruiser Stats that opens a min/max range sheet                       | Yes              | Yes        | No          |
-| Sexuality    | Sniffies' own filter; "Choose up to 3" raised to 99                                 | Yes              | Yes        | Yes         |
-| Body Type    | Sniffies' own filter; "Choose up to 3" raised to 99                                 | Yes              | Yes        | Yes         |
-| Position     | Sniffies' own filter; "Choose up to 4" raised to 99                                 | Yes              | Yes        | Yes         |
+| Height       | New filter under Cruiser Stats                   | Yes              | Yes        | No          |
+| Weight       | New filter under Cruiser Stats                 | Yes              | Yes        | No          |
+| Sexuality    | Choose any number of options                                 | Yes              | Yes        | Yes         |
+| Body Type    | Choose any number of options                                 | Yes              | Yes        | Yes         |
+| Position     | Choose any number of options                                 | Yes              | Yes        | Yes         |
 | Blocked bots | Hides confirmed bot accounts from the map, chat, and live updates                   | Yes              | Yes        | No          |
 
 Everything except Blocked bots is switched on by the "Profile Filters" section of the popup (Chrome extension) or panel (userscript, bookmarklet). It is off by default.

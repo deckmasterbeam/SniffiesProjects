@@ -26,7 +26,7 @@ Output goes to `dist/`.
 
 ## Environment variables
 
-| Variable         | Description                                                                 |
-| ---------------- | --------------------------------------------------------------------------- |
-| `SERVER_BASE`    | Base URL of the deployed server (no trailing slash)                         |
+| Variable         | Description                                                                     |
+| ---------------- | ------------------------------------------------------------------------------- |
+| `SERVER_BASE`    | Base URL of the deployed server (no trailing slash)                             |
 | `WATCHER_SECRET` | Bearer token for watcher-facing API endpoints. Keep private — never distribute. |

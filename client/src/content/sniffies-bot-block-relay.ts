@@ -43,7 +43,7 @@ const relay = (settings: ExtensionLocalSettings): void => {
 
   const effective = gateProfileFilters(stored, profileFiltersEnabled);
   appliedFilters ??= effective;
-  postState(blockedBots, botBlockingEnabled, effective, profileFiltersEnabled);
+  postState(blockedBots, botBlockingEnabled, appliedFilters, profileFiltersEnabled);
 
   if (profileFiltersEnabled && !removeFiltersMenu) {
     removeFiltersMenu = installProfileFiltersMenu({

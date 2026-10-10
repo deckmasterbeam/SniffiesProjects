@@ -86,7 +86,7 @@ describe("feature gate", () => {
     expect(body.error).toBe("not_found");
   });
 
-  it("returns 404 when SAVE_NUMBER_ENABLED is not exactly \"true\"", async () => {
+  it('returns 404 when SAVE_NUMBER_ENABLED is not exactly "true"', async () => {
     const { status, body } = await call({}, { SAVE_NUMBER_ENABLED: "1" });
     expect(status).toBe(404);
     expect(body.error).toBe("not_found");
