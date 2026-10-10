@@ -1,4 +1,4 @@
-const CITY_ENDPOINT_PATTERN = /\/api\/city\/[^/?]+/;
+import { CITY_ENDPOINT_PATTERN, type CityPayload } from "./sniffies-api.js";
 
 export const isCitySearchUrl = (url: string): boolean => CITY_ENDPOINT_PATTERN.test(url);
 
@@ -13,16 +13,15 @@ export const extractCitySearchResult = (body: unknown): CitySearchResult | null 
   if (!body || typeof body !== "object") {
     return null;
   }
-  const b = body as Record<string, unknown>;
-  const location = b.location as { coordinates?: unknown } | undefined;
-  const coords = location?.coordinates;
+  const typedBody = body as CityPayload;
+  const coords = typedBody.location?.coordinates;
   if (!Array.isArray(coords) || typeof coords[0] !== "number" || typeof coords[1] !== "number") {
     return null;
   }
   // GeoJSON Point order is [lng, lat].
-  const [longitude, latitude] = coords as [number, number];
-  const city = typeof b.city === "string" ? b.city : "";
-  const adminName = typeof b.admin_name === "string" ? b.admin_name : "";
+  const [longitude, latitude] = coords;
+  const city = typeof typedBody.city === "string" ? typedBody.city : "";
+  const adminName = typeof typedBody.admin_name === "string" ? typedBody.admin_name : "";
   const label = [city, adminName].filter(Boolean).join(", ") || undefined;
   return { latitude, longitude, label };
 };

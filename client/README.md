@@ -8,6 +8,8 @@ Supported features:
 - Opening profiles outside geofence
 - Profile online notification service _(in progress)_
 - Bot reporting and blocking _(in progress)_
+- New Profile filters: Gender, Height, Weight, Last Online filters
+- Existing Profile filters: no cap on how many options you can pick in Sniffies' Sexuality, Body Type and Position filters
 
 ## Building
 

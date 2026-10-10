@@ -115,7 +115,9 @@ describe("happy path", () => {
   });
 
   it("returns reported user ids from validated_reports", async () => {
-    const sqlFn = vi.fn().mockResolvedValue([{ reported_user_id: "abc" }, { reported_user_id: "def" }]);
+    const sqlFn = vi
+      .fn()
+      .mockResolvedValue([{ reported_user_id: "abc" }, { reported_user_id: "def" }]);
     mockNeon.mockReturnValue(sqlFn as unknown as ReturnType<typeof neon>);
     const { status, body } = await call();
     expect(status).toBe(200);

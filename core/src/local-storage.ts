@@ -26,3 +26,22 @@ export const getProfileBorderSectionOpen = (): boolean => {
 export const setProfileBorderSectionOpen = (open: boolean): void => {
   localStorage.setItem(PROFILE_BORDER_SECTION_OPEN_STORAGE_KEY, String(open));
 };
+
+const PROFILE_FILTERS_ENABLED_STORAGE_KEY = "sniffies-profile-filters-enabled";
+const PROFILE_FILTERS_SECTION_OPEN_STORAGE_KEY = "sniffies-profile-filters-section-open";
+
+export const getProfileFiltersEnabled = (): boolean => {
+  return localStorage.getItem(PROFILE_FILTERS_ENABLED_STORAGE_KEY) === "true";
+};
+
+export const setProfileFiltersEnabled = (enabled: boolean): void => {
+  localStorage.setItem(PROFILE_FILTERS_ENABLED_STORAGE_KEY, String(enabled));
+};
+
+export const getProfileFiltersSectionOpen = (): boolean => {
+  return localStorage.getItem(PROFILE_FILTERS_SECTION_OPEN_STORAGE_KEY) === "true";
+};
+
+export const setProfileFiltersSectionOpen = (open: boolean): void => {
+  localStorage.setItem(PROFILE_FILTERS_SECTION_OPEN_STORAGE_KEY, String(open));
+};

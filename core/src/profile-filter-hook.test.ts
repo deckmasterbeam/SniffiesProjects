@@ -1,12 +1,38 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { BotBlockState } from "./contracts.js";
+import {
+  botBlockRule,
+  createProfileMatcher,
+  gateProfileFilters,
+  genderRule,
+  onlineRule,
+  parseProfileFilters,
+  profileFilterRules,
+  type Gender,
+  type ProfileFilters,
+} from "./profile-filter.js";
 import {
   filterChatDataPayload,
   filterMessagesPayload,
   filterPostAuthenticationPayload,
-  installBotBlockHook,
+  installProfileFilterHook,
   shouldFilterWebSocketFrame,
-  type BotBlockState,
-} from "./bot-block-hook.js";
+} from "./profile-filter-hook.js";
+import type { SniffiesGender } from "./sniffies-api.js";
+
+const blocking = (ids: string[]) =>
+  createProfileMatcher([botBlockRule(() => ({ blockedIds: new Set(ids), enabled: true }))]);
+
+const allowingGenders = (genders: Gender[], enabled = true) =>
+  createProfileMatcher([genderRule(() => ({ enabled, genders }))]);
+
+const withGender = (_id: string, gender: SniffiesGender) => ({
+  _id,
+  data: { profile: { extended: { sexuality: { gender } } } },
+});
+
+const installBotBlockHook = (getState: () => BotBlockState, onFiltered?: (ids: string[]) => void) =>
+  installProfileFilterHook([botBlockRule(getState, onFiltered)]);
 
 const sniffiesPostAuth = "https://uswapi2.sniffies.com/api/post-authentication";
 
@@ -20,18 +46,18 @@ describe("filterPostAuthenticationPayload", () => {
       },
       partialVisitorData: [{ _id: "blocked1" }, { _id: "ok2" }],
     };
-    const result = filterPostAuthenticationPayload(payload, new Set(["blocked1"]));
+    const result = filterPostAuthenticationPayload(payload, blocking(["blocked1"]));
     expect(result.nearbyVisitors?.visitors).toEqual([{ _id: "ok1" }]);
     expect(result.partialVisitorData).toEqual([{ _id: "ok2" }]);
   });
 
   it("is a no-op when the blocklist is empty", () => {
     const payload = { nearbyVisitors: { visitors: [{ _id: "a" }] } };
-    expect(filterPostAuthenticationPayload(payload, new Set())).toBe(payload);
+    expect(filterPostAuthenticationPayload(payload, blocking([]))).toBe(payload);
   });
 
   it("tolerates missing fields", () => {
-    expect(filterPostAuthenticationPayload({}, new Set(["a"]))).toEqual({});
+    expect(filterPostAuthenticationPayload({}, blocking(["a"]))).toEqual({});
   });
 });
 
@@ -49,7 +75,7 @@ describe("filterChatDataPayload", () => {
       },
       partialVisitorData: [{ _id: "blocked1" }, { _id: "friend" }],
     };
-    const result = filterChatDataPayload(payload, new Set(["blocked1", "blocked2", "blocked3"]));
+    const result = filterChatDataPayload(payload, blocking(["blocked1", "blocked2", "blocked3"]));
     expect(result.conversationData?.conversations).toEqual([{ author1: "me", author2: "friend" }]);
     expect(result.conversationData?.userIds).toEqual(["friend"]);
     expect(result.partialVisitorData).toEqual([{ _id: "friend" }]);
@@ -57,7 +83,7 @@ describe("filterChatDataPayload", () => {
 
   it("is a no-op when the blocklist is empty", () => {
     const payload = { conversationData: { conversations: [{ participants: "a" }] } };
-    expect(filterChatDataPayload(payload, new Set())).toBe(payload);
+    expect(filterChatDataPayload(payload, blocking([]))).toBe(payload);
   });
 });
 
@@ -70,19 +96,207 @@ describe("filterMessagesPayload", () => {
       ],
       partialUsers: [{ _id: "blocked1" }, { _id: "me" }],
     };
-    const result = filterMessagesPayload(payload, new Set(["blocked1"]));
+    const result = filterMessagesPayload(payload, blocking(["blocked1"]));
     expect(result.messages).toEqual([{ author: "me", body: "hi" }]);
     expect(result.partialUsers).toEqual([{ _id: "me" }]);
   });
 
   it("is a no-op when the blocklist is empty", () => {
     const payload = { messages: [{ author: "a" }] };
-    expect(filterMessagesPayload(payload, new Set())).toBe(payload);
+    expect(filterMessagesPayload(payload, blocking([]))).toBe(payload);
+  });
+});
+
+describe("gender rule", () => {
+  it("removes profiles whose gender isn't allowed, treating null/missing as undefined", () => {
+    const payload = {
+      nearbyVisitors: {
+        visitors: [
+          withGender("m", "man"),
+          withGender("f", "woman"),
+          withGender("nb", "nonbinary"),
+          withGender("u", null),
+          { _id: "missing", data: { profile: { extended: {} } } },
+        ],
+      },
+    };
+    const ids = (allowed: Gender[]) =>
+      filterPostAuthenticationPayload(
+        structuredClone(payload),
+        allowingGenders(allowed),
+      ).nearbyVisitors?.visitors?.map((v) => v._id);
+    expect(ids(["female", "nonbinary"])).toEqual(["f", "nb"]);
+    expect(ids(["male"])).toEqual(["m"]);
+    expect(ids(["undefined"])).toEqual(["u", "missing"]);
+  });
+
+  it("is inactive when every gender (or, defensively, none) is allowed", () => {
+    expect(allowingGenders(["male", "female", "nonbinary", "undefined"]).isActive()).toBe(false);
+    expect(allowingGenders([]).isActive()).toBe(false);
+    expect(allowingGenders(["male"]).isActive()).toBe(true);
+  });
+
+  it("is inactive while switched off, whatever is selected", () => {
+    expect(allowingGenders(["male"], false).isActive()).toBe(false);
+  });
+
+  it("only hides map markers: chats, messages and their profile cards are left alone", () => {
+    const matcher = allowingGenders(["female"]);
+    const frame = (eventName: string, data: unknown) => JSON.stringify({ eventName, data });
+
+    const map = filterPostAuthenticationPayload(
+      {
+        nearbyVisitors: { visitors: [withGender("m", "man"), withGender("f", "woman")] },
+        partialVisitorData: [withGender("m", "man"), withGender("f", "woman")],
+      },
+      matcher,
+    );
+    expect(map.nearbyVisitors?.visitors).toEqual([withGender("f", "woman")]);
+    expect(map.partialVisitorData).toHaveLength(2);
+
+    const chatData = {
+      conversationData: {
+        conversations: [{ participants: "m" }, { participants: "f" }],
+        userIds: ["m", "f"],
+      },
+      partialVisitorData: [withGender("m", "man"), withGender("f", "woman")],
+    };
+    expect(filterChatDataPayload(structuredClone(chatData), matcher)).toEqual(chatData);
+
+    const thread = {
+      messages: [{ author: "m" }, { author: "f" }],
+      partialUsers: [withGender("m", "man")],
+    };
+    expect(filterMessagesPayload(structuredClone(thread), matcher)).toEqual(thread);
+
+    expect(shouldFilterWebSocketFrame(frame("newMsg", { message: { author: "m" } }), matcher)).toBe(
+      false,
+    );
+    expect(
+      shouldFilterWebSocketFrame(
+        frame("newConversation", { partialUser: withGender("m", "man") }),
+        matcher,
+      ),
+    ).toBe(false);
+    expect(shouldFilterWebSocketFrame(frame("userAwake", "m"), matcher)).toBe(true);
+    expect(matcher.flush()).toEqual([{ rule: "gender", ids: ["m"] }]);
+  });
+
+  it("remembers a userJoined profile for later id-only frames", () => {
+    const matcher = allowingGenders(["female"]);
+    const frame = (eventName: string, data: unknown) => JSON.stringify({ eventName, data });
+    expect(shouldFilterWebSocketFrame(frame("userAwake", "m"), matcher)).toBe(false);
+    expect(shouldFilterWebSocketFrame(frame("userJoined", withGender("m", "man")), matcher)).toBe(
+      true,
+    );
+    expect(shouldFilterWebSocketFrame(frame("userAwake", "m"), matcher)).toBe(true);
+    // userUpdated only carries changed fields — it must not be read as "gender undefined".
+    expect(
+      shouldFilterWebSocketFrame(
+        frame("userUpdated", { _id: "f", data: { profile: {} } }),
+        matcher,
+      ),
+    ).toBe(false);
+  });
+
+  it("never hides the logged-in user", () => {
+    const matcher = allowingGenders(["female"]);
+    matcher.setSelfId("me");
+    const payload = {
+      nearbyVisitors: { visitors: [withGender("me", "man"), withGender("m", "man")] },
+    };
+    const result = filterPostAuthenticationPayload(payload, matcher);
+    expect(result.nearbyVisitors?.visitors).toEqual([withGender("me", "man")]);
+  });
+
+  it("reports hidden ids to the rule that hid them, once per flush", () => {
+    const onBots = vi.fn();
+    const matcher = createProfileMatcher([
+      botBlockRule(() => ({ blockedIds: new Set(["bot"]), enabled: true }), onBots),
+      genderRule(() => ({ enabled: true, genders: ["female"] })),
+    ]);
+    filterPostAuthenticationPayload(
+      { nearbyVisitors: { visitors: [withGender("bot", "man"), withGender("m", "man")] } },
+      matcher,
+    );
+    expect(matcher.flush()).toEqual([
+      { rule: "bot-block", ids: ["bot"] },
+      { rule: "gender", ids: ["m"] },
+    ]);
+    expect(onBots).toHaveBeenCalledExactlyOnceWith(["bot"]);
+    expect(matcher.flush()).toEqual([]);
+  });
+});
+
+describe("height and weight rules", () => {
+  const withStats = (_id: string, heightInCm: number | null, weightInKg: number | null) => ({
+    _id,
+    data: { profile: { extended: { stats: { heightInCm, weightInKg } } } },
+  });
+  const visitors = [
+    withStats("short-light", 165, 60),
+    withStats("mid", 178, 75),
+    withStats("tall-heavy", 196, 110),
+    withStats("no-height", null, 75),
+    withStats("no-weight", 178, null),
+    { _id: "no-stats", data: { profile: { extended: {} } } },
+  ];
+  const shownWith = (overrides: Partial<ProfileFilters>, enabled = true) => {
+    const filters = gateProfileFilters({ ...parseProfileFilters(null), ...overrides }, enabled);
+    const matcher = createProfileMatcher(profileFilterRules(() => filters));
+    return filterPostAuthenticationPayload(
+      { nearbyVisitors: { visitors: structuredClone(visitors) } },
+      matcher,
+    ).nearbyVisitors?.visitors?.map((v) => v._id);
+  };
+  const all = visitors.map((v) => v._id);
+  const range = (
+    min: number | null,
+    max: number | null,
+    enabled = true,
+    includeUnspecified = false,
+  ) => ({ enabled, min, max, metric: true, includeUnspecified });
+
+  it("keeps only profiles inside the inclusive range, hiding ones that don't state a value", () => {
+    expect(shownWith({ height: range(178, 196) })).toEqual(["mid", "tall-heavy", "no-weight"]);
+    expect(shownWith({ weight: range(60, 75) })).toEqual(["short-light", "mid", "no-height"]);
+  });
+
+  it("keeps profiles that don't state a value when asked to include them", () => {
+    expect(shownWith({ height: range(178, 196, true, true) })).toEqual([
+      "mid",
+      "tall-heavy",
+      "no-height",
+      "no-weight",
+      "no-stats",
+    ]);
+    expect(shownWith({ weight: range(60, 75, true, true) })).toEqual([
+      "short-light",
+      "mid",
+      "no-height",
+      "no-weight",
+      "no-stats",
+    ]);
+  });
+
+  it("treats a missing bound as unbounded", () => {
+    expect(shownWith({ height: range(170, null) })).toEqual(["mid", "tall-heavy", "no-weight"]);
+    expect(shownWith({ weight: range(null, 75) })).toEqual(["short-light", "mid", "no-height"]);
+  });
+
+  it("combines with the other filters: a profile has to pass all of them", () => {
+    expect(shownWith({ height: range(170, null), weight: range(null, 100) })).toEqual(["mid"]);
+  });
+
+  it("hides nothing while off, without bounds, or with the master switch off", () => {
+    expect(shownWith({ height: range(178, 196, false) })).toEqual(all);
+    expect(shownWith({ height: range(null, null) })).toEqual(all);
+    expect(shownWith({ height: range(178, 196) }, false)).toEqual(all);
   });
 });
 
 describe("shouldFilterWebSocketFrame", () => {
-  const blocked = new Set(["blocked1"]);
+  const blocked = blocking(["blocked1"]);
 
   it("filters userJoined/userUpdated when data._id is blocked", () => {
     expect(
@@ -184,7 +398,7 @@ describe("shouldFilterWebSocketFrame", () => {
     expect(
       shouldFilterWebSocketFrame(
         JSON.stringify({ eventName: "userAwake", data: "blocked1" }),
-        new Set(),
+        blocking([]),
       ),
     ).toBe(false);
   });
@@ -499,6 +713,26 @@ describe("installBotBlockHook — XHR", () => {
     });
   });
 
+  it("filters the softReload (Cruise this area) response like the map init", () => {
+    installBotBlockHook(() => state);
+    const xhr = new window.XMLHttpRequest() as XMLHttpRequest & {
+      __setRawResponse: (t: string) => void;
+    };
+    xhr.open("POST", "https://uswapi.sniffies.com/api/softReload");
+    xhr.__setRawResponse(
+      JSON.stringify({
+        nearbyVisitors: { visitors: [{ _id: "blocked1" }, { _id: "ok1" }] },
+        partialVisitorData: [{ _id: "blocked1" }, { _id: "ok2" }],
+      }),
+    );
+    xhr.send();
+
+    expect(JSON.parse(xhr.responseText)).toEqual({
+      nearbyVisitors: { visitors: [{ _id: "ok1" }] },
+      partialVisitorData: [{ _id: "ok2" }],
+    });
+  });
+
   it("matches by path against any *.sniffies.com host, not a fixed hostname", () => {
     installBotBlockHook(() => state);
     const xhr = new window.XMLHttpRequest() as XMLHttpRequest & {
@@ -612,5 +846,130 @@ describe("installBotBlockHook — XHR", () => {
     expect(xhr.responseText).toBe(raw);
     expect(parseSpy).not.toHaveBeenCalled();
     parseSpy.mockRestore();
+  });
+});
+
+describe("online rule", () => {
+  const SINCE = Date.parse("2026-10-08T06:00:00Z");
+  const seenAt = (_id: string, connectUpdateTime?: string) => ({
+    _id,
+    data: { connectUpdateTime },
+  });
+  const matcher = () => createProfileMatcher([onlineRule(() => ({ enabled: true, since: SINCE }))]);
+  const frame = (eventName: string, data: unknown) => JSON.stringify({ eventName, data });
+
+  it("hides profiles last online before the cutoff, or with no time at all", () => {
+    const payload = {
+      nearbyVisitors: {
+        visitors: [
+          seenAt("recent", "2026-10-08T06:30:00Z"),
+          seenAt("exact", "2026-10-08T06:00:00Z"),
+          seenAt("old", "2026-10-08T05:59:59Z"),
+          seenAt("none"),
+        ],
+      },
+    };
+    const result = filterPostAuthenticationPayload(payload, matcher());
+    expect(result.nearbyVisitors?.visitors?.map((p) => p._id)).toEqual(["recent", "exact"]);
+  });
+
+  it("is inactive when disabled or empty", () => {
+    for (const filter of [
+      { enabled: false, since: SINCE },
+      { enabled: true, since: null },
+    ]) {
+      expect(createProfileMatcher([onlineRule(() => filter)]).isActive()).toBe(false);
+    }
+  });
+
+  it("lets a hidden account back in when a userUpdated frame shows it came online", () => {
+    const m = matcher();
+    expect(
+      shouldFilterWebSocketFrame(frame("userJoined", seenAt("a", "2026-10-08T05:00:00Z")), m),
+    ).toBe(true);
+    const update = { _id: "a", data: { connectUpdateTime: "2026-10-08T06:10:00Z", profile: {} } };
+    expect(shouldFilterWebSocketFrame(frame("userUpdated", update), m)).toBe(false);
+    expect(shouldFilterWebSocketFrame(frame("userAwake", "a"), m)).toBe(false);
+  });
+
+  it("swallows disconnects and removals so accounts that go offline after the cutoff stay on the map", () => {
+    const m = matcher();
+    shouldFilterWebSocketFrame(frame("userJoined", seenAt("a", "2026-10-08T06:10:00Z")), m);
+    expect(shouldFilterWebSocketFrame(frame("userDisconnected", "a"), m)).toBe(true);
+    expect(shouldFilterWebSocketFrame(frame("userDisconnected", "unseen"), m)).toBe(true);
+    expect(shouldFilterWebSocketFrame(frame("userRemoved", "a"), m)).toBe(true);
+    expect(shouldFilterWebSocketFrame(frame("userAwake", "a"), m)).toBe(false);
+    // Off, the app sees disconnects as usual.
+    const off = createProfileMatcher([onlineRule(() => ({ enabled: false, since: SINCE }))]);
+    expect(shouldFilterWebSocketFrame(frame("userDisconnected", "a"), off)).toBe(false);
+    expect(shouldFilterWebSocketFrame(frame("userRemoved", "a"), off)).toBe(false);
+  });
+
+  it("is saved with the other filters and gated off by the master switch", () => {
+    const parsed = parseProfileFilters({ online: { enabled: true, since: SINCE } });
+    expect(parsed.online).toEqual({ enabled: true, since: SINCE });
+    expect(parseProfileFilters({ online: { enabled: true } }).online).toEqual({
+      enabled: false,
+      since: null,
+    });
+    expect(gateProfileFilters(parsed, false).online).toEqual({ enabled: false, since: SINCE });
+  });
+});
+
+describe("unexpected profile shape", () => {
+  it("warns once per missing field, never for fields that are merely null", async () => {
+    vi.resetModules();
+    const { createProfileMatcher: create } = await import("./profile-filter.js");
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const full = (_id: string) => ({
+      _id,
+      data: {
+        connectUpdateTime: "2026-10-08T06:00:00Z",
+        profile: {
+          extended: { sexuality: { gender: null }, stats: { heightInCm: null, weightInKg: null } },
+        },
+      },
+    });
+    const matcher = create([]);
+    matcher.hidesProfile(full("ok"));
+    expect(warnSpy).not.toHaveBeenCalled();
+
+    matcher.hidesProfile({ _id: "a", data: { profile: {} } });
+    matcher.hidesProfile({ _id: "b", data: { profile: {} } });
+    const text = warnSpy.mock.calls.map((c) => c.join(" "));
+    expect(text).toHaveLength(4);
+    expect(text[0]).toContain("profile a has no data.connectUpdateTime");
+    warnSpy.mockRestore();
+  });
+});
+
+describe("unexpected payload shape", () => {
+  it("warns once per missing list or malformed frame", async () => {
+    vi.resetModules();
+    const hook = await import("./profile-filter-hook.js");
+    const { createProfileMatcher: create } = await import("./profile-filter.js");
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const matcher = create([]);
+    const texts = () => warnSpy.mock.calls.map((c) => c.join(" "));
+
+    hook.filterPostAuthenticationPayload(
+      { nearbyVisitors: { visitors: [] }, partialVisitorData: [] },
+      matcher,
+    );
+    hook.filterMessagesPayload({ messages: [], partialUsers: [] }, matcher);
+    expect(warnSpy).not.toHaveBeenCalled();
+
+    hook.filterPostAuthenticationPayload({}, matcher);
+    hook.filterPostAuthenticationPayload({}, matcher);
+    expect(texts()).toHaveLength(2);
+    expect(texts()[0]).toContain("no nearbyVisitors.visitors list");
+
+    const { genderRule: gender } = await import("./profile-filter.js");
+    const active = create([gender(() => ({ enabled: true, genders: ["female"] }))]);
+    hook.shouldFilterWebSocketFrame(JSON.stringify({ eventName: "userAwake", data: 5 }), active);
+    hook.shouldFilterWebSocketFrame(JSON.stringify({ eventName: "userJoined", data: {} }), active);
+    expect(texts()).toHaveLength(4);
+    expect(texts()[2]).toContain("userAwake frame has no string id");
+    warnSpy.mockRestore();
   });
 });

@@ -2,14 +2,48 @@ export type * from "./contracts.js";
 export type { GeoHookResult } from "./geo-hook.js";
 export { installGeoHook } from "./geo-hook.js";
 export { installUserIdHook } from "./user-id-hook.js";
-export type { BotBlockHookResult } from "./bot-block-hook.js";
+export type { ProfileFilterHookResult } from "./profile-filter-hook.js";
 export {
-  installBotBlockHook,
+  installProfileFilterHook,
   filterPostAuthenticationPayload,
   filterChatDataPayload,
   filterMessagesPayload,
   shouldFilterWebSocketFrame,
-} from "./bot-block-hook.js";
+} from "./profile-filter-hook.js";
+export type {
+  Gender,
+  GenderFilter,
+  OnlineFilter,
+  ProfileFilterRule,
+  ProfileFilters,
+  ProfileMatcher,
+  RangeFilter,
+} from "./profile-filter.js";
+export * from "./sniffies-api.js";
+export {
+  GENDERS,
+  botBlockRule,
+  createProfileMatcher,
+  DEFAULT_GENDER_FILTER,
+  DEFAULT_ONLINE_FILTER,
+  DEFAULT_PROFILE_FILTERS,
+  allowedGenders,
+  gateProfileFilters,
+  genderRule,
+  onlineRule,
+  parseGenderFilter,
+  parseProfileFilters,
+  profileFilterRules,
+  rangeRule,
+  profileGender,
+} from "./profile-filter.js";
+export { installProfileFiltersMenu } from "./filter-menu-ui.js";
+export { installSelectionLimitOverride } from "./selection-limit-hook.js";
+export {
+  PROFILE_FILTERS_HTML,
+  PROFILE_FILTERS_CSS,
+  wireProfileFiltersForm,
+} from "./profile-filters-ui.js";
 export type { BlockedBotDailyLog } from "./blocked-bot-log.js";
 export { recordBlockedBotIds, countDistinctBlockedBotsLast24h } from "./blocked-bot-log.js";
 export type { ProfileBorderHookResult } from "./profile-border-hook.js";
@@ -24,6 +58,10 @@ export {
   setProfileBorderOpen,
   getProfileBorderSectionOpen,
   setProfileBorderSectionOpen,
+  getProfileFiltersEnabled,
+  setProfileFiltersEnabled,
+  getProfileFiltersSectionOpen,
+  setProfileFiltersSectionOpen,
 } from "./local-storage.js";
 export { VERSION_BADGE_HTML, VERSION_BADGE_CSS, wireVersionBadge } from "./version-badge.js";
 export type { TravelClickArmer } from "./travel-capture-hook.js";
@@ -69,5 +107,8 @@ export {
   ICON_HOLDER_RIGHT_BOTTOM_SELECTOR,
   TRAVEL_HERE_BUTTON_SELECTOR,
   CITIES_INPUT_SELECTOR,
+  PROFILE_TYPE_FILTER_LABEL_SELECTOR,
+  CONNECTED_NOW_FILTER_LABEL_SELECTOR,
+  ENDOWMENT_FILTER_LABEL_SELECTOR,
 } from "./sniffies-selectors.js";
 export type { SniffiesSelectorName } from "./sniffies-selectors.js";

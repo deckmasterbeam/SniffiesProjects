@@ -12,6 +12,25 @@ A monorepo of tools to recreate and expand functionality for [sniffies.com](http
 
 - **Bot reporting/blocking** — Flag a profile as a suspected bot from its profile screen; confirmed reports get hidden from the map, chat, and live updates for everyone with blocking enabled.
 
+- **Profile filters** — Extra filters in the Cruisers section of Sniffies' Map Layers menu, and no cap on how many options you can pick in some of Sniffies' own.
+
+### Profile filter support
+
+| Filter       | What it does                                                                        | Chrome extension | Userscript | Bookmarklet |
+| ------------ | ----------------------------------------------------------------------------------- | ---------------- | ---------- | ----------- |
+| Gender       | New filter with: Male / Female / Nonbinary / Not specified buttons | Yes              | Yes        | No          |
+| Last Online  | Row under Cruising Now: Now / 30 min / 1 hr; people stay after going offline        | Yes              | Yes        | No          |
+| Height       | New filter under Cruiser Stats                   | Yes              | Yes        | No          |
+| Weight       | New filter under Cruiser Stats                 | Yes              | Yes        | No          |
+| Sexuality    | Choose any number of options                                 | Yes              | Yes        | Yes         |
+| Body Type    | Choose any number of options                                 | Yes              | Yes        | Yes         |
+| Position     | Choose any number of options                                 | Yes              | Yes        | Yes         |
+| Blocked bots | Hides confirmed bot accounts from the map, chat, and live updates                   | Yes              | Yes        | No          |
+
+Everything except Blocked bots is switched on by the "Profile Filters" section of the popup (Chrome extension) or panel (userscript, bookmarklet). It is off by default.
+
+Gender, Height, Weight, Last Online and Blocked bots work by filtering Sniffies' network responses as the page loads, which a bookmarklet is too late for. Changing them needs a page reload to take effect.
+
 ## Packages
 
 ### `client/` — Chrome Extension
@@ -47,7 +66,7 @@ Location spoofing packaged as a userscript for the [Userscripts](https://apps.ap
 
 ### `bookmarklet/` — iOS Safari Bookmarklet
 
-Reduced-feature version for iOS Safari with no app required. A bookmarklet can't hook the page's init behavior, so it supports opening profiles outside your boundary but not location spoofing or bot filtering — use the userscript for those.
+Reduced-feature version for iOS Safari with no app required. A bookmarklet can't hook the page's init behavior, so it supports opening profiles outside your boundary and the raised selection caps on Sniffies' own stat filters, but not location spoofing, bot filtering, or the Gender / Height / Weight / Last Online filters — use the userscript for those.
 
 **Install:** Create a Safari bookmark and replace its URL with the bookmarklet code from `bookmarklet/README.md`.
 

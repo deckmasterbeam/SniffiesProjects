@@ -4,6 +4,8 @@
     "build": "node scripts/build.mjs",
     "test": "node scripts/test-all.mjs",
     "install:all": "node scripts/install-all.mjs",
+    "format": "node scripts/format-all.mjs",
+    "format:check": "node scripts/format-all.mjs --check",
     "audit:all": "node scripts/audit-all.mjs",
     "db:check": "yarn --cwd server db:check"
   }

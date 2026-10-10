@@ -2,6 +2,8 @@ import {
   BlockedBotDailyLog,
   DEFAULT_GEO_OVERRIDE,
   GeoOverride,
+  parseProfileFilters,
+  ProfileFilters,
   recordBlockedBotIds,
 } from "@sniffies-projects/core";
 
@@ -12,6 +14,9 @@ const BLOCKED_BOTS_FETCHED_AT_STORAGE_KEY = "sniffies-blocked-bots-fetched-at";
 const BOT_BLOCKING_ENABLED_STORAGE_KEY = "sniffies-bot-blocking-enabled";
 const BOT_BLOCKING_SECTION_OPEN_STORAGE_KEY = "sniffies-bot-blocking-section-open";
 const BLOCKED_BOT_EVENTS_STORAGE_KEY = "sniffies-blocked-bot-events";
+const PROFILE_FILTERS_STORAGE_KEY = "sniffies-profile-filters";
+const PROFILE_FILTERS_ENABLED_STORAGE_KEY = "sniffies-profile-filters-enabled";
+const PROFILE_FILTERS_SECTION_OPEN_STORAGE_KEY = "sniffies-profile-filters-section-open";
 
 export const getGeoOverride = (): GeoOverride => {
   try {
@@ -84,4 +89,34 @@ export const getBlockedBotEventsByDay = (): BlockedBotDailyLog => {
 export const recordBlockedBotEvent = (ids: string[]): void => {
   const next = recordBlockedBotIds(getBlockedBotEventsByDay(), ids);
   localStorage.setItem(BLOCKED_BOT_EVENTS_STORAGE_KEY, JSON.stringify(next));
+};
+
+export const getProfileFilters = (): ProfileFilters => {
+  try {
+    return parseProfileFilters(
+      JSON.parse(localStorage.getItem(PROFILE_FILTERS_STORAGE_KEY) ?? "null"),
+    );
+  } catch {
+    return parseProfileFilters(null);
+  }
+};
+
+export const setProfileFilters = (next: ProfileFilters): void => {
+  localStorage.setItem(PROFILE_FILTERS_STORAGE_KEY, JSON.stringify(next));
+};
+
+export const getProfileFiltersEnabled = (): boolean => {
+  return localStorage.getItem(PROFILE_FILTERS_ENABLED_STORAGE_KEY) === "true";
+};
+
+export const setProfileFiltersEnabled = (enabled: boolean): void => {
+  localStorage.setItem(PROFILE_FILTERS_ENABLED_STORAGE_KEY, String(enabled));
+};
+
+export const getProfileFiltersSectionOpen = (): boolean => {
+  return localStorage.getItem(PROFILE_FILTERS_SECTION_OPEN_STORAGE_KEY) === "true";
+};
+
+export const setProfileFiltersSectionOpen = (open: boolean): void => {
+  localStorage.setItem(PROFILE_FILTERS_SECTION_OPEN_STORAGE_KEY, String(open));
 };
