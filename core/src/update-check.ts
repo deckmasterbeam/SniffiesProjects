@@ -6,6 +6,9 @@ export type ReleaseChannel = "chrome" | "userscript";
 
 const RELEASES_API = "https://api.github.com/repos/deckmasterbeam/SniffiesProjects/releases";
 
+const CACHE_KEY_PREFIX = "snp-latest-version-";
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+
 interface GitHubRelease {
   tag_name: string;
 }
@@ -25,12 +28,32 @@ export const isNewerVersion = (a: string, b: string): boolean => {
   return false;
 };
 
+const readCache = (channel: ReleaseChannel): string | null => {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY_PREFIX + channel);
+    const cached = raw ? (JSON.parse(raw) as { version: string; at: number }) : null;
+    return cached && Date.now() - cached.at < CACHE_TTL_MS ? cached.version : null;
+  } catch {
+    return null;
+  }
+};
+
+const writeCache = (channel: ReleaseChannel, version: string): void => {
+  try {
+    localStorage.setItem(CACHE_KEY_PREFIX + channel, JSON.stringify({ version, at: Date.now() }));
+  } catch {
+    // Storage unavailable — just skip caching.
+  }
+};
+
 /**
- * Fetches published GitHub releases and returns the newest version tagged
- * for `channel` (release tag `chrome-0.3` -> `"0.3"`), or null if none are
- * found or the request fails. Best-effort — never throws.
+ * Fetches published GitHub releases and returns the newest version tagged. A found version is cached for 24h
  */
 export const fetchLatestVersion = async (channel: ReleaseChannel): Promise<string | null> => {
+  const cachedVersion = readCache(channel);
+  if (cachedVersion !== null) {
+    return cachedVersion;
+  }
   const prefix = `${channel}-`;
   try {
     const res = await fetch(RELEASES_API, {
@@ -48,6 +71,9 @@ export const fetchLatestVersion = async (channel: ReleaseChannel): Promise<strin
       if (latest === null || isNewerVersion(latest, version)) {
         latest = version;
       }
+    }
+    if (latest !== null) {
+      writeCache(channel, latest);
     }
     return latest;
   } catch (err) {

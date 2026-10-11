@@ -1,0 +1,38 @@
+name: Release Bookmarklet
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+        working-directory: bookmarklet
+
+      - name: Build bookmarklet
+        run: yarn build
+        working-directory: bookmarklet
+
+      - name: Publish release
+        run: |
+          VERSION=$(node -p "require('./bookmarklet/package.json').version")
+          TAG="bookmarklet-$VERSION"
+          gh release delete "$TAG" --yes --cleanup-tag 2>/dev/null || true
+          gh release create "$TAG" \
+            --title "Bookmarklet v$VERSION" \
+            --notes "Automated build from [\`${GITHUB_SHA::7}\`](https://github.com/${{ github.repository }}/commit/${{ github.sha }})" \
+            bookmarklet/dist/inject.js
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

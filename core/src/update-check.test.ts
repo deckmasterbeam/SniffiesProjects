@@ -35,6 +35,7 @@ describe("fetchLatestVersion", () => {
   beforeEach(() => {
     fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
+    localStorage.clear();
   });
 
   afterEach(() => {
@@ -64,12 +65,44 @@ describe("fetchLatestVersion", () => {
   });
 });
 
+describe("fetchLatestVersion caching", () => {
+  let fetchMock: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    fetchMock = vi.fn().mockResolvedValue(releasesResponse(["chrome-0.3"]));
+    vi.stubGlobal("fetch", fetchMock);
+    localStorage.clear();
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
+
+  it("serves from cache within 24h and refetches after", async () => {
+    await fetchLatestVersion("chrome");
+    await fetchLatestVersion("chrome");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    vi.advanceTimersByTime(24 * 60 * 60 * 1000 + 1);
+    await fetchLatestVersion("chrome");
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not cache failures", async () => {
+    fetchMock.mockRejectedValueOnce(new Error("down"));
+    await expect(fetchLatestVersion("chrome")).resolves.toBeNull();
+    await expect(fetchLatestVersion("chrome")).resolves.toBe("0.3");
+  });
+});
+
 describe("isUpdateAvailable", () => {
   let fetchMock: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
+    localStorage.clear();
   });
 
   afterEach(() => {
