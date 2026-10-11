@@ -1,19 +1,22 @@
 import {
+  BOT_BLOCK_CSS,
+  BOT_BLOCK_HTML,
+  countDistinctBlockedBotsLast24h,
+  createLogger,
   DEFAULT_GEO_OVERRIDE,
   DEFAULT_PROFILE_BORDER_OPEN,
   GEO_OVERRIDE_CSS,
   GEO_OVERRIDE_HTML,
   PROFILE_BORDER_CSS,
   PROFILE_BORDER_HTML,
-  wireGeoOverrideForm,
+  UPDATE_BANNER_CSS,
+  UPDATE_BANNER_HTML,
   VERSION_BADGE_CSS,
   VERSION_BADGE_HTML,
+  wireUpdateBanner,
   wireVersionBadge,
+  wireGeoOverrideForm,
   wireProfileBorderForm,
-  createLogger,
-  countDistinctBlockedBotsLast24h,
-  BOT_BLOCK_HTML,
-  BOT_BLOCK_CSS,
   wireBotBlockForm,
   PROFILE_FILTERS_HTML,
   PROFILE_FILTERS_CSS,
@@ -57,6 +60,10 @@ const versionStyle = document.createElement("style");
 versionStyle.textContent = VERSION_BADGE_CSS;
 document.head.appendChild(versionStyle);
 
+const updateBannerStyle = document.createElement("style");
+updateBannerStyle.textContent = UPDATE_BANNER_CSS;
+document.head.appendChild(updateBannerStyle);
+
 // ── Element references ────────────────────────────────────────────────────────
 
 const favoritesDetails = document.getElementById("favorites-details") as HTMLDetailsElement | null;
@@ -76,6 +83,10 @@ const init = async (): Promise<void> => {
   const versionRoot = document.getElementById("snp-version-root")!;
   versionRoot.innerHTML = VERSION_BADGE_HTML;
   wireVersionBadge(versionRoot, chrome.runtime.getManifest().version);
+
+  const updateRoot = document.getElementById("snp-update-root")!;
+  updateRoot.innerHTML = UPDATE_BANNER_HTML;
+  wireUpdateBanner(updateRoot, "chrome", chrome.runtime.getManifest().version);
 
   // Geo form — inject HTML from core and wire up logic
   const geoRoot = document.getElementById("snp-geo-root")!;

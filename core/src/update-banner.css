@@ -1,0 +1,18 @@
+.snp-update-banner {
+  margin: 8px 0;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: #4a2a00;
+  color: #ffcf8a;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.snp-update-banner[hidden] {
+  display: none;
+}
+
+.snp-update-banner a {
+  color: #ffe1b0;
+  font-weight: 600;
+}

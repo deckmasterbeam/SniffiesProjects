@@ -30,6 +30,9 @@ import {
   wireProfileBorderForm,
   wireProfileFiltersForm,
   wireVersionBadge,
+  UPDATE_BANNER_CSS,
+  UPDATE_BANNER_HTML,
+  wireUpdateBanner,
   type LocationOverrideController,
   type ProfileBorderOpen,
 } from "@sniffies-projects/core";
@@ -155,6 +158,10 @@ export function mountUI(state: HookState | null): void {
   versionStyle.textContent = VERSION_BADGE_CSS;
   document.head.appendChild(versionStyle);
 
+  const updateBannerStyle = document.createElement("style");
+  updateBannerStyle.textContent = UPDATE_BANNER_CSS;
+  document.head.appendChild(updateBannerStyle);
+
   const fab = document.createElement("button");
   fab.id = "snp-fab";
   fab.title = "Sniffies Tools";
@@ -174,6 +181,10 @@ export function mountUI(state: HookState | null): void {
   const versionRoot = panel.querySelector<HTMLElement>("#snp-version-root")!;
   versionRoot.innerHTML = VERSION_BADGE_HTML;
   wireVersionBadge(versionRoot, VERSION);
+
+  const updateRoot = panel.querySelector<HTMLElement>("#snp-update-root")!;
+  updateRoot.innerHTML = UPDATE_BANNER_HTML;
+  wireUpdateBanner(updateRoot, "userscript", VERSION);
 
   const geoRoot = panel.querySelector<HTMLElement>("#snp-geo-root")!;
   geoRoot.innerHTML = GEO_OVERRIDE_HTML;

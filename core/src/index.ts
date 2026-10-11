@@ -53,6 +53,9 @@ export { GEO_OVERRIDE_HTML, GEO_OVERRIDE_CSS, wireGeoOverrideForm } from "./geo-
 export type { GeoOverrideFormHandle } from "./geo-override-ui.js";
 export { mountFab } from "./mount-fab.js";
 export { default as PANEL_CSS } from "./panel.css";
+export type { ReleaseChannel } from "./update-check.js";
+export { isNewerVersion, fetchLatestVersion, isUpdateAvailable } from "./update-check.js";
+export { UPDATE_BANNER_HTML, UPDATE_BANNER_CSS, wireUpdateBanner } from "./update-banner.js";
 export {
   getProfileBorderOpen,
   setProfileBorderOpen,

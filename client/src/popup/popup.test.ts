@@ -16,6 +16,7 @@ const POPUP_HTML = `
       </label>
     </div>
   </details>
+  <div id="snp-update-root"></div>
   <div id="snp-geo-root"></div>
   <div id="snp-profile-border-root"></div>
   <div id="snp-bot-block-root"></div>
