@@ -11,6 +11,8 @@ import {
   getProfileBorderOpen,
   getProfileBorderSectionOpen,
   hasCapturedCoords,
+  installHidePhotoClick,
+  installSentPhotoHider,
   installProfileFiltersMenu,
   installSelectionLimitOverride,
   installLocationOverrideController,
@@ -87,6 +89,7 @@ function installHooks(): HookState {
   });
   refreshBlockedBotsIfStale(reportState);
   installSelectionLimitOverride(getProfileFiltersEnabled);
+  installHidePhotoClick(installSentPhotoHider(() => reportState.currentSniffiesUserId));
 
   const geoController = installLocationOverrideController({
     initialOverride: getGeoOverride(),

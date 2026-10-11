@@ -24,6 +24,10 @@ export const SNIFFIES_SELECTORS = {
   CONNECTED_NOW_FILTER_LABEL_SELECTOR: 'label[for="CONNECTED_NOW"]',
   /** "Endowment" line under Cruiser Stats in the stats menu. Height and Weight lines mount after it. */
   ENDOWMENT_FILTER_LABEL_SELECTOR: 'label[for="stats.endowment"]',
+  /** Sniffies' own "Hide Photo" tooltip button on a sent chat photo (paywalled for free users). */
+  HIDE_PHOTO_BUTTON_SELECTOR: '[aria-label="Hide Photo"]',
+  /** A photo message in a chat. Holds the photo container, whose id is `message-<message _id>`. */
+  PHOTO_MESSAGE_SELECTOR: "chat-photo-message",
 } as const;
 
 export type SniffiesSelectorName = keyof typeof SNIFFIES_SELECTORS;
@@ -41,4 +45,6 @@ export const {
   PROFILE_TYPE_FILTER_LABEL_SELECTOR,
   CONNECTED_NOW_FILTER_LABEL_SELECTOR,
   ENDOWMENT_FILTER_LABEL_SELECTOR,
+  HIDE_PHOTO_BUTTON_SELECTOR,
+  PHOTO_MESSAGE_SELECTOR,
 } = SNIFFIES_SELECTORS;

@@ -57,6 +57,47 @@ manually/on a schedule, not on every push, since it needs a live site + a real a
 
 ---
 
+## 0c. Full mocked Sniffies (HAR-based) — default target for most e2e tests
+
+Direction: two suites with separate jobs.
+
+- **Mocked suite (default, automated):** a mocked Sniffies that replays a captured HAR. Tests every
+  feature end to end with no human interaction, no live site, no real account — safe to run on every
+  push / in CI. Most tests (§1–§7, §10–§11) live here.
+- **Live suite (manual, drift check):** the existing §0b suite against real sniffies.com, with the
+  human-authenticated session reused across tests. Run by hand to check that the real API
+  calls/responses and DOM anchors still match what the mock assumes. Not gating, not in CI.
+
+This extends the existing `e2e/fixtures/sniffies-mock.html` + `server-mocks.ts` approach rather
+than replacing it.
+
+- [ ] **Sanitized HAR fixture** — strip auth tokens, cookies, and real user ids/photos/messages from
+      a captured HAR and commit the result. Never commit a raw capture.
+- [ ] **HTTP replay** — `context.route` serving the sanitized HAR's API responses by path only (not
+      hostname — the API host has changed before). Playwright's `routeFromHAR` is the starting
+      point, but ids/timestamps will need templating so tests can control the data (e.g. "this
+      visitor is a blocked bot").
+- [ ] **WebSocket replay** — `page.routeWebSocket` to push frames (`userJoined`, `newMsg`,
+      `newConversation`, …) on demand; also covers the "Fake XHR/WS endpoints for bot-block-hook.ts"
+      item in §0.
+- [ ] **Page/DOM layer** — decide how far to go: keep the hand-built `sniffies-mock.html` (cheap,
+      covers the selectors in `e2e/site-contract.ts`), or serve real captured page HTML/JS so
+      Sniffies' own handlers (e.g. the paywall click handler) run for real. The second is higher
+      fidelity but pulls in third-party scripts that may break offline.
+- [ ] **Fixture builder API** — small helpers like `mockSniffies({ visitors, blockedIds, chats })`
+      so tests describe data, not raw HAR entries.
+- [ ] **Keep the mock honest (manual)** — extend the live canary to diff real responses/DOM against
+      the mock's assumptions (builds on `e2e/scripts/check-har-schema.mjs` and `site-contract.ts`);
+      when it fails, refresh the HAR and re-sanitize. Run by hand, never as part of the automated
+      suite.
+- [ ] **Separate the two suites in config** — mocked tests in their own Playwright project with no
+      dependency on the `setup` (manual login) project; live tests stay behind `setup`. A plain
+      `npm test` runs only the mocked project.
+- [ ] **Migrate tests** — move §1–§7 and §10–§11 tests onto the mock; keep only the live-only
+      scenarios on the shared-token suite (state which ones in each test's header comment).
+
+---
+
 ## 1. Geo override (location spoofing) — `core/src/geo-hook.ts`
 
 - [ ] Enabling override in popup/panel makes `getCurrentPosition` return the spoofed coords on the

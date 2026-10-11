@@ -36,6 +36,7 @@ const tsEntries = [
   "src/content/sniffies-user-id-relay.ts",
   "src/content/sniffies-bot-block-hook.ts",
   "src/content/sniffies-bot-block-relay.ts",
+  "src/content/sniffies-photos-hook.ts",
   "src/popup/popup.ts",
   "src/options/options.ts",
   "src/settings/settings.ts",

@@ -71,6 +71,13 @@
       "matches": ["*://sniffies.com/*", "*://*.sniffies.com/*"],
       "js": ["src/content/sniffies-bot-block-relay.js"],
       "run_at": "document_start"
+    },
+    {
+      "matches": ["*://sniffies.com/*", "*://*.sniffies.com/*"],
+      "js": ["src/content/sniffies-photos-hook.js"],
+      "run_at": "document_start",
+      "world": "MAIN",
+      "all_frames": true
     }
   ],
   "options_page": "src/options/options.html",

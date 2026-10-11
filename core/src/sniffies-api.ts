@@ -74,7 +74,11 @@ export interface ChatDataPayload {
 export const MESSAGES_PATH = "/api/messages";
 
 export interface Message {
+  _id?: string;
   author?: string;
+  /** Filename of the attached photo; null/absent on text messages. */
+  file?: string | null;
+  isHidden?: boolean;
   [key: string]: unknown;
 }
 
@@ -82,6 +86,19 @@ export interface MessagesPayload {
   messages?: Message[];
   partialUsers?: FilterableProfile[];
   [key: string]: unknown;
+}
+
+/** POST — hides (or un-hides) one photo message, per photo. Responds `true`. */
+export const PHOTO_VISIBILITY_PATH = "/api/messages/photo-visibility";
+
+export interface PhotoVisibilityBody {
+  conversationId: string;
+  conversationLocation: null;
+  userIdFrom: string;
+  userIdTo: string;
+  messageId: string;
+  isHidden: boolean;
+  file: null;
 }
 
 // ── Location endpoints ───────────────────────────────────────────────────────
@@ -144,8 +161,4 @@ export interface NewConversationFrame {
 }
 
 export type SniffiesWsFrame =
-  | UserJoinedFrame
-  | UserUpdatedFrame
-  | UserPresenceFrame
-  | NewMsgFrame
-  | NewConversationFrame;
+  UserJoinedFrame | UserUpdatedFrame | UserPresenceFrame | NewMsgFrame | NewConversationFrame;
