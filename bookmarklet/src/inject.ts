@@ -11,6 +11,12 @@ import {
   installSelectionLimitOverride,
   mountFab,
   PANEL_CSS,
+  UPDATE_BANNER_CSS,
+  UPDATE_BANNER_HTML,
+  VERSION_BADGE_CSS,
+  VERSION_BADGE_HTML,
+  wireVersionBadge,
+  wireUpdateBanner,
   PROFILE_BORDER_CSS,
   PROFILE_BORDER_HTML,
   PROFILE_FILTERS_CSS,
@@ -54,6 +60,14 @@ function main(): void {
   shellStyle.textContent = PANEL_CSS;
   document.head.appendChild(shellStyle);
 
+  const versionStyle = document.createElement("style");
+  versionStyle.textContent = VERSION_BADGE_CSS;
+  document.head.appendChild(versionStyle);
+
+  const updateBannerStyle = document.createElement("style");
+  updateBannerStyle.textContent = UPDATE_BANNER_CSS;
+  document.head.appendChild(updateBannerStyle);
+
   const profileBorderStyle = document.createElement("style");
   profileBorderStyle.textContent = PROFILE_BORDER_CSS;
   document.head.appendChild(profileBorderStyle);
@@ -79,6 +93,14 @@ function main(): void {
   panel.style.display = "none";
   panel.innerHTML = PANEL_HTML;
   document.body.appendChild(panel);
+
+  const versionRoot = panel.querySelector<HTMLElement>("#snp-version-root")!;
+  versionRoot.innerHTML = VERSION_BADGE_HTML;
+  wireVersionBadge(versionRoot, __VERSION__);
+
+  const updateRoot = panel.querySelector<HTMLElement>("#snp-update-root")!;
+  updateRoot.innerHTML = UPDATE_BANNER_HTML;
+  wireUpdateBanner(updateRoot, "bookmarklet", __VERSION__);
 
   const profileBorderRoot = panel.querySelector<HTMLElement>("#snp-profile-border-root")!;
   profileBorderRoot.innerHTML = PROFILE_BORDER_HTML;

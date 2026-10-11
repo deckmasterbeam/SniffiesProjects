@@ -2,7 +2,7 @@ import { createLogger } from "./log.js";
 
 const log = createLogger("update-check");
 
-export type ReleaseChannel = "chrome" | "userscript";
+export type ReleaseChannel = "chrome" | "userscript" | "bookmarklet";
 
 const RELEASES_API = "https://api.github.com/repos/deckmasterbeam/SniffiesProjects/releases";
 

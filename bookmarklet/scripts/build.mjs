@@ -9,6 +9,8 @@ const root = resolve(__dirname, "..");
 const distDir = join(root, "dist");
 const watch = process.argv.includes("--watch");
 
+const pkg = JSON.parse(await readFile(join(root, "package.json"), "utf8"));
+
 const buildOptions = {
   entryPoints: [join(root, "src/inject.ts")],
   outfile: join(distDir, "inject.js"),
@@ -28,6 +30,7 @@ const buildOptions = {
   },
   define: {
     __DEBUG__: String(process.env.DEBUG === "true"),
+    __VERSION__: JSON.stringify(pkg.version),
   },
 };
 

@@ -23,6 +23,7 @@ export default defineConfig({
   },
   define: {
     __DEBUG__: "false",
+    __VERSION__: JSON.stringify("0.0.0-test"),
   },
   test: {
     environment: "jsdom",
