@@ -16,6 +16,7 @@ beforeEach(() => {
   document.body.appendChild(container);
   fetchMock = vi.fn();
   vi.stubGlobal("fetch", fetchMock);
+  localStorage.clear();
 });
 
 afterEach(() => {
