@@ -12,25 +12,34 @@ import {
   UPDATE_BANNER_CSS,
   UPDATE_BANNER_HTML,
   VERSION_BADGE_CSS,
-  wireBotBlockForm,
-  wireGeoOverrideForm,
-  wireProfileBorderForm,
+  VERSION_BADGE_HTML,
   wireUpdateBanner,
   wireVersionBadge,
+  wireGeoOverrideForm,
+  wireProfileBorderForm,
+  wireBotBlockForm,
+  PROFILE_FILTERS_HTML,
+  PROFILE_FILTERS_CSS,
+  wireProfileFiltersForm,
 } from "@sniffies-projects/core";
-import { FAVORITES_NOTIFICATIONS_ENABLED, REPORTING_ENABLED } from "../shared/env.js";
+import { DEBUG, FAVORITES_NOTIFICATIONS_ENABLED, REPORTING_ENABLED } from "../shared/env.js";
 import {
   getLocalSettings,
   setBotBlockingEnabled,
+  setBotBlockingSectionOpen,
   setFavoritesEnabled,
+  setFavoritesSectionOpen,
   setGeoOverride,
+  setGeoSectionOpen,
   setProfileBorderOpen,
-  SETTINGS_KEYS,
+  setProfileBorderSectionOpen,
+  setProfileFiltersEnabled,
+  setProfileFiltersSectionOpen,
 } from "../shared/settings.js";
 
 const log = createLogger("popup");
 
-// Inject geo form, profile border form, bot-block form, and version badge styles from core
+// Inject geo form, profile border form, bot-block form, profile filters form, and version badge styles from core
 const geoStyle = document.createElement("style");
 geoStyle.textContent = GEO_OVERRIDE_CSS;
 document.head.appendChild(geoStyle);
@@ -42,6 +51,10 @@ document.head.appendChild(profileBorderStyle);
 const botBlockStyle = document.createElement("style");
 botBlockStyle.textContent = BOT_BLOCK_CSS;
 document.head.appendChild(botBlockStyle);
+
+const profileFiltersStyle = document.createElement("style");
+profileFiltersStyle.textContent = PROFILE_FILTERS_CSS;
+document.head.appendChild(profileFiltersStyle);
 
 const versionStyle = document.createElement("style");
 versionStyle.textContent = VERSION_BADGE_CSS;
@@ -55,22 +68,25 @@ document.head.appendChild(updateBannerStyle);
 
 const favoritesDetails = document.getElementById("favorites-details") as HTMLDetailsElement | null;
 const favoritesEnabledCheckbox = document.getElementById("favorites-enabled") as HTMLInputElement;
-const favoritesHint = document.getElementById("favorites-hint");
-const favoritesEnableLabel = document.getElementById("favorites-enable-label");
 
 const openSettingsBtn = document.getElementById("open-settings");
+// The settings page is a debug tool.
+if (!DEBUG && openSettingsBtn) {
+  openSettingsBtn.style.display = "none";
+}
 
 // ── Init ─────────────────────────────────────────────────────────────────────
 
 const init = async (): Promise<void> => {
   const settings = await getLocalSettings();
 
-  const version = chrome.runtime.getManifest().version;
-  wireVersionBadge(document.body, version);
+  const versionRoot = document.getElementById("snp-version-root")!;
+  versionRoot.innerHTML = VERSION_BADGE_HTML;
+  wireVersionBadge(versionRoot, chrome.runtime.getManifest().version);
 
   const updateRoot = document.getElementById("snp-update-root")!;
   updateRoot.innerHTML = UPDATE_BANNER_HTML;
-  wireUpdateBanner(updateRoot, "chrome", version);
+  wireUpdateBanner(updateRoot, "chrome", chrome.runtime.getManifest().version);
 
   // Geo form — inject HTML from core and wire up logic
   const geoRoot = document.getElementById("snp-geo-root")!;
@@ -78,10 +94,10 @@ const init = async (): Promise<void> => {
   wireGeoOverrideForm(geoRoot, {
     initial: { ...DEFAULT_GEO_OVERRIDE, ...settings.geoOverride },
     onSave: setGeoOverride,
-    getNativePosition: navigator.geolocation.getCurrentPosition.bind(navigator.geolocation),
+    onClear: setGeoOverride,
     initialOpen: settings.geoSectionOpen,
     onToggle: (open) => {
-      void chrome.storage.local.set({ [SETTINGS_KEYS.geoSectionOpen]: open });
+      void setGeoSectionOpen(open);
     },
   });
 
@@ -93,7 +109,7 @@ const init = async (): Promise<void> => {
     onSave: setProfileBorderOpen,
     initialOpen: settings.profileBorderSectionOpen,
     onToggle: (open) => {
-      void chrome.storage.local.set({ [SETTINGS_KEYS.profileBorderSectionOpen]: open });
+      void setProfileBorderSectionOpen(open);
     },
   });
 
@@ -102,13 +118,9 @@ const init = async (): Promise<void> => {
     favoritesDetails.open = settings.favoritesSectionOpen;
   }
   if (!FAVORITES_NOTIFICATIONS_ENABLED) {
-    favoritesEnabledCheckbox.checked = false;
-    favoritesEnabledCheckbox.disabled = true;
-    if (favoritesHint) {
-      favoritesHint.textContent = "Coming soon!";
-    }
-    if (favoritesEnableLabel) {
-      favoritesEnableLabel.style.textDecoration = "line-through";
+    // style.display rather than `hidden`: details.collapsible sets display: block.
+    if (favoritesDetails) {
+      favoritesDetails.style.display = "none";
     }
   } else {
     favoritesEnabledCheckbox.checked = settings.favoritesEnabled;
@@ -119,20 +131,32 @@ const init = async (): Promise<void> => {
   botBlockRoot.innerHTML = BOT_BLOCK_HTML;
   wireBotBlockForm(botBlockRoot, {
     reportingEnabled: REPORTING_ENABLED,
-    initialEnabled: settings.botBlockingEnabled,
+    userEnabledReporting: settings.botBlockingEnabled,
     initialCount: countDistinctBlockedBotsLast24h(settings.blockedBotEventsByDay),
     initialOpen: settings.botBlockingSectionOpen,
     onToggle: (open) => {
-      void chrome.storage.local.set({ [SETTINGS_KEYS.botBlockingSectionOpen]: open });
+      void setBotBlockingSectionOpen(open);
     },
     onToggleEnabled: setBotBlockingEnabled,
+  });
+
+  // Profile filters form — inject HTML from core and wire up logic
+  const profileFiltersRoot = document.getElementById("snp-profile-filters-root")!;
+  profileFiltersRoot.innerHTML = PROFILE_FILTERS_HTML;
+  wireProfileFiltersForm(profileFiltersRoot, {
+    initialEnabled: settings.profileFiltersEnabled,
+    onToggleEnabled: setProfileFiltersEnabled,
+    initialOpen: settings.profileFiltersSectionOpen,
+    onToggle: (open) => {
+      void setProfileFiltersSectionOpen(open);
+    },
   });
 };
 
 // ── Event listeners ───────────────────────────────────────────────────────────
 
 favoritesDetails?.addEventListener("toggle", () => {
-  void chrome.storage.local.set({ [SETTINGS_KEYS.favoritesSectionOpen]: favoritesDetails.open });
+  void setFavoritesSectionOpen(favoritesDetails.open);
 });
 
 favoritesEnabledCheckbox.addEventListener("change", () => {

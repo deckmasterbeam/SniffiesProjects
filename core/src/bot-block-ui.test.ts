@@ -26,7 +26,7 @@ describe("wireBotBlockForm", () => {
     it("disables the toggle and shows 'Coming soon!'", () => {
       wireBotBlockForm(container, {
         reportingEnabled: false,
-        initialEnabled: true,
+        userEnabledReporting: true,
         initialCount: 0,
         initialOpen: false,
         onToggle: () => {},
@@ -40,7 +40,7 @@ describe("wireBotBlockForm", () => {
     it("strikes through the enable label", () => {
       wireBotBlockForm(container, {
         reportingEnabled: false,
-        initialEnabled: true,
+        userEnabledReporting: true,
         initialCount: 0,
         initialOpen: false,
         onToggle: () => {},
@@ -54,7 +54,7 @@ describe("wireBotBlockForm", () => {
     it("reflects the enabled flag", () => {
       wireBotBlockForm(container, {
         reportingEnabled: true,
-        initialEnabled: true,
+        userEnabledReporting: true,
         initialCount: 0,
         initialOpen: false,
         onToggle: () => {},
@@ -66,7 +66,7 @@ describe("wireBotBlockForm", () => {
     it("shows the blocked count when positive", () => {
       wireBotBlockForm(container, {
         reportingEnabled: true,
-        initialEnabled: true,
+        userEnabledReporting: true,
         initialCount: 3,
         initialOpen: false,
         onToggle: () => {},
@@ -80,7 +80,7 @@ describe("wireBotBlockForm", () => {
     it("uses singular phrasing for a count of 1", () => {
       wireBotBlockForm(container, {
         reportingEnabled: true,
-        initialEnabled: true,
+        userEnabledReporting: true,
         initialCount: 1,
         initialOpen: false,
         onToggle: () => {},
@@ -94,7 +94,7 @@ describe("wireBotBlockForm", () => {
     it("leaves the count empty when zero", () => {
       wireBotBlockForm(container, {
         reportingEnabled: true,
-        initialEnabled: true,
+        userEnabledReporting: true,
         initialCount: 0,
         initialOpen: false,
         onToggle: () => {},
@@ -109,7 +109,7 @@ describe("wireBotBlockForm", () => {
       const onToggleEnabled = vi.fn();
       wireBotBlockForm(container, {
         reportingEnabled: true,
-        initialEnabled: true,
+        userEnabledReporting: true,
         initialCount: 0,
         initialOpen: false,
         onToggle: () => {},
@@ -126,7 +126,7 @@ describe("wireBotBlockForm", () => {
     it("sets details.open from initialOpen", () => {
       wireBotBlockForm(container, {
         reportingEnabled: true,
-        initialEnabled: true,
+        userEnabledReporting: true,
         initialCount: 0,
         initialOpen: true,
         onToggle: () => {},
@@ -139,7 +139,7 @@ describe("wireBotBlockForm", () => {
       const onToggle = vi.fn();
       wireBotBlockForm(container, {
         reportingEnabled: true,
-        initialEnabled: true,
+        userEnabledReporting: true,
         initialCount: 0,
         initialOpen: false,
         onToggle,

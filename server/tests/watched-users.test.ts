@@ -94,7 +94,7 @@ describe("authorization", () => {
   });
 
   it("returns 401 when Authorization is absent", async () => {
-    const { status, body } = await call({ headers: { authorization: undefined } });
+    const { status } = await call({ headers: { authorization: undefined } });
     expect(status).toBe(401);
   });
 

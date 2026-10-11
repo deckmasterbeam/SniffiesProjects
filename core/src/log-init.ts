@@ -1,19 +1,8 @@
+import type { LogInitOptions } from "./contracts.js";
 import { createLogger } from "./log.js";
 
-export type ClientType = "chrome-client" | "userscript";
-
-export interface LogInitOptions {
-  serverBase: string;
-  clientSecret: string;
-  userId: string;
-  clientType: ClientType;
-  version: string;
-}
-
 /**
- * Best-effort telemetry ping fired once per client init, so the server can
- * track which user ids are running which client/version combinations.
- * Failures are swallowed — telemetry must never block or break the caller.
+ * Telemetry ping fired once per client init so the server can track which user ids are running which version
  */
 export const logInit = async (options: LogInitOptions): Promise<void> => {
   const log = createLogger("log-init");
@@ -39,7 +28,6 @@ export const logInit = async (options: LogInitOptions): Promise<void> => {
       log.error("init ping rejected", res.status);
     }
   } catch (err) {
-    // Best-effort — network/server failures are not actionable here.
     log.error("init ping failed", err);
   }
 };

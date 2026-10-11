@@ -1,9 +1,11 @@
 import type { BlockedBotDailyLog } from "./blocked-bot-log.js";
+import { DEFAULT_PROFILE_FILTERS, type ProfileFilters } from "./profile-filter.js";
 
 export interface GeoOverride {
   enabled: boolean;
   latitude: number;
   longitude: number;
+  label?: string;
 }
 
 export const DEFAULT_GEO_OVERRIDE: GeoOverride = {
@@ -11,6 +13,10 @@ export const DEFAULT_GEO_OVERRIDE: GeoOverride = {
   latitude: 0,
   longitude: 0,
 };
+
+/** True once a real location has been captured — (0, 0) is the "nothing picked yet" sentinel. */
+export const hasCapturedCoords = (override: GeoOverride): boolean =>
+  override.latitude !== 0 || override.longitude !== 0;
 
 export interface ProfileBorderOpen {
   enabled: boolean;
@@ -42,6 +48,9 @@ export const SETTINGS_KEYS = {
   botBlockingEnabled: "botBlockingEnabled",
   botBlockingSectionOpen: "botBlockingSectionOpen",
   blockedBotEventsByDay: "blockedBotEventsByDay",
+  profileFilters: "profileFilters",
+  profileFiltersEnabled: "profileFiltersEnabled",
+  profileFiltersSectionOpen: "profileFiltersSectionOpen",
 } as const;
 
 export interface ExtensionLocalSettings {
@@ -59,6 +68,9 @@ export interface ExtensionLocalSettings {
   botBlockingEnabled: boolean;
   botBlockingSectionOpen: boolean;
   blockedBotEventsByDay: BlockedBotDailyLog;
+  profileFilters: ProfileFilters;
+  profileFiltersEnabled: boolean;
+  profileFiltersSectionOpen: boolean;
 }
 
 export const DEFAULT_LOCAL_SETTINGS: ExtensionLocalSettings = {
@@ -76,4 +88,7 @@ export const DEFAULT_LOCAL_SETTINGS: ExtensionLocalSettings = {
   botBlockingEnabled: true,
   botBlockingSectionOpen: false,
   blockedBotEventsByDay: {},
+  profileFilters: DEFAULT_PROFILE_FILTERS,
+  profileFiltersEnabled: false,
+  profileFiltersSectionOpen: false,
 };

@@ -5,7 +5,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 const NOON_JAN_2 = new Date("2026-01-02T12:00:00.000Z");
 
 describe("recordBlockedBotIds", () => {
-  it("adds new ids to today's bucket", () => {
+  it("adds new ids to todays bucket", () => {
     const next = recordBlockedBotIds({}, ["a", "b"], NOON_JAN_2);
     expect(next).toEqual({ "2026-01-02": ["a", "b"] });
   });
@@ -15,7 +15,7 @@ describe("recordBlockedBotIds", () => {
     expect(next["2026-01-02"]).toEqual(["a", "b"]);
   });
 
-  it("keeps yesterday's bucket untouched alongside today's", () => {
+  it("keeps yesterdays bucket untouched alongside todays", () => {
     const yesterday = new Date(NOON_JAN_2.getTime() - DAY_MS);
     const log = { [yesterday.toISOString().slice(0, 10)]: ["y1"] };
     const next = recordBlockedBotIds(log, ["a"], NOON_JAN_2);
@@ -38,7 +38,7 @@ describe("recordBlockedBotIds", () => {
 });
 
 describe("countDistinctBlockedBotsLast24h", () => {
-  it("unions today's and yesterday's distinct ids", () => {
+  it("unions todays and yesterdays distinct ids", () => {
     const log = { "2026-01-01": ["a", "b"], "2026-01-02": ["b", "c"] };
     expect(countDistinctBlockedBotsLast24h(log, NOON_JAN_2)).toBe(3);
   });

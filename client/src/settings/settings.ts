@@ -5,12 +5,13 @@ import {
   SERVER_BASE,
 } from "../shared/env.js";
 import {
-  DEFAULT_LOCAL_SETTINGS,
   PHONE_E164_REGEX,
-  SETTINGS_KEYS,
   SNIFFIES_USER_ID_REGEX,
   getLocalSettings,
+  resetLocalSettings,
   setBlockedBots,
+  setGuid,
+  setPhone,
 } from "../shared/settings.js";
 
 if (!FAVORITES_NOTIFICATIONS_ENABLED) {
@@ -70,9 +71,9 @@ phoneSaveBtn.addEventListener("click", async () => {
       return;
     }
     const data = (await res.json()) as { ok: boolean; guid?: string };
-    await chrome.storage.local.set({ [SETTINGS_KEYS.phone]: phone });
+    await setPhone(phone);
     if (data.guid) {
-      await chrome.storage.local.set({ [SETTINGS_KEYS.guid]: data.guid });
+      await setGuid(data.guid);
       void loadFavorites(data.guid);
     }
     setPhoneStatus("Saved.");
@@ -131,7 +132,7 @@ codeSaveBtn.addEventListener("click", async () => {
     setRecoveryStatus("Paste your code first.");
     return;
   }
-  await chrome.storage.local.set({ [SETTINGS_KEYS.guid]: code });
+  await setGuid(code);
   setRecoveryStatus("Code saved.");
   void loadFavorites(code);
 });
@@ -330,8 +331,7 @@ const resetStatus = document.getElementById("reset-status");
 resetBtn.addEventListener("click", async () => {
   resetBtn.disabled = true;
   try {
-    await chrome.storage.local.clear();
-    await chrome.storage.local.set(DEFAULT_LOCAL_SETTINGS);
+    await resetLocalSettings();
     if (resetStatus) {
       resetStatus.textContent = "Reset. Reload sniffies.com to apply.";
       setTimeout(() => {

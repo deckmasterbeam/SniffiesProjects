@@ -1,19 +1,22 @@
 import {
   BlockedBotDailyLog,
   DEFAULT_GEO_OVERRIDE,
-  DEFAULT_PROFILE_BORDER_OPEN,
   GeoOverride,
-  ProfileBorderOpen,
+  parseProfileFilters,
+  ProfileFilters,
   recordBlockedBotIds,
 } from "@sniffies-projects/core";
 
 const GEO_STORAGE_KEY = "sniffies-geo";
-const PROFILE_BORDER_STORAGE_KEY = "sniffies-profile-border";
+const GEO_SECTION_OPEN_STORAGE_KEY = "sniffies-geo-section-open";
 const BLOCKED_BOTS_STORAGE_KEY = "sniffies-blocked-bots";
 const BLOCKED_BOTS_FETCHED_AT_STORAGE_KEY = "sniffies-blocked-bots-fetched-at";
 const BOT_BLOCKING_ENABLED_STORAGE_KEY = "sniffies-bot-blocking-enabled";
 const BOT_BLOCKING_SECTION_OPEN_STORAGE_KEY = "sniffies-bot-blocking-section-open";
 const BLOCKED_BOT_EVENTS_STORAGE_KEY = "sniffies-blocked-bot-events";
+const PROFILE_FILTERS_STORAGE_KEY = "sniffies-profile-filters";
+const PROFILE_FILTERS_ENABLED_STORAGE_KEY = "sniffies-profile-filters-enabled";
+const PROFILE_FILTERS_SECTION_OPEN_STORAGE_KEY = "sniffies-profile-filters-section-open";
 
 export const getGeoOverride = (): GeoOverride => {
   try {
@@ -28,19 +31,12 @@ export const setGeoOverride = (next: GeoOverride): void => {
   localStorage.setItem(GEO_STORAGE_KEY, JSON.stringify(next));
 };
 
-export const getProfileBorderOpen = (): ProfileBorderOpen => {
-  try {
-    const raw = localStorage.getItem(PROFILE_BORDER_STORAGE_KEY);
-    return raw
-      ? { ...DEFAULT_PROFILE_BORDER_OPEN, ...JSON.parse(raw) }
-      : { ...DEFAULT_PROFILE_BORDER_OPEN };
-  } catch {
-    return { ...DEFAULT_PROFILE_BORDER_OPEN };
-  }
+export const getGeoSectionOpen = (): boolean => {
+  return localStorage.getItem(GEO_SECTION_OPEN_STORAGE_KEY) === "true";
 };
 
-export const setProfileBorderOpen = (next: ProfileBorderOpen): void => {
-  localStorage.setItem(PROFILE_BORDER_STORAGE_KEY, JSON.stringify(next));
+export const setGeoSectionOpen = (open: boolean): void => {
+  localStorage.setItem(GEO_SECTION_OPEN_STORAGE_KEY, String(open));
 };
 
 export const getBlockedBots = (): string[] => {
@@ -93,4 +89,34 @@ export const getBlockedBotEventsByDay = (): BlockedBotDailyLog => {
 export const recordBlockedBotEvent = (ids: string[]): void => {
   const next = recordBlockedBotIds(getBlockedBotEventsByDay(), ids);
   localStorage.setItem(BLOCKED_BOT_EVENTS_STORAGE_KEY, JSON.stringify(next));
+};
+
+export const getProfileFilters = (): ProfileFilters => {
+  try {
+    return parseProfileFilters(
+      JSON.parse(localStorage.getItem(PROFILE_FILTERS_STORAGE_KEY) ?? "null"),
+    );
+  } catch {
+    return parseProfileFilters(null);
+  }
+};
+
+export const setProfileFilters = (next: ProfileFilters): void => {
+  localStorage.setItem(PROFILE_FILTERS_STORAGE_KEY, JSON.stringify(next));
+};
+
+export const getProfileFiltersEnabled = (): boolean => {
+  return localStorage.getItem(PROFILE_FILTERS_ENABLED_STORAGE_KEY) === "true";
+};
+
+export const setProfileFiltersEnabled = (enabled: boolean): void => {
+  localStorage.setItem(PROFILE_FILTERS_ENABLED_STORAGE_KEY, String(enabled));
+};
+
+export const getProfileFiltersSectionOpen = (): boolean => {
+  return localStorage.getItem(PROFILE_FILTERS_SECTION_OPEN_STORAGE_KEY) === "true";
+};
+
+export const setProfileFiltersSectionOpen = (open: boolean): void => {
+  localStorage.setItem(PROFILE_FILTERS_SECTION_OPEN_STORAGE_KEY, String(open));
 };

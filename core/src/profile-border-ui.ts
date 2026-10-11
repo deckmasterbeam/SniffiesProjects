@@ -1,7 +1,7 @@
 import PROFILE_BORDER_HTML from "./profile-border.html";
 import PROFILE_BORDER_CSS from "./profile-border.css";
 import type { ProfileBorderOpen } from "./settings.js";
-import type { ProfileBorderFormContract } from "./profile-border-form-contract.js";
+import type { ProfileBorderFormContract } from "./contracts.js";
 
 export { PROFILE_BORDER_HTML, PROFILE_BORDER_CSS };
 export type { ProfileBorderFormContract };

@@ -1,8 +1,7 @@
 import { createLogger } from "./log.js";
+import { WS_HOST, WS_USER_ID_PARAM } from "./sniffies-api.js";
 
 type PatchedWebSocketCtor = typeof WebSocket & { __sniffiesUserIdPatched?: boolean };
-
-const WS_HOST = "prod.ws.sniffies.com";
 
 const extractUserId = (url: string | URL): string | null => {
   try {
@@ -10,7 +9,7 @@ const extractUserId = (url: string | URL): string | null => {
     if (parsed.host !== WS_HOST) {
       return null;
     }
-    return parsed.searchParams.get("userId");
+    return parsed.searchParams.get(WS_USER_ID_PARAM);
   } catch {
     return null;
   }
@@ -18,10 +17,7 @@ const extractUserId = (url: string | URL): string | null => {
 
 /**
  * Wraps the global WebSocket constructor to read the `userId` query param off
- * connections to prod.ws.sniffies.com — that socket carries the logged-in
- * user's own id on every connect, e.g.
- * wss://prod.ws.sniffies.com/?userId=<id>&lat=...&lng=...
- * The socket itself is left untouched; this only observes the connect URL.
+ * connections to prod.ws.sniffies.com
  *
  * @returns false if WebSocket is unavailable or already patched.
  */
@@ -48,7 +44,6 @@ export const installUserIdHook = (onUserId: (userId: string) => void): boolean =
     return protocols === undefined ? new NativeWebSocket(url) : new NativeWebSocket(url, protocols);
   } as unknown as PatchedWebSocketCtor;
 
-  // TODO: I hate this
   PatchedWebSocket.prototype = NativeWebSocket.prototype;
   (PatchedWebSocket as unknown as { CONNECTING: number }).CONNECTING = NativeWebSocket.CONNECTING;
   (PatchedWebSocket as unknown as { OPEN: number }).OPEN = NativeWebSocket.OPEN;

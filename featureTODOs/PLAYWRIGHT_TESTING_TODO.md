@@ -76,9 +76,13 @@ manually/on a schedule, not on every push, since it needs a live site + a real a
 - [ ] Clicking a marker with `data-within-radius="false"` navigates directly to `/profile/<id>`,
       bypassing the paywall handler (verify `stopImmediatePropagation` actually suppresses
       Sniffies' own handler — simulate a competing capture-phase listener in the fixture).
+  - [x] Bookmarklet — `e2e/tests/bookmarklet/profile-border.spec.ts` (competing listener is on the marker, not capture-phase on document: a post-load bookmarklet can't pre-empt one the site registered first).
 - [ ] `openInNewTab` true vs false changes `window.open` vs `location.assign`.
+  - [x] Bookmarklet — `e2e/tests/bookmarklet/profile-border.spec.ts`.
 - [ ] Feature disabled → click falls through untouched.
+  - [x] Bookmarklet — `e2e/tests/bookmarklet/profile-border.spec.ts`.
 - [ ] Marker with `data-within-radius="true"` (or missing) is never intercepted.
+  - [x] Bookmarklet — `e2e/tests/bookmarklet/profile-border.spec.ts`.
 
 ## 3. Bot blocking (XHR + WebSocket filtering) — `core/src/bot-block-hook.ts`
 
@@ -166,12 +170,15 @@ against a fixture that fakes the four surfaces:
 
 ## 10. Userscript-specific (no popup/options — everything lives in the FAB panel) — `userscript/src/userscript.ts`
 
-- [ ] FAB button mounts next to `[title="Sitelinks"]` when present at load, and via
+- [ ] FAB button mounts in `[data-testid="iconHolderRightBottom"]` when present at load, and via
       `MutationObserver` when it appears later (SPA nav).
+  - [x] Bookmarklet — `e2e/tests/bookmarklet/fab-panel.spec.ts`.
 - [ ] Clicking FAB opens/closes the panel; panel contains working geo-override and
       profile-border forms wired to userscript-local storage (not `chrome.storage`).
+  - [x] Bookmarklet (profile-border form only; it has no geo override) — `e2e/tests/bookmarklet/fab-panel.spec.ts`, `e2e/tests/bookmarklet/profile-border.spec.ts`.
 - [ ] Double-injection guard: `window.__sniffiesInjected` prevents mounting twice if the script
       runs again.
+  - [x] Bookmarklet (a second tap toggles the panel instead) — `e2e/tests/bookmarklet/fab-panel.spec.ts`.
 - [ ] `installHooks()` throwing doesn't prevent `mountUI` from still rendering a usable (if
       degraded) panel — verify the try/catch fallback path.
 - [ ] User-id logging (`userscript/src/user-id-logger.ts`) still fires independent of the rest of
@@ -188,6 +195,7 @@ against a fixture that fakes the four surfaces:
       duplicate patching/errors.
 - [ ] Console has no uncaught errors on a full "load fixture → click marker → open profile →
       toggle every feature" pass, for both packages.
+  - [x] Bookmarklet — `e2e/tests/bookmarklet/console-errors.spec.ts`.
 
 ---
 

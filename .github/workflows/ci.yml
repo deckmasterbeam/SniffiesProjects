@@ -70,6 +70,10 @@ jobs:
         working-directory: userscript
         run: yarn build
 
+      - name: Build bookmarklet
+        working-directory: bookmarklet
+        run: yarn build
+
       - name: Install Playwright browsers
         working-directory: e2e
         run: npx playwright install --with-deps chromium
@@ -81,9 +85,9 @@ jobs:
       - name: Install xvfb
         run: sudo apt-get update && sudo apt-get install -y xvfb
 
-      - name: Run Playwright e2e tests (extension + userscript)
+      - name: Run Playwright e2e tests (extension + userscript + bookmarklet)
         working-directory: e2e
-        run: xvfb-run -a npx playwright test --project=extension --project=userscript
+        run: xvfb-run -a npx playwright test --project=extension --project=userscript --project=bookmarklet
 
       - name: Upload Playwright report on failure
         if: failure()

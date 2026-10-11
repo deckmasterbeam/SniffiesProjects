@@ -8,10 +8,13 @@
   border: 1px solid #1c2b3a;
   border-radius: 50%;
   cursor: pointer;
-  font-size: 20px;
-  line-height: 1;
+  color: #ffffff;
   width: 44px;
   height: 44px;
+  padding: 0;
+  margin: 0;
+  appearance: none;
+  font: inherit;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -21,6 +24,34 @@
 }
 #snp-fab:hover {
   opacity: 1;
+}
+
+#snp-fab.snp-fab-docked {
+  position: static;
+  bottom: auto;
+  right: auto;
+  z-index: auto;
+  width: auto;
+  height: auto;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  opacity: 1;
+  color: inherit;
+}
+
+#snp-fab-icon {
+  background-size: 24px 24px;
+  background-position: center;
+  background-repeat: no-repeat;
+  border-radius: 6px;
+}
+
+.snp-fab-icon-base-size {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
 }
 
 #snp-panel {

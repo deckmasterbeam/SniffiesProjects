@@ -1,8 +1,3 @@
-/* Injected directly into the Sniffies page (not a popup/settings root), so
-   this is scoped under #snp-report-backdrop rather than relying on :root
-   variables that don't exist in that context — same approach as
-   geo-override.css. Palette lifted from popup.css. */
-
 #snp-report-backdrop {
   display: none;
   position: fixed;
@@ -41,6 +36,10 @@
   font-size: 11px;
   color: #7a90a4;
   margin: 0;
+}
+
+#snp-report-backdrop .hint.error {
+  color: #ff4d4f;
 }
 
 #snp-report-backdrop .field {

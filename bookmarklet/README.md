@@ -1,12 +1,21 @@
 # Sniffies Bookmarklet
 
-> **Note:** New features go in `userscript/`, not here. This package is not under active development — avoid making changes to it.
-
 Injects features into sniffies.com on browsers where extensions aren't available (e.g. iOS Safari) without 3rd party apps.
+
+A bookmarklet only runs after the page has loaded, so it can never hook the page's init behavior. Features that need that live in `userscript/` only.
 
 Supported features:
 
-- Location spoofing (doesn't work well)
+- Open profiles outside your boundary
+- No cap on how many options you can pick in Sniffies' own Sexuality, Body Type and Position filters (enable "Profile Filters" in the panel, then open the filter menu)
+
+Not supported (use the userscript):
+
+- Location spoofing
+- Bot filtering
+- Gender, Height, Weight and Last Online filters
+
+See the "Profile filter support" table in the root `README.md` for every build.
 
 ## Bookmarklet code
 
@@ -30,4 +39,4 @@ You can't type a `javascript:` URL directly into Safari on iOS — you have to c
 4. Replace the URL with the bookmarklet code above
 5. Save
 
-**To use:** navigate to sniffies.com in Safari, open your bookmarks, and tap "Sniffies Tools". A FAB button will appear on the page.
+**To use:** navigate to sniffies.com in Safari, open your bookmarks, and tap "Sniffies Tools". A Sniffies Tools button will appear in the map's icon row. You need to tap the bookmark again after every page load.

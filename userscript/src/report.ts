@@ -1,30 +1,29 @@
-// Wires the report-button injection (core/src/report-button-hook.ts, shared
-// verbatim with the Chrome client's src/content/sniffies-profile-id.ts — see
-// that module's header for the panel-switch/deep-link/no-photo race handling
-// it covers) and the bot-blocking network filter. The userscript runs
-// entirely in the page's own world (no isolated-world relay needed, see
-// user-id-logger.ts), so both install directly here rather than needing a
-// postMessage bridge. Favorites/star injection is excluded — the userscript
-// has no favorites feature.
-
 import {
-  installBotBlockHook,
+  botBlockRule,
+  gateProfileFilters,
+  installProfileFilterHook,
   installReportButtonInjection,
   refreshBlockedBotsIfStale as refreshBlockedBotsIfStaleShared,
   type BotBlockState,
+  profileFilterRules,
+  type ProfileFilters,
 } from "@sniffies-projects/core";
 import { CLIENT_SECRET, REPORTING_ENABLED, SERVER_BASE } from "./shared/env.js";
 import {
   getBlockedBots,
   getBlockedBotsFetchedAt,
   getBotBlockingEnabled,
+  getProfileFilters,
+  getProfileFiltersEnabled,
   recordBlockedBotEvent,
   setBlockedBots,
-} from "./shared/settings.js";
+} from "./shared/local-storage.js";
 
 export interface ReportFeatureState {
   currentSniffiesUserId: string;
   botBlockState: BotBlockState;
+  /** The filters the network hook runs with for this page load. */
+  appliedProfileFilters: ProfileFilters;
 }
 
 const clientHeaders = (): Record<string, string> => ({
@@ -32,23 +31,22 @@ const clientHeaders = (): Record<string, string> => ({
   Authorization: `Bearer ${CLIENT_SECRET}`,
 });
 
-/**
- * Installs the bot-block network hook (always, mirroring the Chrome client's
- * MAIN-world hook script) and, if REPORTING_ENABLED, the report-button
- * injection machinery. Returns the mutable state object — the caller wires
- * currentSniffiesUserId from installUserIdLogging's callback, and the
- * bot-block panel UI reads/writes botBlockState directly.
- */
+/** Installs the profile-filter network hook (blocked bots + the filter menu's filters) */
 export const installReportFeature = (): ReportFeatureState => {
   const state: ReportFeatureState = {
     currentSniffiesUserId: "",
     botBlockState: { blockedIds: new Set(getBlockedBots()), enabled: getBotBlockingEnabled() },
+
+    appliedProfileFilters: gateProfileFilters(getProfileFilters(), getProfileFiltersEnabled()),
   };
 
-  installBotBlockHook(
-    () => state.botBlockState,
-    (ids) => recordBlockedBotEvent(ids),
-  );
+  installProfileFilterHook([
+    botBlockRule(
+      () => state.botBlockState,
+      (ids) => recordBlockedBotEvent(ids),
+    ),
+    ...profileFilterRules(() => state.appliedProfileFilters),
+  ]);
 
   if (REPORTING_ENABLED) {
     installReportButtonInjection({

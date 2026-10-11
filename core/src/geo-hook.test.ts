@@ -84,6 +84,17 @@ describe("installGeoHook", () => {
     );
   });
 
+  it("passes through real coords when enabled but no location has been captured yet", () => {
+    installGeoHook(() => ({ enabled: true, latitude: 0, longitude: 0 }));
+    const success = vi.fn();
+    navigator.geolocation.getCurrentPosition(success);
+    expect(success).toHaveBeenCalledWith(
+      expect.objectContaining({
+        coords: expect.objectContaining({ latitude: REAL.latitude, longitude: REAL.longitude }),
+      }),
+    );
+  });
+
   it("spoofs coords when override has enabled: true", () => {
     installGeoHook(() => SPOOF);
     const success = vi.fn();
@@ -144,5 +155,21 @@ describe("installGeoHook", () => {
     installGeoHook(() => SPOOF, onPosition);
     navigator.geolocation.getCurrentPosition(vi.fn());
     expect(onPosition).toHaveBeenCalledWith({ latitude: REAL.latitude, longitude: REAL.longitude });
+  });
+
+  it("still calls the site's error callback when the native call fails", () => {
+    const failingGeo = {
+      ...mockGeo,
+      getCurrentPosition: vi.fn(
+        (_success: PositionCallback, error?: PositionErrorCallback | null) => {
+          error?.({ code: 1, message: "User denied Geolocation" } as GeolocationPositionError);
+        },
+      ),
+    };
+    Object.defineProperty(navigator, "geolocation", { value: failingGeo, configurable: true });
+    installGeoHook(() => SPOOF);
+    const error = vi.fn();
+    navigator.geolocation.getCurrentPosition(vi.fn(), error);
+    expect(error).toHaveBeenCalledWith(expect.objectContaining({ code: 1 }));
   });
 });

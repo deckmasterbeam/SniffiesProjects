@@ -1,4 +1,4 @@
-// Runs vitest in each package that has a test script, sequentially.
+// Runs each package's own `test` script, sequentially.
 // Exits with code 1 if any package fails.
 
 import { spawnSync } from "node:child_process";
@@ -16,11 +16,11 @@ for (const pkg of packages) {
   console.log(`  Testing: ${pkg}`);
   console.log(`${"─".repeat(40)}\n`);
 
-  const result = spawnSync(
-    process.execPath,
-    ["node_modules/vitest/vitest.mjs", "run"],
-    { cwd: resolve(root, pkg), stdio: "inherit" },
-  );
+  const result = spawnSync("yarn", ["test"], {
+    cwd: resolve(root, pkg),
+    stdio: "inherit",
+    shell: true,
+  });
 
   if (result.status !== 0) {
     failed = true;

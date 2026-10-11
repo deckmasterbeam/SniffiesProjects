@@ -1,19 +1,10 @@
-// Isolated world. Reads geo override from extension storage and forwards it
-// to the MAIN world geo hook via window.postMessage.
-
 import { createLogger, type GeoOverride } from "@sniffies-projects/core";
-import { SETTINGS_KEYS, getLocalSettings } from "../shared/settings.js";
+import { SETTINGS_KEYS, getLocalSettings, setGeoOverride } from "../shared/settings.js";
 
 const log = createLogger("geo-relay");
 
 const postOverride = (override: GeoOverride): void => {
-  window.postMessage(
-    {
-      source: "sniffies-geo-relay",
-      coords: override.enabled ? override : null,
-    },
-    "*",
-  );
+  window.postMessage({ source: "sniffies-geo-relay", kind: "override", override }, "*");
 };
 
 void getLocalSettings().then(({ geoOverride }) => {
@@ -35,8 +26,13 @@ window.addEventListener("message", (event) => {
     return;
   }
   const msg = event.data as Record<string, unknown> | null;
-  if (!msg || msg.source !== "sniffies-geo-hook" || msg.kind !== "position") {
+  if (!msg || msg.source !== "sniffies-geo-hook") {
     return;
   }
-  log("position observed by Sniffies", msg.coords);
+  if (msg.kind === "persistOverride") {
+    log("persisting override captured in MAIN world", msg.override);
+    void setGeoOverride(msg.override as GeoOverride);
+  } else if (msg.kind === "position") {
+    log("position observed by Sniffies", msg.coords);
+  }
 });

@@ -15,7 +15,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
       - name: Install dependencies
         run: npm install
@@ -27,6 +27,7 @@ jobs:
         env:
           SERVER_BASE: ${{ secrets.SERVER_BASE }}
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+          REPORTING_ENABLED: ${{ vars.REPORTING_ENABLED }}
 
       - name: Commit dist to repo
         run: |
