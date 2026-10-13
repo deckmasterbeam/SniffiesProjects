@@ -174,4 +174,8 @@ export interface NewConversationFrame {
 }
 
 export type SniffiesWsFrame =
-  UserJoinedFrame | UserUpdatedFrame | UserPresenceFrame | NewMsgFrame | NewConversationFrame;
+  | UserJoinedFrame
+  | UserUpdatedFrame
+  | UserPresenceFrame
+  | NewMsgFrame
+  | NewConversationFrame;

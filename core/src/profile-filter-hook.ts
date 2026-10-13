@@ -446,7 +446,8 @@ const patchSocketInstance = (
 
 const installWebSocketFilter = (matcher: ProfileMatcher, log: Logger): boolean => {
   const NativeWebSocket = (typeof WebSocket !== "undefined" ? WebSocket : undefined) as
-    PatchedWebSocketCtor | undefined;
+    | PatchedWebSocketCtor
+    | undefined;
   if (!NativeWebSocket || NativeWebSocket.__sniffiesBotBlockPatched) {
     log("WebSocket filter not installed (no WebSocket or already patched)");
     return false;

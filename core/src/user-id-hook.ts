@@ -24,7 +24,8 @@ const extractUserId = (url: string | URL): string | null => {
 export const installUserIdHook = (onUserId: (userId: string) => void): boolean => {
   const log = createLogger("user-id");
   const NativeWebSocket = (typeof WebSocket !== "undefined" ? WebSocket : undefined) as
-    PatchedWebSocketCtor | undefined;
+    | PatchedWebSocketCtor
+    | undefined;
   if (!NativeWebSocket || NativeWebSocket.__sniffiesUserIdPatched) {
     log("hook not installed (no WebSocket or already patched)");
     return false;
