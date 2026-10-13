@@ -1,4 +1,4 @@
-# Single "Premium Features" Toggle — Proposal
+# Single "Premium Features" Toggle — Proposal - in progress
 
 Status: **proposal, not started.**
 
