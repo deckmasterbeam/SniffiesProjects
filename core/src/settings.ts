@@ -51,6 +51,8 @@ export const SETTINGS_KEYS = {
   profileFilters: "profileFilters",
   profileFiltersEnabled: "profileFiltersEnabled",
   profileFiltersSectionOpen: "profileFiltersSectionOpen",
+  hidePhotosEnabled: "hidePhotosEnabled",
+  hidePhotosSectionOpen: "hidePhotosSectionOpen",
 } as const;
 
 export interface ExtensionLocalSettings {
@@ -71,6 +73,8 @@ export interface ExtensionLocalSettings {
   profileFilters: ProfileFilters;
   profileFiltersEnabled: boolean;
   profileFiltersSectionOpen: boolean;
+  hidePhotosEnabled: boolean;
+  hidePhotosSectionOpen: boolean;
 }
 
 export const DEFAULT_LOCAL_SETTINGS: ExtensionLocalSettings = {
@@ -91,4 +95,6 @@ export const DEFAULT_LOCAL_SETTINGS: ExtensionLocalSettings = {
   profileFilters: DEFAULT_PROFILE_FILTERS,
   profileFiltersEnabled: false,
   profileFiltersSectionOpen: false,
+  hidePhotosEnabled: true,
+  hidePhotosSectionOpen: false,
 };

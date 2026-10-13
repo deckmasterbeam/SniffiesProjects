@@ -7,6 +7,9 @@ import {
   DEFAULT_PROFILE_BORDER_OPEN,
   GEO_OVERRIDE_CSS,
   GEO_OVERRIDE_HTML,
+  HIDE_PHOTOS_CSS,
+  HIDE_PHOTOS_HTML,
+  wireHidePhotosForm,
   PROFILE_BORDER_CSS,
   PROFILE_BORDER_HTML,
   UPDATE_BANNER_CSS,
@@ -31,6 +34,8 @@ import {
   setFavoritesSectionOpen,
   setGeoOverride,
   setGeoSectionOpen,
+  setHidePhotosEnabled,
+  setHidePhotosSectionOpen,
   setProfileBorderOpen,
   setProfileBorderSectionOpen,
   setProfileFiltersEnabled,
@@ -55,6 +60,10 @@ document.head.appendChild(botBlockStyle);
 const profileFiltersStyle = document.createElement("style");
 profileFiltersStyle.textContent = PROFILE_FILTERS_CSS;
 document.head.appendChild(profileFiltersStyle);
+
+const hidePhotosStyle = document.createElement("style");
+hidePhotosStyle.textContent = HIDE_PHOTOS_CSS;
+document.head.appendChild(hidePhotosStyle);
 
 const versionStyle = document.createElement("style");
 versionStyle.textContent = VERSION_BADGE_CSS;
@@ -149,6 +158,18 @@ const init = async (): Promise<void> => {
     initialOpen: settings.profileFiltersSectionOpen,
     onToggle: (open) => {
       void setProfileFiltersSectionOpen(open);
+    },
+  });
+
+  // Hide sent photos — inject HTML from core and wire up logic
+  const hidePhotosRoot = document.getElementById("snp-hide-photos-root")!;
+  hidePhotosRoot.innerHTML = HIDE_PHOTOS_HTML;
+  wireHidePhotosForm(hidePhotosRoot, {
+    initialEnabled: settings.hidePhotosEnabled,
+    onToggleEnabled: setHidePhotosEnabled,
+    initialOpen: settings.hidePhotosSectionOpen,
+    onToggle: (open) => {
+      void setHidePhotosSectionOpen(open);
     },
   });
 };

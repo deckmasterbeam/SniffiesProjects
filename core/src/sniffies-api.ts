@@ -54,6 +54,7 @@ export interface NearbyVisitorsPayload {
 export const CHAT_DATA_PATH = "/api/v2/post-authentication/chat-data";
 
 export interface Conversation {
+  _id?: string;
   participants?: string;
   author1?: string;
   author2?: string | null;
@@ -63,6 +64,7 @@ export interface Conversation {
 export interface ChatDataPayload {
   conversationData?: {
     conversations?: Conversation[];
+    pinnedConversations?: Conversation[];
     userIds?: string[];
     [key: string]: unknown;
   };
@@ -74,7 +76,11 @@ export interface ChatDataPayload {
 export const MESSAGES_PATH = "/api/messages";
 
 export interface Message {
+  _id?: string;
   author?: string;
+  /** Filename of the attached photo; null/absent on text messages. */
+  file?: string | null;
+  isHidden?: boolean;
   [key: string]: unknown;
 }
 
@@ -82,6 +88,30 @@ export interface MessagesPayload {
   messages?: Message[];
   partialUsers?: FilterableProfile[];
   [key: string]: unknown;
+}
+
+/** POST — hides (or un-hides) one photo message, per photo. Responds `true`. */
+export const PHOTO_VISIBILITY_PATH = "/api/messages/photo-visibility";
+
+export interface PhotoVisibilityBody {
+  conversationId: string;
+  conversationLocation: null;
+  userIdFrom: string;
+  userIdTo: string;
+  messageId: string;
+  isHidden: boolean;
+  file: null;
+}
+
+/** POST — hides or un-hides every photo you've sent in one conversation. Responds `true`. */
+export const ALL_PHOTOS_VISIBILITY_PATH = "/api/messages/all-photos-visibility";
+
+export interface AllPhotosVisibilityBody {
+  conversationId: string;
+  conversationLocation: null;
+  userIdFrom: string;
+  userIdTo: string;
+  isHidden: boolean;
 }
 
 // ── Location endpoints ───────────────────────────────────────────────────────

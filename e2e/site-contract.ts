@@ -58,10 +58,35 @@ const SELECTOR_METADATA: Record<SniffiesSelectorName, SelectorMeta> = {
     description: "Profile Type row in the Cruisers filter menu — our filter rows mount after it",
     source: "core/src/filter-menu-ui.ts",
   },
+  CONNECTED_NOW_FILTER_LABEL_SELECTOR: {
+    description:
+      "Cruising Now row in the Cruisers filter menu — our Last Online row mounts after it",
+    source: "core/src/filter-menu-ui.ts",
+  },
   ENDOWMENT_FILTER_LABEL_SELECTOR: {
     description:
       "Endowment line under Cruiser Stats in the filter menu — our Height and Weight lines mount after it",
     source: "core/src/filter-menu-ui.ts",
+  },
+  HIDE_PHOTO_BUTTON_SELECTOR: {
+    description:
+      "Sniffies' own Hide Photo tooltip button on a sent chat photo — the hide-photo hook takes over its click",
+    source: "core/src/hide-photo-click-hook.ts",
+  },
+  PHOTO_MESSAGE_SELECTOR: {
+    description:
+      "A chat photo message; its inner element's id is message-<message _id>, which the hide-photo hook reads",
+    source: "core/src/hide-photo-click-hook.ts",
+  },
+  HIDE_ALL_PHOTOS_BUTTON_SELECTOR: {
+    description:
+      "Hide All My Photos in the profile options menu (only in the DOM while the menu is open) — the hide-photo hook takes over its click",
+    source: "core/src/hide-photo-click-hook.ts",
+  },
+  UNHIDE_ALL_PHOTOS_BUTTON_SELECTOR: {
+    description:
+      "Unhide All My Photos in the profile options menu (only in the DOM while the menu is open) — the hide-photo hook takes over its click",
+    source: "core/src/hide-photo-click-hook.ts",
   },
 };
 

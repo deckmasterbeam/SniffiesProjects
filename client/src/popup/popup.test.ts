@@ -21,6 +21,7 @@ const POPUP_HTML = `
   <div id="snp-profile-border-root"></div>
   <div id="snp-bot-block-root"></div>
   <div id="snp-profile-filters-root"></div>
+  <div id="snp-hide-photos-root"></div>
 `;
 
 const flushPromises = () => new Promise<void>((r) => setTimeout(r, 0));

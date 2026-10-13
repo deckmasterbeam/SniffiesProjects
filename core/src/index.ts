@@ -61,6 +61,10 @@ export {
   setProfileBorderOpen,
   getProfileBorderSectionOpen,
   setProfileBorderSectionOpen,
+  getHidePhotosEnabled,
+  setHidePhotosEnabled,
+  getHidePhotosSectionOpen,
+  setHidePhotosSectionOpen,
   getProfileFiltersEnabled,
   setProfileFiltersEnabled,
   getProfileFiltersSectionOpen,
@@ -113,5 +117,14 @@ export {
   PROFILE_TYPE_FILTER_LABEL_SELECTOR,
   CONNECTED_NOW_FILTER_LABEL_SELECTOR,
   ENDOWMENT_FILTER_LABEL_SELECTOR,
+  HIDE_PHOTO_BUTTON_SELECTOR,
+  PHOTO_MESSAGE_SELECTOR,
+  HIDE_ALL_PHOTOS_BUTTON_SELECTOR,
+  UNHIDE_ALL_PHOTOS_BUTTON_SELECTOR,
 } from "./sniffies-selectors.js";
 export type { SniffiesSelectorName } from "./sniffies-selectors.js";
+export type { SentPhotoHider, ThreadSnapshot } from "./sent-photos.js";
+export { installSentPhotoHider } from "./sent-photos.js";
+export { installHidePhotoClick } from "./hide-photo-click-hook.js";
+export { installHidePhotoMenuButtons } from "./hide-photo-menu-hook.js";
+export { HIDE_PHOTOS_HTML, HIDE_PHOTOS_CSS, wireHidePhotosForm } from "./hide-photos-ui.js";
