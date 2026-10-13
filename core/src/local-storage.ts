@@ -27,8 +27,27 @@ export const setProfileBorderSectionOpen = (open: boolean): void => {
   localStorage.setItem(PROFILE_BORDER_SECTION_OPEN_STORAGE_KEY, String(open));
 };
 
+const HIDE_PHOTOS_ENABLED_STORAGE_KEY = "sniffies-hide-photos-enabled";
+const HIDE_PHOTOS_SECTION_OPEN_STORAGE_KEY = "sniffies-hide-photos-section-open";
 const PROFILE_FILTERS_ENABLED_STORAGE_KEY = "sniffies-profile-filters-enabled";
 const PROFILE_FILTERS_SECTION_OPEN_STORAGE_KEY = "sniffies-profile-filters-section-open";
+
+export const getHidePhotosEnabled = (): boolean => {
+  const raw = localStorage.getItem(HIDE_PHOTOS_ENABLED_STORAGE_KEY);
+  return raw === null ? true : raw === "true";
+};
+
+export const setHidePhotosEnabled = (enabled: boolean): void => {
+  localStorage.setItem(HIDE_PHOTOS_ENABLED_STORAGE_KEY, String(enabled));
+};
+
+export const getHidePhotosSectionOpen = (): boolean => {
+  return localStorage.getItem(HIDE_PHOTOS_SECTION_OPEN_STORAGE_KEY) === "true";
+};
+
+export const setHidePhotosSectionOpen = (open: boolean): void => {
+  localStorage.setItem(HIDE_PHOTOS_SECTION_OPEN_STORAGE_KEY, String(open));
+};
 
 export const getProfileFiltersEnabled = (): boolean => {
   return localStorage.getItem(PROFILE_FILTERS_ENABLED_STORAGE_KEY) === "true";

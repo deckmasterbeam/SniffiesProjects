@@ -27,6 +27,11 @@ export interface BotBlockFormContract extends CollapsibleSectionContract {
   onToggleEnabled: (enabled: boolean) => void | Promise<void>;
 }
 
+export interface HidePhotosFormContract extends CollapsibleSectionContract {
+  initialEnabled: boolean;
+  onToggleEnabled: (enabled: boolean) => void | Promise<void>;
+}
+
 export interface ReportFormContract {
   onSubmit: (message: string) => void | Promise<void>;
   onCancel?: () => void;

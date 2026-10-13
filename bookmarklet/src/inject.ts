@@ -3,11 +3,18 @@
 //   javascript:(function(){var s=document.createElement('script');s.src='https://YOUR_VERCEL_URL/inject.js?t='+Date.now();document.head.appendChild(s);})();
 
 import {
+  getHidePhotosEnabled,
+  getHidePhotosSectionOpen,
   getProfileBorderOpen,
   getProfileBorderSectionOpen,
   getProfileFiltersEnabled,
   getProfileFiltersSectionOpen,
+  HIDE_PHOTOS_CSS,
+  HIDE_PHOTOS_HTML,
+  installHidePhotoClick,
+  installHidePhotoMenuButtons,
   installProfileBorderRedirect,
+  installSentPhotoHider,
   installSelectionLimitOverride,
   mountFab,
   PANEL_CSS,
@@ -21,10 +28,13 @@ import {
   PROFILE_BORDER_HTML,
   PROFILE_FILTERS_CSS,
   PROFILE_FILTERS_HTML,
+  setHidePhotosEnabled,
+  setHidePhotosSectionOpen,
   setProfileBorderOpen,
   setProfileBorderSectionOpen,
   setProfileFiltersEnabled,
   setProfileFiltersSectionOpen,
+  wireHidePhotosForm,
   wireProfileBorderForm,
   wireProfileFiltersForm,
 } from "@sniffies-projects/core";
@@ -49,6 +59,12 @@ function main(): void {
 
   let currentProfileBorderOpen = getProfileBorderOpen();
   installProfileBorderRedirect(() => currentProfileBorderOpen);
+
+  installHidePhotoClick(
+    installSentPhotoHider(() => ""),
+    getHidePhotosEnabled,
+  );
+  installHidePhotoMenuButtons(getHidePhotosEnabled);
 
   // Takes effect the next time the filter menu is opened. The other profile filters need to hook
   // the page's network requests from the start, which a bookmarklet can't.
@@ -75,6 +91,10 @@ function main(): void {
   const profileFiltersStyle = document.createElement("style");
   profileFiltersStyle.textContent = PROFILE_FILTERS_CSS;
   document.head.appendChild(profileFiltersStyle);
+
+  const hidePhotosStyle = document.createElement("style");
+  hidePhotosStyle.textContent = HIDE_PHOTOS_CSS;
+  document.head.appendChild(hidePhotosStyle);
 
   // Inject trigger button into the map's icon row
   const fab = document.createElement("button");
@@ -127,6 +147,15 @@ function main(): void {
     },
     initialOpen: getProfileFiltersSectionOpen(),
     onToggle: setProfileFiltersSectionOpen,
+  });
+
+  const hidePhotosRoot = panel.querySelector<HTMLElement>("#snp-hide-photos-root")!;
+  hidePhotosRoot.innerHTML = HIDE_PHOTOS_HTML;
+  wireHidePhotosForm(hidePhotosRoot, {
+    initialEnabled: getHidePhotosEnabled(),
+    onToggleEnabled: setHidePhotosEnabled,
+    initialOpen: getHidePhotosSectionOpen(),
+    onToggle: setHidePhotosSectionOpen,
   });
 
   // Shell interaction

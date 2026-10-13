@@ -44,6 +44,21 @@ One section, "Premium features", with a master checkbox at the top.
   - Profile border: the "open in new tab" option.
 - **Off:** hide the configuration, and stop taking over Sniffies' own Hide Photo button.
 
+### Warning for paid accounts
+
+Everything in this section only matters on a free account; Sniffies Plus already includes these
+features. When the account is paid, show a notice at the top of the section, e.g. "You have Sniffies
+Plus, so you don't need these features." The toggle stays available.
+
+- **Detecting paid:** `POST /api/authenticate/current` returns `user.private.appstoreMembership`
+  (`name: "Plus"`, `subscriptionStatus: "active"`, `end` in the future). Seen on a paid account only;
+  a free-account capture is needed to confirm the field is missing/null there.
+- **Where:** extension and userscript can observe that response from page start. The bookmarklet runs
+  too late to see it, so it shows no notice (or a generic "not needed on Plus" line).
+- **Unknown/failed detection:** show no warning; never block the features on a guess.
+- Could also let paid accounts skip the hide-photo menu injection and click takeover entirely
+  (Sniffies' own buttons already work for them).
+
 ### Behavior when off
 
 - Geo hook stops spoofing, even if a location is saved (the saved location is kept, not cleared).
@@ -81,6 +96,8 @@ Existing users have separate saved toggles. On first load after the update:
 - [ ] Wire the section into the popup and the userscript panel; remove the old separate sections
 - [ ] Geo hook + profile border hook read the master flag (live-updatable, like the other hook
       state)
+- [ ] Capture `/api/authenticate/current` from a free account and confirm how `appstoreMembership` differs
+- [ ] Detect paid accounts (extension + userscript) and show the "you don't need these" notice in the section
 - [ ] Hide-photo click hook (`installHidePhotoClick`) gated on the master flag
 - [ ] Update the existing popup/userscript tests that assume the old sections
 - [ ] Bookmarklet: gate its supported features (profile border) on the master toggle

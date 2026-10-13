@@ -78,6 +78,16 @@ const SELECTOR_METADATA: Record<SniffiesSelectorName, SelectorMeta> = {
       "A chat photo message; its inner element's id is message-<message _id>, which the hide-photo hook reads",
     source: "core/src/hide-photo-click-hook.ts",
   },
+  HIDE_ALL_PHOTOS_BUTTON_SELECTOR: {
+    description:
+      "Hide All My Photos in the profile options menu (only in the DOM while the menu is open) — the hide-photo hook takes over its click",
+    source: "core/src/hide-photo-click-hook.ts",
+  },
+  UNHIDE_ALL_PHOTOS_BUTTON_SELECTOR: {
+    description:
+      "Unhide All My Photos in the profile options menu (only in the DOM while the menu is open) — the hide-photo hook takes over its click",
+    source: "core/src/hide-photo-click-hook.ts",
+  },
 };
 
 export interface SelectorContractEntry {

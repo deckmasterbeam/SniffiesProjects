@@ -7,6 +7,7 @@ A bookmarklet only runs after the page has loaded, so it can never hook the page
 Supported features:
 
 - Open profiles outside your boundary
+- Hide and unhide photos you've sent ("Hide Sent Photos" in the panel). Open the chat after tapping the bookmarklet, so it can see the conversation
 - No cap on how many options you can pick in Sniffies' own Sexuality, Body Type and Position filters (enable "Profile Filters" in the panel, then open the filter menu)
 
 Not supported (use the userscript):

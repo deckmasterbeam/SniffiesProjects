@@ -89,6 +89,14 @@ export const setProfileFiltersEnabled = async (enabled: boolean): Promise<void> 
   await chrome.storage.local.set({ [SETTINGS_KEYS.profileFiltersEnabled]: enabled });
 };
 
+export const setHidePhotosEnabled = async (enabled: boolean): Promise<void> => {
+  await chrome.storage.local.set({ [SETTINGS_KEYS.hidePhotosEnabled]: enabled });
+};
+
+export const setHidePhotosSectionOpen = async (open: boolean): Promise<void> => {
+  await chrome.storage.local.set({ [SETTINGS_KEYS.hidePhotosSectionOpen]: open });
+};
+
 export const setProfileFiltersSectionOpen = async (open: boolean): Promise<void> => {
   await chrome.storage.local.set({ [SETTINGS_KEYS.profileFiltersSectionOpen]: open });
 };

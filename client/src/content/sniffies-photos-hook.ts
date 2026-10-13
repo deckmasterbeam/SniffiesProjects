@@ -1,8 +1,20 @@
-import { installHidePhotoClick, installSentPhotoHider } from "@sniffies-projects/core";
+import {
+  installHidePhotoClick,
+  installHidePhotoMenuButtons,
+  installSentPhotoHider,
+} from "@sniffies-projects/core";
 
 (() => {
   let ownUserId = "";
-  installHidePhotoClick(installSentPhotoHider(() => ownUserId));
+  // Off until the relay reports the stored setting.
+  let enabled = false;
+  const isEnabled = (): boolean => enabled;
+
+  installHidePhotoClick(
+    installSentPhotoHider(() => ownUserId),
+    isEnabled,
+  );
+  installHidePhotoMenuButtons(isEnabled);
 
   window.addEventListener("message", (event) => {
     if (event.source !== window) {
@@ -11,6 +23,8 @@ import { installHidePhotoClick, installSentPhotoHider } from "@sniffies-projects
     const msg = event.data as Record<string, unknown> | null;
     if (msg?.source === "sniffies-user-id-hook" && typeof msg.userId === "string") {
       ownUserId = msg.userId;
+    } else if (msg?.source === "sniffies-bot-block-relay") {
+      enabled = msg.hidePhotosEnabled === true;
     }
   });
 })();

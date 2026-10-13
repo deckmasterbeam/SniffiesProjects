@@ -8,10 +8,15 @@ import {
   DEFAULT_PROFILE_BORDER_OPEN,
   GEO_OVERRIDE_CSS,
   GEO_OVERRIDE_HTML,
+  getHidePhotosEnabled,
+  getHidePhotosSectionOpen,
   getProfileBorderOpen,
   getProfileBorderSectionOpen,
   hasCapturedCoords,
+  HIDE_PHOTOS_CSS,
+  HIDE_PHOTOS_HTML,
   installHidePhotoClick,
+  installHidePhotoMenuButtons,
   installSentPhotoHider,
   installProfileFiltersMenu,
   installSelectionLimitOverride,
@@ -23,6 +28,8 @@ import {
   PROFILE_BORDER_HTML,
   PROFILE_FILTERS_CSS,
   PROFILE_FILTERS_HTML,
+  setHidePhotosEnabled,
+  setHidePhotosSectionOpen,
   setProfileBorderOpen,
   setProfileBorderSectionOpen,
   VERSION_BADGE_CSS,
@@ -30,6 +37,7 @@ import {
   wireBotBlockForm,
   wireGeoOverrideForm,
   wireProfileBorderForm,
+  wireHidePhotosForm,
   wireProfileFiltersForm,
   wireVersionBadge,
   UPDATE_BANNER_CSS,
@@ -89,7 +97,11 @@ function installHooks(): HookState {
   });
   refreshBlockedBotsIfStale(reportState);
   installSelectionLimitOverride(getProfileFiltersEnabled);
-  installHidePhotoClick(installSentPhotoHider(() => reportState.currentSniffiesUserId));
+  installHidePhotoClick(
+    installSentPhotoHider(() => reportState.currentSniffiesUserId),
+    getHidePhotosEnabled,
+  );
+  installHidePhotoMenuButtons(getHidePhotosEnabled);
 
   const geoController = installLocationOverrideController({
     initialOverride: getGeoOverride(),
@@ -152,6 +164,10 @@ export function mountUI(state: HookState | null): void {
   const botBlockStyle = document.createElement("style");
   botBlockStyle.textContent = BOT_BLOCK_CSS;
   document.head.appendChild(botBlockStyle);
+
+  const hidePhotosStyle = document.createElement("style");
+  hidePhotosStyle.textContent = HIDE_PHOTOS_CSS;
+  document.head.appendChild(hidePhotosStyle);
 
   const profileFiltersStyle = document.createElement("style");
   profileFiltersStyle.textContent = PROFILE_FILTERS_CSS;
@@ -263,6 +279,15 @@ export function mountUI(state: HookState | null): void {
     },
     initialOpen: getProfileFiltersSectionOpen(),
     onToggle: setProfileFiltersSectionOpen,
+  });
+
+  const hidePhotosRoot = panel.querySelector<HTMLElement>("#snp-hide-photos-root")!;
+  hidePhotosRoot.innerHTML = HIDE_PHOTOS_HTML;
+  wireHidePhotosForm(hidePhotosRoot, {
+    initialEnabled: getHidePhotosEnabled(),
+    onToggleEnabled: setHidePhotosEnabled,
+    initialOpen: getHidePhotosSectionOpen(),
+    onToggle: setHidePhotosSectionOpen,
   });
 
   const closeBtn = panel.querySelector<HTMLButtonElement>("#snp-close")!;

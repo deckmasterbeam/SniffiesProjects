@@ -66,7 +66,7 @@ Location spoofing packaged as a userscript for the [Userscripts](https://apps.ap
 
 ### `bookmarklet/` — iOS Safari Bookmarklet
 
-Reduced-feature version for iOS Safari with no app required. A bookmarklet can't hook the page's init behavior, so it supports opening profiles outside your boundary and the raised selection caps on Sniffies' own stat filters, but not location spoofing, bot filtering, or the Gender / Height / Weight / Last Online filters — use the userscript for those.
+Reduced-feature version for iOS Safari with no app required. A bookmarklet can't hook the page's init behavior, so it supports opening profiles outside your boundary, hiding sent photos, and the raised selection caps on Sniffies' own stat filters, but not location spoofing, bot filtering, or the Gender / Height / Weight / Last Online filters — use the userscript for those.
 
 **Install:** Create a Safari bookmark and replace its URL with the bookmarklet code from `bookmarklet/README.md`.
 
