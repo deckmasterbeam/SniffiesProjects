@@ -51,6 +51,12 @@ describe("sniffies-user-id-relay", () => {
     expect(chrome.storage.local.set).toHaveBeenCalledWith({ sniffiesUserId: "abc123" });
   });
 
+  it("persists whether the account has Plus", async () => {
+    dispatchHookMessage({ source: "sniffies-plus-hook", hasPlus: true });
+    await flushPromises();
+    expect(chrome.storage.local.set).toHaveBeenCalledWith({ hasPlus: true });
+  });
+
   it("ignores messages with the wrong source tag", async () => {
     dispatchHookMessage({ source: "some-other-script", userId: "abc123" });
     await flushPromises();

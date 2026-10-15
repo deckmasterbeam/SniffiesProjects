@@ -13,7 +13,7 @@ const statLine = (key: string, title: string, last = false): string => `
   <ui-menu-item-group variant="level3">
     <div class="menu-item-group${last ? " no-border-bottom" : ""} level3">
       <app-advanced-filter-checkbox>
-        <div class="list-item label-only${last ? " last" : ""}">
+        <div class="list-item label-only parent-enabled${last ? " last" : ""}">
           <label tabindex="0" class="stat-name clickable" for="${key}" data-testid="${key}Checkbox">
             <i class="fa fa-square"></i><span>${title}</span>
           </label>
@@ -30,7 +30,7 @@ const statLine = (key: string, title: string, last = false): string => `
 const MENU_HTML = `
   <filter-group-component>
     <smart-select-filter>
-      <div class="smart-options-container">
+      <div class="smart-options-container active">
         ${statLine("stats.age", "Age")}
         ${statLine("stats.endowment", "Endowment")}
         ${statLine("sexuality.spectrum", "Sexuality", true)}
@@ -302,8 +302,51 @@ describe("installProfileFiltersMenu", () => {
       expect(row("height").querySelector("button")!.className).toBe("select");
       expect(row("height").querySelector(".text-value")!.classList).toContain("placeholder");
       expect(isChecked("height")).toBe(false);
-      // Independent of Sniffies' own Cruiser Stats switch.
       expect(row("height").querySelector(".list-item")!.classList).toContain("parent-enabled");
+    });
+
+    describe("Cruiser Stats off", () => {
+      const nativeLine = (): Element => document.querySelector(".smart-options-container")!;
+      const cruiserStats = async (on: boolean): Promise<void> => {
+        nativeLine().classList.toggle("active", on);
+        await Promise.resolve(); // MutationObserver callbacks run as a microtask
+      };
+
+      it("greys the lines out and switches the filters off, keeping the ranges", async () => {
+        install(filters({ height: range({ min: 178, max: 191 }) }));
+        await cruiserStats(false);
+        expect(row("height").querySelector(".list-item")!.classList).not.toContain(
+          "parent-enabled",
+        );
+        expect(lastChange().height).toEqual(range({ enabled: false, min: 178, max: 191 }));
+        expect(isChecked("height")).toBe(false);
+        expect(statValue("height")).toBe(`5'10" - 6'3"`);
+      });
+
+      it("turns the filters back on when it comes back on", async () => {
+        install(filters({ height: range({ min: 178, max: 191 }) }));
+        await cruiserStats(false);
+        await cruiserStats(true);
+        expect(lastChange().height.enabled).toBe(true);
+        expect(isChecked("height")).toBe(true);
+      });
+
+      it("leaves a filter that was already off alone", async () => {
+        install(filters({ height: range({ enabled: false, min: 178, max: 191 }) }));
+        await cruiserStats(false);
+        await cruiserStats(true);
+        expect(onChange).not.toHaveBeenCalled();
+      });
+
+      it("ignores clicks on the checkbox and the value button", async () => {
+        install(filters({ weight: range({ min: 68, max: 79 }) }));
+        await cruiserStats(false);
+        onChange.mockClear();
+        statCheckbox("weight").click();
+        openSheet("weight");
+        expect(sheet()).toBeNull();
+        expect(onChange).not.toHaveBeenCalled();
+      });
     });
 
     it("show the range and a ticked checkbox once set", () => {
@@ -568,23 +611,10 @@ describe("installProfileFiltersMenu", () => {
   });
 
   describe("last online", () => {
-    const NOW = new Date(2026, 9, 7, 23, 10).getTime();
-    const chipLabels = (): string[] =>
-      [...row("online").querySelectorAll<HTMLButtonElement>("button")]
-        .filter((b) => !b.hidden && !b.classList.contains("snp-filter-apply"))
-        .map((b) => b.textContent!);
-    const chip = (text: string): HTMLButtonElement =>
-      [...row("online").querySelectorAll("button")].find((b) => b.textContent === text)!;
-
-    beforeEach(() => {
-      vi.useFakeTimers({ toFake: ["Date"] });
-      vi.setSystemTime(NOW);
-    });
-    afterEach(() => vi.useRealTimers());
-
     const toggle = (): HTMLInputElement =>
       document.querySelector<HTMLInputElement>("#snp-online-filter-enabled")!;
-    const icon = (): HTMLElement => row("online").querySelector<HTMLElement>("label i")!;
+    const selectButton = (): HTMLButtonElement =>
+      row("online").querySelector<HTMLButtonElement>(".snp-gender-option")!;
     const title = (): string => row("online").querySelector("p")!.textContent!.trim();
 
     it("mounts right under Cruising Now, leaving its own switch alone", () => {
@@ -596,50 +626,59 @@ describe("installProfileFiltersMenu", () => {
       expect(row("online").querySelector("[data-testid]")).toBeNull();
     });
 
-    it("offers the three presets inline with the title while empty, with its switch off", () => {
+    it("reads Last Online [Select] with its switch off while empty", () => {
       install(filters());
       expect(title()).toBe("Last Online");
-      expect(chipLabels()).toEqual(["Now", "30 min", "1 hr"]);
-      // Same line as the title text, so the × never wraps below it.
-      expect(row("online").querySelector("p")!.parentElement).toBe(
-        row("online").querySelector(".snp-online-inline")!.parentElement,
-      );
+      expect(selectButton().textContent).toBe("Select");
       expect(toggle().disabled).toBe(true);
     });
 
-    it("fixes the cutoff when a preset is picked and shows it in the title", () => {
+    it("offers 15 min to 48 hours in a scrolling sheet", () => {
       install(filters());
-      chip("1 hr").click();
-      expect(lastChange().online).toEqual({ enabled: true, since: NOW - 3_600_000 });
-      expect(title()).toBe("Last Online: 10:10 PM");
-      expect(chipLabels()).toEqual([]);
-      expect(icon().classList.contains("fa-times-circle")).toBe(true);
-      expect(icon().classList.contains("fa-clock")).toBe(false);
+      selectButton().click();
+      expect(wheelLabels("choice")).toEqual([
+        "< 15 min ago",
+        "< 30 min ago",
+        "< 45 min ago",
+        "< 1 hour ago",
+        "< 1.5 hours ago",
+        "< 3 hours ago",
+        "< 6 hours ago",
+        "< 12 hours ago",
+        "< 24 hours ago",
+        "< 36 hours ago",
+        "< 48 hours ago",
+      ]);
+    });
+
+    it("saves the pick on Done and shows it on the button", () => {
+      install(filters());
+      selectButton().click();
+      pick("choice", "< 3 hours ago");
+      expect(onChange).not.toHaveBeenCalled();
+      sheetButton("Done").click();
+      expect(lastChange().online).toEqual({ enabled: true, minutes: 180 });
+      expect(selectButton().textContent).toBe("< 3 hours ago");
       expect(toggle().checked).toBe(true);
       expect(applyButton("online").hidden).toBe(false);
     });
 
-    it("the switch turns the filter off and on without losing the cutoff", () => {
-      install(filters({ online: { enabled: true, since: NOW } }));
-      toggle().click();
-      expect(lastChange().online).toEqual({ enabled: false, since: NOW });
-      expect(title()).toBe("Last Online: 11:10 PM");
-      toggle().click();
-      expect(lastChange().online).toEqual({ enabled: true, since: NOW });
+    it("Cancel leaves the filter alone", () => {
+      install(filters());
+      selectButton().click();
+      pick("choice", "< 3 hours ago");
+      sheetButton("Cancel").click();
+      expect(onChange).not.toHaveBeenCalled();
+      expect(selectButton().textContent).toBe("Select");
     });
 
-    it("clearing empties and disables the filter", () => {
-      install(filters({ online: { enabled: true, since: NOW - 1_800_000 } }));
-      expect(chipLabels()).toEqual([]);
-      icon().click();
-      expect(lastChange().online).toEqual({ enabled: false, since: null });
-      expect(chipLabels()).toEqual(["Now", "30 min", "1 hr"]);
-      expect(toggle().disabled).toBe(true);
-      expect(icon().classList.contains("fa-clock")).toBe(true);
-      icon().click(); // nothing to clear, and it must not trigger the first chip
-      // Nor may a click on the label text.
-      row("online").querySelector("p")!.click();
-      expect(onChange).toHaveBeenCalledTimes(1);
+    it("the switch turns the filter off and on without losing the pick", () => {
+      install(filters({ online: { enabled: true, minutes: 60 } }));
+      toggle().click();
+      expect(lastChange().online).toEqual({ enabled: false, minutes: 60 });
+      expect(selectButton().textContent).toBe("< 1 hour ago");
+      toggle().click();
+      expect(lastChange().online).toEqual({ enabled: true, minutes: 60 });
     });
   });
 

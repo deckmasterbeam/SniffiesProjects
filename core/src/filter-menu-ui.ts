@@ -6,7 +6,9 @@ import {
   HEIGHT_OPTIONS,
   WEIGHT_OPTIONS,
   allowedGenders,
+  ONLINE_MINUTES,
   onlineKey,
+  onlineLabel,
   rangeKey,
   rangeLabel,
   type Gender,
@@ -14,7 +16,7 @@ import {
   type RangeFilter,
   type RangeOptions,
 } from "./profile-filter.js";
-import { openRangeFlyout } from "./range-flyout-ui.js";
+import { openChoiceFlyout, openRangeFlyout } from "./range-flyout-ui.js";
 import {
   CONNECTED_NOW_FILTER_LABEL_SELECTOR,
   ENDOWMENT_FILTER_LABEL_SELECTOR,
@@ -130,19 +132,6 @@ const buildGenderRow = (
 };
 
 const ONLINE_ROW_ID = "snp-online-filter";
-const ONLINE_CHOICES = [
-  { label: "Now", minutes: 0 },
-  { label: "30 min", minutes: 30 },
-  { label: "1 hr", minutes: 60 },
-];
-
-const sinceLabel = (since: number): string => {
-  const date = new Date(since);
-  const time = { hour: "numeric", minute: "2-digit" } as const;
-  return date.toDateString() === new Date().toDateString()
-    ? date.toLocaleTimeString([], time)
-    : date.toLocaleString([], { weekday: "short", ...time });
-};
 
 const buildOnlineRow = (
   anchor: Element,
@@ -166,6 +155,7 @@ const buildOnlineRow = (
   toggle.disabled = false;
   label.removeAttribute("for");
   icon.classList.replace("fa-plug", "fa-clock");
+  title.textContent = " Last Online";
   toggle.addEventListener("change", () => {
     filters.online.enabled = toggle.checked;
     changed();
@@ -173,59 +163,46 @@ const buildOnlineRow = (
 
   const inline = document.createElement("span");
   inline.className = "snp-online-inline";
-  const chips = ONLINE_CHOICES.map(({ label: text, minutes }) => {
-    const chip = document.createElement("button");
-    chip.type = "button";
-    chip.className = "snp-gender-option";
-    chip.textContent = text;
-    chip.addEventListener("click", () => {
-      filters.online = { enabled: true, since: Date.now() - minutes * 60_000 };
-      changed();
-    });
-    return chip;
-  });
-
+  const select = document.createElement("button");
+  select.type = "button";
+  select.className = "snp-gender-option";
+  select.addEventListener("click", () =>
+    openChoiceFlyout(
+      "Last Online",
+      ONLINE_MINUTES.map((value) => ({ value, label: onlineLabel(value) })),
+      filters.online.minutes,
+      (minutes) => {
+        filters.online = { enabled: true, minutes };
+        changed();
+      },
+      root.closest("smart-select-filter"),
+    ),
+  );
   label.addEventListener("click", (event) => {
     if (!(event.target as Element).closest("button")) {
       event.preventDefault();
     }
   });
-  // With a time picked, the clock icon becomes the clear button.
-  icon.addEventListener("click", (event) => {
-    if (filters.online.since === null) {
-      return;
-    }
-    event.preventDefault();
-    filters.online = { enabled: false, since: null };
-    changed();
-  });
-  inline.append(...chips);
+  inline.appendChild(select);
   titleLine.classList.add("snp-online-title");
   titleLine.appendChild(inline);
 
   return {
     root,
-    placeApply: (apply) => inline.appendChild(apply),
+    placeApply: (apply) => {
+      const line = document.createElement("div");
+      line.className = "snp-online-apply";
+      line.appendChild(apply);
+      root.appendChild(line);
+    },
     sync: () => {
-      const { enabled, since } = filters.online;
-      const picked = since !== null;
-      title.textContent = picked ? ` Last Online: ${sinceLabel(since)}` : " Last Online";
+      const { enabled, minutes } = filters.online;
+      const picked = minutes !== null;
+      select.textContent = picked ? onlineLabel(minutes) : "Select";
+      select.classList.toggle("active", picked);
       toggle.checked = enabled && picked;
       toggle.disabled = !picked;
       header.classList.toggle("active", enabled && picked);
-      for (const chip of chips) {
-        chip.hidden = picked;
-      }
-      icon.classList.toggle("fa-clock", !picked);
-      icon.classList.toggle("fa-times-circle", picked);
-      icon.classList.toggle("snp-online-clear", picked);
-      if (picked) {
-        icon.setAttribute("role", "button");
-        icon.setAttribute("aria-label", "Clear last online filter");
-      } else {
-        icon.removeAttribute("role");
-        icon.removeAttribute("aria-label");
-      }
     },
   };
 };
@@ -252,7 +229,6 @@ const buildStatRow =
 
     group.classList.remove("no-border-bottom");
     item.classList.remove("last");
-    item.classList.add("parent-enabled");
     label.removeAttribute("for");
     name.textContent = title;
 
@@ -267,9 +243,36 @@ const buildStatRow =
           changed();
         },
         root.closest("smart-select-filter"),
+        checkbox,
       );
+    const nativeList = anchor.closest(".smart-options-container");
+    let suspended = false;
+    const followCruiserStats = (): void => {
+      const on = nativeList?.classList.contains("active") ?? true;
+      item.classList.toggle("parent-enabled", on);
+      if (!on && filter.enabled) {
+        suspended = true;
+        filter.enabled = false;
+        changed();
+      } else if (on && suspended) {
+        suspended = false;
+        filter.enabled = true;
+        changed();
+      }
+    };
+    if (nativeList) {
+      new MutationObserver(followCruiserStats).observe(nativeList, {
+        attributes: true,
+        attributeFilter: ["class"],
+      });
+    }
+    followCruiserStats();
+
     label.addEventListener("click", (event) => {
       event.preventDefault();
+      if (!item.classList.contains("parent-enabled")) {
+        return;
+      }
       if (!filter.enabled && filter.min === null && filter.max === null) {
         openSheet();
         return;
@@ -277,7 +280,11 @@ const buildStatRow =
       filter.enabled = !filter.enabled;
       changed();
     });
-    statButton.addEventListener("click", openSheet);
+    statButton.addEventListener("click", () => {
+      if (item.classList.contains("parent-enabled")) {
+        openSheet();
+      }
+    });
 
     return {
       root,

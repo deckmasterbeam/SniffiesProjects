@@ -40,7 +40,7 @@ test("FAB and close button open and close the panel", async ({ page }) => {
 
   await fab.click();
   await expect(panel).toBeVisible();
-  await expect(panel.locator("#snp-profile-border-root")).toBeVisible();
+  await expect(panel.locator("#snp-premium-root")).toBeVisible();
 
   await fab.click();
   await expect(panel).toBeHidden();

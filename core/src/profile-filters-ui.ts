@@ -1,6 +1,9 @@
 import type { ProfileFiltersFormContract } from "./contracts.js";
-import PROFILE_FILTERS_CSS from "./profile-filters.css";
+import RAW_CSS from "./profile-filters.css";
+import SWITCH_CSS from "./switch.css";
 import PROFILE_FILTERS_HTML from "./profile-filters.html";
+
+const PROFILE_FILTERS_CSS = SWITCH_CSS + RAW_CSS;
 
 export { PROFILE_FILTERS_CSS, PROFILE_FILTERS_HTML };
 export type { ProfileFiltersFormContract };

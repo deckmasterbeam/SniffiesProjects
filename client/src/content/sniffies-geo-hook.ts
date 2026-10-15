@@ -8,8 +8,11 @@ import {
 (() => {
   const log = createLogger("geo");
 
+  let premiumEnabled = true;
+
   const controller = installLocationOverrideController({
     initialOverride: DEFAULT_GEO_OVERRIDE,
+    isPremiumEnabled: () => premiumEnabled,
     onOverrideChanged: (next) => {
       window.postMessage(
         { source: "sniffies-geo-hook", kind: "persistOverride", override: next },
@@ -30,6 +33,7 @@ import {
     if (!msg || msg.source !== "sniffies-geo-relay" || msg.kind !== "override") {
       return;
     }
+    premiumEnabled = msg.premiumFeaturesEnabled !== false;
     const override = (msg.override as GeoOverride | undefined) ?? DEFAULT_GEO_OVERRIDE;
     log("override synced from storage", override);
     controller.syncOverride(override);

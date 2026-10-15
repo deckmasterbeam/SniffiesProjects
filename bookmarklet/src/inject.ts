@@ -3,14 +3,12 @@
 //   javascript:(function(){var s=document.createElement('script');s.src='https://YOUR_VERCEL_URL/inject.js?t='+Date.now();document.head.appendChild(s);})();
 
 import {
-  getHidePhotosEnabled,
-  getHidePhotosSectionOpen,
+  getPremiumFeatureFlags,
+  getPremiumFeaturesEnabled,
+  getPremiumSectionOpen,
   getProfileBorderOpen,
-  getProfileBorderSectionOpen,
   getProfileFiltersEnabled,
   getProfileFiltersSectionOpen,
-  HIDE_PHOTOS_CSS,
-  HIDE_PHOTOS_HTML,
   installHidePhotoClick,
   installHidePhotoMenuButtons,
   installProfileBorderRedirect,
@@ -24,18 +22,17 @@ import {
   VERSION_BADGE_HTML,
   wireVersionBadge,
   wireUpdateBanner,
-  PROFILE_BORDER_CSS,
-  PROFILE_BORDER_HTML,
+  PREMIUM_FEATURES_CSS,
+  PREMIUM_FEATURES_HTML,
   PROFILE_FILTERS_CSS,
   PROFILE_FILTERS_HTML,
-  setHidePhotosEnabled,
-  setHidePhotosSectionOpen,
+  setPremiumFeatureFlags,
+  setPremiumFeaturesEnabled,
+  setPremiumSectionOpen,
   setProfileBorderOpen,
-  setProfileBorderSectionOpen,
   setProfileFiltersEnabled,
   setProfileFiltersSectionOpen,
-  wireHidePhotosForm,
-  wireProfileBorderForm,
+  wirePremiumFeaturesForm,
   wireProfileFiltersForm,
 } from "@sniffies-projects/core";
 import FAB_ICON_PNG from "../../client/icons/icon48.png";
@@ -58,13 +55,19 @@ function main(): void {
   alert("Sniffies Tools loaded! Tap the Sniffies Tools button on the map to open the panel.");
 
   let currentProfileBorderOpen = getProfileBorderOpen();
-  installProfileBorderRedirect(() => currentProfileBorderOpen);
+  let premiumEnabled = getPremiumFeaturesEnabled();
+  let premiumFlags = getPremiumFeatureFlags();
+  installProfileBorderRedirect(
+    () => currentProfileBorderOpen,
+    () => premiumEnabled && premiumFlags.boundary,
+  );
 
+  const isPhotosEnabled = (): boolean => premiumEnabled && premiumFlags.photos;
   installHidePhotoClick(
     installSentPhotoHider(() => ""),
-    getHidePhotosEnabled,
+    isPhotosEnabled,
   );
-  installHidePhotoMenuButtons(getHidePhotosEnabled);
+  installHidePhotoMenuButtons(isPhotosEnabled);
 
   // Takes effect the next time the filter menu is opened. The other profile filters need to hook
   // the page's network requests from the start, which a bookmarklet can't.
@@ -84,17 +87,13 @@ function main(): void {
   updateBannerStyle.textContent = UPDATE_BANNER_CSS;
   document.head.appendChild(updateBannerStyle);
 
-  const profileBorderStyle = document.createElement("style");
-  profileBorderStyle.textContent = PROFILE_BORDER_CSS;
-  document.head.appendChild(profileBorderStyle);
+  const premiumStyle = document.createElement("style");
+  premiumStyle.textContent = PREMIUM_FEATURES_CSS;
+  document.head.appendChild(premiumStyle);
 
   const profileFiltersStyle = document.createElement("style");
   profileFiltersStyle.textContent = PROFILE_FILTERS_CSS;
   document.head.appendChild(profileFiltersStyle);
-
-  const hidePhotosStyle = document.createElement("style");
-  hidePhotosStyle.textContent = HIDE_PHOTOS_CSS;
-  document.head.appendChild(hidePhotosStyle);
 
   // Inject trigger button into the map's icon row
   const fab = document.createElement("button");
@@ -122,17 +121,32 @@ function main(): void {
   updateRoot.innerHTML = UPDATE_BANNER_HTML;
   wireUpdateBanner(updateRoot, "bookmarklet", __VERSION__);
 
-  const profileBorderRoot = panel.querySelector<HTMLElement>("#snp-profile-border-root")!;
-  profileBorderRoot.innerHTML = PROFILE_BORDER_HTML;
+  // Location spoofing isn't supported here (it has to hook the page before it loads), and a
+  // bookmarklet runs too late to see whether the account has Plus.
+  const premiumRoot = panel.querySelector<HTMLElement>("#snp-premium-root")!;
+  premiumRoot.innerHTML = PREMIUM_FEATURES_HTML;
 
-  wireProfileBorderForm(profileBorderRoot, {
-    initial: currentProfileBorderOpen,
-    onSave: (next) => {
-      setProfileBorderOpen(next);
-      currentProfileBorderOpen = next;
+  wirePremiumFeaturesForm(premiumRoot, {
+    initialEnabled: premiumEnabled,
+    onToggleEnabled: (enabled) => {
+      setPremiumFeaturesEnabled(enabled);
+      premiumEnabled = enabled;
     },
-    initialOpen: getProfileBorderSectionOpen(),
-    onToggle: setProfileBorderSectionOpen,
+    flags: premiumFlags,
+    onFlagChange: (key, enabled) => {
+      premiumFlags = { ...premiumFlags, [key]: enabled };
+      setPremiumFeatureFlags(premiumFlags);
+    },
+    hasPlus: null,
+    border: {
+      initial: currentProfileBorderOpen,
+      onSave: (next) => {
+        setProfileBorderOpen(next);
+        currentProfileBorderOpen = next;
+      },
+    },
+    initialOpen: getPremiumSectionOpen(),
+    onToggle: setPremiumSectionOpen,
   });
 
   const profileFiltersRoot = panel.querySelector<HTMLElement>("#snp-profile-filters-root")!;
@@ -147,15 +161,6 @@ function main(): void {
     },
     initialOpen: getProfileFiltersSectionOpen(),
     onToggle: setProfileFiltersSectionOpen,
-  });
-
-  const hidePhotosRoot = panel.querySelector<HTMLElement>("#snp-hide-photos-root")!;
-  hidePhotosRoot.innerHTML = HIDE_PHOTOS_HTML;
-  wireHidePhotosForm(hidePhotosRoot, {
-    initialEnabled: getHidePhotosEnabled(),
-    onToggleEnabled: setHidePhotosEnabled,
-    initialOpen: getHidePhotosSectionOpen(),
-    onToggle: setHidePhotosSectionOpen,
   });
 
   // Shell interaction

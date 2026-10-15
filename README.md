@@ -4,7 +4,7 @@ A monorepo of tools to recreate and expand functionality for [sniffies.com](http
 
 ## Features
 
-- **Location spoofing** — Override the GPS coordinates Sniffies sees, letting you browse any location on the map.
+- **Location spoofing** — Override the GPS coordinates Sniffies sees, letting you browse any location on the map. Together with opening profiles outside your boundary and hiding sent photos, it sits behind one "Premium Features" switch (on by default; the section notes if your account already has Sniffies Plus, extension and userscript only).
 
 - **Opening profiles outside geofence** — Click profiles outside the free radius to view them without hitting the paywall.
 
@@ -19,7 +19,7 @@ A monorepo of tools to recreate and expand functionality for [sniffies.com](http
 | Filter       | What it does                                                                        | Chrome extension | Userscript | Bookmarklet |
 | ------------ | ----------------------------------------------------------------------------------- | ---------------- | ---------- | ----------- |
 | Gender       | New filter with: Male / Female / Nonbinary / Not specified buttons | Yes              | Yes        | No          |
-| Last Online  | Row under Cruising Now: Now / 30 min / 1 hr; people stay after going offline        | Yes              | Yes        | No          |
+| Last Online  | Row under Cruising Now: pick 15 min to 48 hours; people stay after going offline   | Yes              | Yes        | No          |
 | Height       | New filter under Cruiser Stats                   | Yes              | Yes        | No          |
 | Weight       | New filter under Cruiser Stats                 | Yes              | Yes        | No          |
 | Sexuality    | Choose any number of options                                 | Yes              | Yes        | Yes         |

@@ -3,21 +3,29 @@ import { SETTINGS_KEYS, getLocalSettings, setGeoOverride } from "../shared/setti
 
 const log = createLogger("geo-relay");
 
-const postOverride = (override: GeoOverride): void => {
-  window.postMessage({ source: "sniffies-geo-relay", kind: "override", override }, "*");
+const postOverride = (override: GeoOverride, premiumFeaturesEnabled: boolean): void => {
+  window.postMessage(
+    { source: "sniffies-geo-relay", kind: "override", override, premiumFeaturesEnabled },
+    "*",
+  );
 };
 
-void getLocalSettings().then(({ geoOverride }) => {
-  postOverride(geoOverride);
+void getLocalSettings().then(({ geoOverride, premiumFeaturesEnabled, premiumFeatureFlags }) => {
+  postOverride(geoOverride, premiumFeaturesEnabled && premiumFeatureFlags.location);
 });
 
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area !== "local") {
     return;
   }
-  const change = changes[SETTINGS_KEYS.geoOverride];
-  if (change) {
-    postOverride(change.newValue as GeoOverride);
+  if (
+    changes[SETTINGS_KEYS.geoOverride] ||
+    changes[SETTINGS_KEYS.premiumFeaturesEnabled] ||
+    changes[SETTINGS_KEYS.premiumFeatureFlags]
+  ) {
+    void getLocalSettings().then(({ geoOverride, premiumFeaturesEnabled, premiumFeatureFlags }) => {
+      postOverride(geoOverride, premiumFeaturesEnabled && premiumFeatureFlags.location);
+    });
   }
 });
 

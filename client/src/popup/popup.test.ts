@@ -17,11 +17,9 @@ const POPUP_HTML = `
     </div>
   </details>
   <div id="snp-update-root"></div>
-  <div id="snp-geo-root"></div>
-  <div id="snp-profile-border-root"></div>
+  <div id="snp-premium-root"></div>
   <div id="snp-bot-block-root"></div>
   <div id="snp-profile-filters-root"></div>
-  <div id="snp-hide-photos-root"></div>
 `;
 
 const flushPromises = () => new Promise<void>((r) => setTimeout(r, 0));
@@ -35,15 +33,14 @@ const getElements = () => ({
   botBlockingHint: document.getElementById("bot-block-hint") as HTMLElement,
   botBlockingEnableLabel: document.getElementById("bot-block-enable-label") as HTMLElement,
   botBlockingCount: document.getElementById("bot-block-count") as HTMLElement,
-  geoEnabled: document.getElementById("geo-enabled") as HTMLInputElement,
+  premiumEnabled: document.getElementById("premium-enabled") as HTMLInputElement,
+  premiumConfig: document.getElementById("premium-config") as HTMLElement,
+  premiumDetails: document.getElementById("premium-details") as HTMLDetailsElement,
+  plusNotice: document.getElementById("premium-plus-notice") as HTMLElement,
   geoClear: document.getElementById("geo-clear") as HTMLButtonElement,
   geoSaved: document.getElementById("geo-saved") as HTMLElement,
-  geoDetails: document.getElementById("geo-details") as HTMLDetailsElement,
-  profileBorderEnabled: document.getElementById("profile-border-enabled") as HTMLInputElement,
-  profileBorderTabField: document.getElementById("profile-border-tab-field") as HTMLElement,
   profileBorderTab: document.getElementById("profile-border-tab") as HTMLSelectElement,
   profileBorderSave: document.getElementById("profile-border-save") as HTMLButtonElement,
-  profileBorderDetails: document.getElementById("profile-border-details") as HTMLDetailsElement,
 });
 
 const loadModule = async () => {
@@ -114,107 +111,90 @@ describe("popup — version badge", () => {
   });
 });
 
-describe("popup — profile border open", () => {
+const loadWithStored = async (stored: Record<string, unknown>) => {
+  vi.resetModules();
+  (chrome.storage.local.get as ReturnType<typeof vi.fn>).mockResolvedValueOnce(stored);
+  document.body.innerHTML = POPUP_HTML;
+  await import("./popup.js");
+  await flushPromises();
+};
+
+describe("popup — premium features master toggle", () => {
+  it("is on by default with the configuration visible", async () => {
+    await loadModule();
+    const { premiumEnabled, premiumConfig } = getElements();
+    expect(premiumEnabled.checked).toBe(true);
+    expect(premiumConfig.style.display).toBe("");
+  });
+
+  it("saves the switch and greys out the feature list when turned off", async () => {
+    await loadModule();
+    const { premiumEnabled, premiumConfig } = getElements();
+    premiumEnabled.checked = false;
+    premiumEnabled.dispatchEvent(new Event("change"));
+    expect(chrome.storage.local.set).toHaveBeenCalledWith({ premiumFeaturesEnabled: false });
+    expect(premiumConfig.style.display).toBe("");
+    expect(premiumConfig.classList.contains("snp-disabled")).toBe(true);
+  });
+
+  it("migrates from the old per-feature toggles when no master value is saved", async () => {
+    await loadWithStored({ profileBorderOpen: { enabled: false, openInNewTab: true } });
+    expect(getElements().premiumEnabled.checked).toBe(false);
+    await loadWithStored({ geoOverride: { enabled: true, latitude: 0, longitude: 0 } });
+    expect(getElements().premiumEnabled.checked).toBe(true);
+  });
+
+  it("a saved master value wins over the old toggles", async () => {
+    await loadWithStored({
+      premiumFeaturesEnabled: false,
+      geoOverride: { enabled: true, latitude: 1, longitude: 1 },
+    });
+    expect(getElements().premiumEnabled.checked).toBe(false);
+  });
+
+  it("shows the Plus notice only when the account is known to have Plus", async () => {
+    await loadWithStored({ hasPlus: true });
+    expect(getElements().plusNotice.style.display).toBe("");
+    await loadWithStored({ hasPlus: false });
+    expect(getElements().plusNotice.style.display).toBe("none");
+    await loadModule();
+    expect(getElements().plusNotice.style.display).toBe("none");
+  });
+
+  it("saves the section open state on toggle", async () => {
+    await loadModule();
+    const { premiumDetails } = getElements();
+    premiumDetails.open = true;
+    premiumDetails.dispatchEvent(new Event("toggle"));
+    expect(chrome.storage.local.set).toHaveBeenCalledWith({ premiumSectionOpen: true });
+  });
+});
+
+describe("popup — profiles outside boundary", () => {
   beforeEach(loadModule);
 
-  it("hides the tab field on init when disabled", () => {
-    const { profileBorderTabField } = getElements();
-    expect(profileBorderTabField.style.display).toBe("none");
-  });
-
-  it("shows the tab field when enable is checked", () => {
-    const { profileBorderEnabled, profileBorderTabField } = getElements();
-    profileBorderEnabled.checked = true;
-    profileBorderEnabled.dispatchEvent(new Event("change"));
-    expect(profileBorderTabField.style.display).not.toBe("none");
-  });
-
-  it("hides the tab field when enable is unchecked after being checked", () => {
-    const { profileBorderEnabled, profileBorderTabField } = getElements();
-    profileBorderEnabled.checked = true;
-    profileBorderEnabled.dispatchEvent(new Event("change"));
-    profileBorderEnabled.checked = false;
-    profileBorderEnabled.dispatchEvent(new Event("change"));
-    expect(profileBorderTabField.style.display).toBe("none");
-  });
-
-  it("save button is hidden on init", () => {
-    const { profileBorderSave } = getElements();
-    expect(profileBorderSave.style.display).toBe("none");
-  });
-
-  it("save button appears when select is changed to opposite value", () => {
+  it("save button is hidden on init and appears when the select differs", () => {
     const { profileBorderTab, profileBorderSave } = getElements();
+    expect(profileBorderSave.style.display).toBe("none");
     profileBorderTab.value = "current-tab";
     profileBorderTab.dispatchEvent(new Event("change"));
     expect(profileBorderSave.style.display).toBe("");
+    profileBorderTab.value = "new-tab";
+    profileBorderTab.dispatchEvent(new Event("change"));
+    expect(profileBorderSave.style.display).toBe("none");
   });
 
-  it("save button hides when select is changed back to saved value", () => {
+  it("saves openInNewTab and hides the button afterwards", async () => {
     const { profileBorderTab, profileBorderSave } = getElements();
     profileBorderTab.value = "current-tab";
     profileBorderTab.dispatchEvent(new Event("change"));
-    profileBorderTab.value = "new-tab";
-    profileBorderTab.dispatchEvent(new Event("change"));
-    expect(profileBorderSave.style.display).toBe("none");
-  });
-
-  it("saves enabled=true and openInNewTab=true when saved with new-tab", async () => {
-    const { profileBorderEnabled, profileBorderTab, profileBorderSave } = getElements();
-    profileBorderEnabled.checked = true;
-    profileBorderTab.value = "new-tab";
-    profileBorderTab.dispatchEvent(new Event("change"));
     profileBorderSave.click();
     await flushPromises();
     expect(chrome.storage.local.set).toHaveBeenCalledWith({
-      profileBorderOpen: { enabled: true, openInNewTab: true },
+      profileBorderOpen: expect.objectContaining({ openInNewTab: false }),
     });
-  });
-
-  it("save button hides after saving", async () => {
-    const { profileBorderTab, profileBorderSave } = getElements();
-    profileBorderTab.value = "new-tab";
-    profileBorderTab.dispatchEvent(new Event("change"));
-    profileBorderSave.click();
-    await flushPromises();
     expect(profileBorderSave.style.display).toBe("none");
-  });
-
-  it("marks the new-tab option as saved when openInNewTab is true", async () => {
-    const { profileBorderTab, profileBorderSave } = getElements();
-    profileBorderTab.value = "new-tab";
-    profileBorderTab.dispatchEvent(new Event("change"));
-    profileBorderSave.click();
-    await flushPromises();
-    expect(profileBorderTab.options[0]?.text).not.toContain("(saved)");
-    expect(profileBorderTab.options[1]?.text).toContain("(saved)");
-  });
-
-  it("auto-saves when enable checkbox is toggled", async () => {
-    const { profileBorderEnabled } = getElements();
-    profileBorderEnabled.checked = true;
-    profileBorderEnabled.dispatchEvent(new Event("change"));
-    await flushPromises();
-    expect(chrome.storage.local.set).toHaveBeenCalledWith({
-      profileBorderOpen: { enabled: true, openInNewTab: true },
-    });
-  });
-
-  it("shows the tab field on init when enabled is saved as true", async () => {
-    vi.resetModules();
-    (chrome.storage.local.get as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      profileBorderOpen: { enabled: true, openInNewTab: false },
-      profileBorderSectionOpen: false,
-      geoOverride: { enabled: false, latitude: 0, longitude: 0 },
-      geoSectionOpen: false,
-      guid: "",
-      phone: "",
-    });
-    document.body.innerHTML = POPUP_HTML;
-    await import("./popup.js");
-    await flushPromises();
-    const field = document.getElementById("profile-border-tab-field") as HTMLElement;
-    expect(field.style.display).toBe("");
+    expect(profileBorderTab.options[0]?.text).toContain("(saved)");
   });
 });
 
@@ -327,101 +307,25 @@ describe("popup — bot blocking count (REPORTING_ENABLED true)", () => {
   });
 });
 
-describe("popup — geo status", () => {
-  beforeEach(loadModule);
-
-  it("leaves the checkbox enabled and unchecked with no saved location when nothing has been captured", () => {
-    const { geoEnabled, geoSaved, geoClear } = getElements();
-    expect(geoEnabled.disabled).toBe(false);
+describe("popup — location", () => {
+  it("shows no saved location and hides Clear when nothing has been captured", async () => {
+    await loadModule();
+    const { geoSaved, geoClear } = getElements();
     expect(geoSaved.textContent).toBe("");
     expect(geoClear.style.display).toBe("none");
   });
 
-  it("shows saved coords on init when a location was previously captured", async () => {
-    vi.resetModules();
-    (chrome.storage.local.get as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+  it("shows the saved coords, and Clear wipes them", async () => {
+    await loadWithStored({
       geoOverride: { enabled: true, latitude: 40.7128, longitude: -74.006 },
-      geoSectionOpen: false,
-      profileBorderOpen: { enabled: false, openInNewTab: false },
-      profileBorderSectionOpen: false,
-      favoritesEnabled: false,
-      favoritesSectionOpen: false,
-      guid: "",
-      phone: "",
     });
-    document.body.innerHTML = POPUP_HTML;
-    Object.defineProperty(navigator, "geolocation", {
-      value: { getCurrentPosition: vi.fn() },
-      writable: true,
-      configurable: true,
-    });
-    await import("./popup.js");
-    await flushPromises();
-    const { geoEnabled, geoSaved, geoClear } = getElements();
-    expect(geoEnabled.checked).toBe(true);
+    const { geoSaved, geoClear } = getElements();
     expect(geoSaved.textContent).toBe("Saved: 40.71280, -74.00600");
-    expect(geoClear.style.display).toBe("");
-  });
-});
-
-describe("popup — geo override", () => {
-  beforeEach(async () => {
-    vi.resetModules();
-    (chrome.storage.local.get as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      geoOverride: { enabled: true, latitude: 40.7128, longitude: -74.006 },
-      geoSectionOpen: false,
-      profileBorderOpen: { enabled: false, openInNewTab: false },
-      profileBorderSectionOpen: false,
-      favoritesEnabled: false,
-      favoritesSectionOpen: false,
-      guid: "",
-      phone: "",
-    });
-    document.body.innerHTML = POPUP_HTML;
-    Object.defineProperty(navigator, "geolocation", {
-      value: { getCurrentPosition: vi.fn() },
-      writable: true,
-      configurable: true,
-    });
-    await import("./popup.js");
-    await flushPromises();
-  });
-
-  it("saves geoOverride with enabled: false when the checkbox is unchecked", async () => {
-    const { geoEnabled } = getElements();
-    geoEnabled.checked = false;
-    geoEnabled.dispatchEvent(new Event("change"));
-    await flushPromises();
-    expect(chrome.storage.local.set).toHaveBeenCalledWith({
-      geoOverride: { enabled: false, latitude: 40.7128, longitude: -74.006 },
-    });
-  });
-
-  it("clears the coords but preserves enabled when Clear location is clicked", async () => {
-    const { geoClear } = getElements();
     geoClear.click();
     await flushPromises();
     expect(chrome.storage.local.set).toHaveBeenCalledWith({
       geoOverride: { enabled: true, latitude: 0, longitude: 0, label: undefined },
     });
-  });
-});
-
-describe("popup — section persistence", () => {
-  beforeEach(loadModule);
-
-  it("saves geo section open state on toggle", () => {
-    const { geoDetails } = getElements();
-    geoDetails.open = true;
-    geoDetails.dispatchEvent(new Event("toggle"));
-    expect(chrome.storage.local.set).toHaveBeenCalledWith({ geoSectionOpen: true });
-  });
-
-  it("saves profile border section open state on toggle", () => {
-    const { profileBorderDetails } = getElements();
-    profileBorderDetails.open = true;
-    profileBorderDetails.dispatchEvent(new Event("toggle"));
-    expect(chrome.storage.local.set).toHaveBeenCalledWith({ profileBorderSectionOpen: true });
   });
 });
 

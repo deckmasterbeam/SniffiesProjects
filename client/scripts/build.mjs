@@ -46,6 +46,8 @@ const staticAssets = [
   "manifest.json",
   "src/popup/popup.html",
   "src/popup/popup.css",
+  "src/popup/fonts/roboto-latin-400-normal.woff2",
+  "src/popup/fonts/roboto-latin-700-normal.woff2",
   "src/options/options.html",
   "src/options/options.css",
   "src/content/content.css",

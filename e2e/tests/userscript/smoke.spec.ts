@@ -23,7 +23,7 @@ test("userscript direct-injects and mounts the FAB panel", async ({ page, contex
 
   const panel = page.locator("#snp-panel");
   await expect(panel).toBeVisible();
-  await expect(panel.locator("#snp-geo-root")).toBeVisible();
+  await expect(panel.locator("#snp-premium-root")).toBeVisible();
 });
 
 test("marker outside the free radius redirects instead of opening a panel", async ({
@@ -31,8 +31,7 @@ test("marker outside the free radius redirects instead of opening a panel", asyn
   context,
 }) => {
   await mockSniffiesPage(context);
-  // ProfileBorderOpen.enabled defaults false — same gotcha as the Chrome
-  // extension smoke test, just via localStorage instead of chrome.storage.
+  // Premium features default on; open in the current tab so the navigation is observable.
   await seedUserscriptStorage(page, {
     "sniffies-profile-border": JSON.stringify({ enabled: true, openInNewTab: false }),
   });

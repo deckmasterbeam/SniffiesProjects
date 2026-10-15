@@ -1,6 +1,9 @@
 import type { BotBlockFormContract } from "./contracts.js";
-import BOT_BLOCK_CSS from "./bot-block.css";
+import RAW_CSS from "./bot-block.css";
+import SWITCH_CSS from "./switch.css";
 import BOT_BLOCK_HTML from "./bot-block.html";
+
+const BOT_BLOCK_CSS = SWITCH_CSS + RAW_CSS;
 
 export { BOT_BLOCK_CSS, BOT_BLOCK_HTML };
 export type { BotBlockFormContract };

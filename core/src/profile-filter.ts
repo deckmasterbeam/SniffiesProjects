@@ -249,19 +249,25 @@ export const rangeRule = (
 
 export interface OnlineFilter {
   enabled: boolean;
-  since: number | null;
+  /** Seen within this many minutes of now. */
+  minutes: number | null;
 }
 
-export const DEFAULT_ONLINE_FILTER: OnlineFilter = { enabled: false, since: null };
+export const DEFAULT_ONLINE_FILTER: OnlineFilter = { enabled: false, minutes: null };
+
+export const ONLINE_MINUTES = [15, 30, 45, 60, 90, 180, 360, 720, 1440, 2160, 2880];
+
+export const onlineLabel = (minutes: number): string =>
+  `< ${minutes < 60 ? `${minutes} min` : `${minutes / 60} hour${minutes === 60 ? "" : "s"}`} ago`;
 
 const parseOnlineFilter = (value: unknown): OnlineFilter => {
-  const raw = (value ?? {}) as { enabled?: unknown; since?: unknown };
-  const since = typeof raw.since === "number" && isFinite(raw.since) ? raw.since : null;
-  return { enabled: raw.enabled === true && since !== null, since };
+  const raw = (value ?? {}) as { enabled?: unknown; minutes?: unknown };
+  const minutes = ONLINE_MINUTES.includes(raw.minutes as number) ? (raw.minutes as number) : null;
+  return { enabled: raw.enabled === true && minutes !== null, minutes };
 };
 
 export const onlineKey = (filter: OnlineFilter): string =>
-  filter.enabled && filter.since !== null ? String(filter.since) : "";
+  filter.enabled && filter.minutes !== null ? String(filter.minutes) : "";
 
 export const onlineRule = (getFilter: () => OnlineFilter): ProfileFilterRule => ({
   name: "online",
@@ -273,7 +279,10 @@ export const onlineRule = (getFilter: () => OnlineFilter): ProfileFilterRule => 
       return false;
     }
     // A missing connect time is NaN, it wasn't online recently.
-    return !(Date.parse(profile.data.connectUpdateTime ?? "") >= getFilter().since!);
+    return !(
+      Date.parse(profile.data.connectUpdateTime ?? "") >=
+      Date.now() - getFilter().minutes! * 60_000
+    );
   },
 });
 

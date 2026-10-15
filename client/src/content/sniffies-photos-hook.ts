@@ -24,7 +24,7 @@ import {
     if (msg?.source === "sniffies-user-id-hook" && typeof msg.userId === "string") {
       ownUserId = msg.userId;
     } else if (msg?.source === "sniffies-bot-block-relay") {
-      enabled = msg.hidePhotosEnabled === true;
+      enabled = msg.premiumFeaturesEnabled === true;
     }
   });
 })();

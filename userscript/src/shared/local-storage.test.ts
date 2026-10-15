@@ -5,12 +5,10 @@ import {
   getBlockedBotsFetchedAt,
   getBotBlockingEnabled,
   getBotBlockingSectionOpen,
-  getGeoSectionOpen,
   recordBlockedBotEvent,
   setBlockedBots,
   setBotBlockingEnabled,
   setBotBlockingSectionOpen,
-  setGeoSectionOpen,
 } from "./local-storage.js";
 
 afterEach(() => {
@@ -60,17 +58,6 @@ describe("bot blocking section open", () => {
   it("round-trips true", () => {
     setBotBlockingSectionOpen(true);
     expect(getBotBlockingSectionOpen()).toBe(true);
-  });
-});
-
-describe("geo section open", () => {
-  it("defaults to false", () => {
-    expect(getGeoSectionOpen()).toBe(false);
-  });
-
-  it("round-trips true", () => {
-    setGeoSectionOpen(true);
-    expect(getGeoSectionOpen()).toBe(true);
   });
 });
 

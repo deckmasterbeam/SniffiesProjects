@@ -20,7 +20,7 @@ const postState = (
   enabled: boolean,
   profileFilters: ProfileFilters,
   profileFiltersEnabled: boolean,
-  hidePhotosEnabled: boolean,
+  premiumFeaturesEnabled: boolean,
 ): void => {
   window.postMessage(
     {
@@ -29,7 +29,7 @@ const postState = (
       enabled,
       profileFilters,
       profileFiltersEnabled,
-      hidePhotosEnabled,
+      premiumFeaturesEnabled,
     },
     "*",
   );
@@ -40,7 +40,9 @@ let appliedFilters: ProfileFilters | null = null;
 let removeFiltersMenu: (() => void) | null = null;
 
 const relay = (settings: ExtensionLocalSettings): void => {
-  const { blockedBots, botBlockingEnabled, profileFiltersEnabled, hidePhotosEnabled } = settings;
+  const { blockedBots, botBlockingEnabled, profileFiltersEnabled } = settings;
+  const premiumFeaturesEnabled =
+    settings.premiumFeaturesEnabled && settings.premiumFeatureFlags.photos;
   const stored = parseProfileFilters(settings.profileFilters);
 
   const effective = gateProfileFilters(stored, profileFiltersEnabled);
@@ -50,7 +52,7 @@ const relay = (settings: ExtensionLocalSettings): void => {
     botBlockingEnabled,
     appliedFilters,
     profileFiltersEnabled,
-    hidePhotosEnabled,
+    premiumFeaturesEnabled,
   );
 
   if (profileFiltersEnabled && !removeFiltersMenu) {
@@ -82,7 +84,8 @@ chrome.storage.onChanged.addListener((changes, area) => {
     !changes[SETTINGS_KEYS.botBlockingEnabled] &&
     !changes[SETTINGS_KEYS.profileFilters] &&
     !changes[SETTINGS_KEYS.profileFiltersEnabled] &&
-    !changes[SETTINGS_KEYS.hidePhotosEnabled]
+    !changes[SETTINGS_KEYS.premiumFeaturesEnabled] &&
+    !changes[SETTINGS_KEYS.premiumFeatureFlags]
   ) {
     return;
   }

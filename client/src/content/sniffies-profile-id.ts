@@ -1,12 +1,3 @@
-// Runs in the isolated world on sniffies.com.
-// - Listens for clicks on profile markers ([data-testid="cv-marker-avatar-image"]).
-// - Extracts the user id (and profile pic URL) from the marker's background-image URL.
-// - When a profile panel (#app-screen) renders its cruiserNameLabel span,
-//   injects a star toggle (always shown) and the user id text (debug-gated).
-// - Report-button injection (id resolution, the panel-switch race handling,
-//   deep-link/no-photo fixes) lives in core/src/report-button-hook.ts, shared
-//   verbatim with the userscript's src/report.ts — see that file's header.
-
 import {
   CLIENT_SECRET,
   DEBUG,
@@ -18,6 +9,7 @@ import {
   createLogger,
   installProfileBorderRedirect,
   installReportButtonInjection,
+  parsePremiumFeatureFlags,
   refreshBlockedBotsIfStale,
   APP_SCREEN_SELECTOR,
   NAME_LABEL_SELECTOR,
@@ -51,10 +43,9 @@ let favoritedIds = new Set<string>();
 let currentGuid = "";
 let currentSniffiesUserId = "";
 let currentProfileBorderOpen: ProfileBorderOpen = { ...DEFAULT_PROFILE_BORDER_OPEN };
-// The most recent marker click's extraction, kept only to hand a favorite's
-// profilePicUrl to injectIntoNameLabel — onProfileResolved below only uses it
-// when its userId still matches the panel being resolved (it won't after a
-// URL-driven self-correction, e.g. a deep link or a no-photo marker).
+let currentPremiumEnabled = false;
+let currentBoundaryEnabled = true;
+
 let lastMarkerSelection: MarkerSelection | null = null;
 
 const isFavorite = (userId: string): boolean => favoritedIds.has(userId);
@@ -210,9 +201,10 @@ const injectIntoNameLabel = (
   log("injected for user", userId);
 };
 
-// Registered before the favorites click listener below so it can claim
-// out-of-radius profile clicks first (via stopImmediatePropagation).
-installProfileBorderRedirect(() => currentProfileBorderOpen);
+installProfileBorderRedirect(
+  () => currentProfileBorderOpen,
+  () => currentPremiumEnabled && currentBoundaryEnabled,
+);
 
 installReportButtonInjection({
   serverBase: SERVER_BASE,
@@ -234,7 +226,16 @@ installReportButtonInjection({
 });
 
 void getLocalSettings().then(
-  ({ guid, profileBorderOpen, sniffiesUserId, blockedBotsFetchedAt }) => {
+  ({
+    guid,
+    profileBorderOpen,
+    sniffiesUserId,
+    blockedBotsFetchedAt,
+    premiumFeaturesEnabled,
+    premiumFeatureFlags,
+  }) => {
+    currentPremiumEnabled = premiumFeaturesEnabled;
+    currentBoundaryEnabled = premiumFeatureFlags.boundary;
     currentGuid = guid;
     currentSniffiesUserId = sniffiesUserId;
     currentProfileBorderOpen = { ...DEFAULT_PROFILE_BORDER_OPEN, ...profileBorderOpen };
@@ -268,6 +269,14 @@ chrome.storage.onChanged.addListener((changes, area) => {
   if (sniffiesUserIdChange) {
     currentSniffiesUserId =
       typeof sniffiesUserIdChange.newValue === "string" ? sniffiesUserIdChange.newValue : "";
+  }
+  const premiumChange = changes[SETTINGS_KEYS.premiumFeaturesEnabled];
+  if (premiumChange) {
+    currentPremiumEnabled = premiumChange.newValue === true;
+  }
+  const flagsChange = changes[SETTINGS_KEYS.premiumFeatureFlags];
+  if (flagsChange) {
+    currentBoundaryEnabled = parsePremiumFeatureFlags(flagsChange.newValue).boundary;
   }
   const profileBorderChange = changes[SETTINGS_KEYS.profileBorderOpen];
   if (profileBorderChange) {

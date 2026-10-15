@@ -850,12 +850,17 @@ describe("installBotBlockHook — XHR", () => {
 });
 
 describe("online rule", () => {
-  const SINCE = Date.parse("2026-10-08T06:00:00Z");
+  const NOW = Date.parse("2026-10-08T07:00:00Z");
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(NOW);
+  });
+  afterEach(() => vi.useRealTimers());
   const seenAt = (_id: string, connectUpdateTime?: string) => ({
     _id,
     data: { connectUpdateTime },
   });
-  const matcher = () => createProfileMatcher([onlineRule(() => ({ enabled: true, since: SINCE }))]);
+  const matcher = () => createProfileMatcher([onlineRule(() => ({ enabled: true, minutes: 60 }))]);
   const frame = (eventName: string, data: unknown) => JSON.stringify({ eventName, data });
 
   it("hides profiles last online before the cutoff, or with no time at all", () => {
@@ -875,8 +880,8 @@ describe("online rule", () => {
 
   it("is inactive when disabled or empty", () => {
     for (const filter of [
-      { enabled: false, since: SINCE },
-      { enabled: true, since: null },
+      { enabled: false, minutes: 60 },
+      { enabled: true, minutes: null },
     ]) {
       expect(createProfileMatcher([onlineRule(() => filter)]).isActive()).toBe(false);
     }
@@ -900,19 +905,19 @@ describe("online rule", () => {
     expect(shouldFilterWebSocketFrame(frame("userRemoved", "a"), m)).toBe(true);
     expect(shouldFilterWebSocketFrame(frame("userAwake", "a"), m)).toBe(false);
     // Off, the app sees disconnects as usual.
-    const off = createProfileMatcher([onlineRule(() => ({ enabled: false, since: SINCE }))]);
+    const off = createProfileMatcher([onlineRule(() => ({ enabled: false, minutes: 60 }))]);
     expect(shouldFilterWebSocketFrame(frame("userDisconnected", "a"), off)).toBe(false);
     expect(shouldFilterWebSocketFrame(frame("userRemoved", "a"), off)).toBe(false);
   });
 
   it("is saved with the other filters and gated off by the master switch", () => {
-    const parsed = parseProfileFilters({ online: { enabled: true, since: SINCE } });
-    expect(parsed.online).toEqual({ enabled: true, since: SINCE });
+    const parsed = parseProfileFilters({ online: { enabled: true, minutes: 60 } });
+    expect(parsed.online).toEqual({ enabled: true, minutes: 60 });
     expect(parseProfileFilters({ online: { enabled: true } }).online).toEqual({
       enabled: false,
-      since: null,
+      minutes: null,
     });
-    expect(gateProfileFilters(parsed, false).online).toEqual({ enabled: false, since: SINCE });
+    expect(gateProfileFilters(parsed, false).online).toEqual({ enabled: false, minutes: 60 });
   });
 });
 

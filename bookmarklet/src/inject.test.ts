@@ -43,8 +43,10 @@ describe("bookmarklet", () => {
 
   it("only offers the profile-border feature", () => {
     const panel = document.querySelector("#snp-panel")!;
-    expect(panel.querySelector("#profile-border-enabled")).not.toBeNull();
-    expect(panel.querySelector("#snp-geo-root")).toBeNull();
+    expect(panel.querySelector("#premium-enabled")).not.toBeNull();
+    expect(panel.querySelector("#profile-border-tab")).not.toBeNull();
+    expect(panel.querySelector("#premium-geo")!.getAttribute("style")).toContain("none");
+    expect(panel.querySelector("#premium-plus-notice")!.getAttribute("style")).toContain("none");
     expect(panel.querySelector("#snp-bot-block-root")).toBeNull();
   });
 
@@ -56,19 +58,20 @@ describe("bookmarklet", () => {
     expect(panelDisplay()).toBe("none");
   });
 
-  it("leaves out-of-boundary profile clicks alone until enabled", () => {
-    document.querySelector<HTMLElement>("#abc123 img")!.click();
-    expect(open).not.toHaveBeenCalled();
-  });
-
-  it("saves the setting and opens out-of-boundary profiles once enabled", () => {
-    const checkbox = document.querySelector<HTMLInputElement>("#profile-border-enabled")!;
-    checkbox.checked = true;
-    checkbox.dispatchEvent(new Event("change"));
-    expect(JSON.parse(localStorage.getItem("sniffies-profile-border")!).enabled).toBe(true);
-
+  it("opens out-of-boundary profiles by default (premium features default on)", () => {
     document.querySelector<HTMLElement>("#abc123 img")!.click();
     expect(open).toHaveBeenCalledWith("https://sniffies.com/profile/abc123", "_blank");
+  });
+
+  it("saves the master switch and leaves clicks alone once it is turned off", () => {
+    open.mockClear();
+    const checkbox = document.querySelector<HTMLInputElement>("#premium-enabled")!;
+    checkbox.checked = false;
+    checkbox.dispatchEvent(new Event("change"));
+    expect(localStorage.getItem("sniffies-premium-features-enabled")).toBe("false");
+
+    document.querySelector<HTMLElement>("#abc123 img")!.click();
+    expect(open).not.toHaveBeenCalled();
   });
 
   it("lifts the selection cap on Sniffies' own stat filters once Profile Filters is enabled", () => {

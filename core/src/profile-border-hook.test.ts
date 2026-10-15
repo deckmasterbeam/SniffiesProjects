@@ -6,7 +6,6 @@ import type { ProfileBorderOpen } from "./settings.js";
 
 const ENABLED_NEW_TAB: ProfileBorderOpen = { enabled: true, openInNewTab: true };
 const ENABLED_CURRENT_TAB: ProfileBorderOpen = { enabled: true, openInNewTab: false };
-const DISABLED: ProfileBorderOpen = { enabled: false, openInNewTab: true };
 
 const buildContainer = (id: string, withinRadius: "true" | "false"): HTMLElement => {
   const container = document.createElement("div");
@@ -26,8 +25,8 @@ const clickOn = (el: Element): void => {
 // Tracks every hook installed in a test so afterEach can uninstall it —
 // otherwise listeners leak onto `document` across tests.
 let installed: Array<{ uninstall: () => void }>;
-const install = (getSettings: () => ProfileBorderOpen) => {
-  const hook = installProfileBorderRedirect(getSettings);
+const install = (getSettings: () => ProfileBorderOpen, isPremiumEnabled = () => true) => {
+  const hook = installProfileBorderRedirect(getSettings, isPremiumEnabled);
   installed.push(hook);
   return hook;
 };
@@ -71,8 +70,11 @@ afterEach(() => {
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe("installProfileBorderRedirect", () => {
-  it("does nothing when disabled", () => {
-    install(() => DISABLED);
+  it("does nothing when premium features are off", () => {
+    install(
+      () => ENABLED_NEW_TAB,
+      () => false,
+    );
     const container = buildContainer("abc123", "false");
     clickOn(container.firstElementChild!);
     expect(openSpy).not.toHaveBeenCalled();
@@ -139,14 +141,17 @@ describe("installProfileBorderRedirect", () => {
     expect(openSpy).not.toHaveBeenCalled();
   });
 
-  it("reads settings freshly on every click", () => {
-    let settings = DISABLED;
-    install(() => settings);
+  it("reads the premium switch freshly on every click", () => {
+    let premium = false;
+    install(
+      () => ENABLED_NEW_TAB,
+      () => premium,
+    );
     const container = buildContainer("abc123", "false");
     clickOn(container.firstElementChild!);
     expect(openSpy).not.toHaveBeenCalled();
 
-    settings = ENABLED_NEW_TAB;
+    premium = true;
     clickOn(container.firstElementChild!);
     expect(openSpy).toHaveBeenCalledWith("https://sniffies.com/profile/abc123", "_blank");
   });

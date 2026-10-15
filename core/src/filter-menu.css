@@ -1,5 +1,3 @@
-/* ── Rows in Sniffies' filter menu ── */
-
 .snp-filter-row .snp-filter-body {
   display: flex;
   flex-wrap: wrap;
@@ -13,21 +11,27 @@
 
 .snp-filter-row .snp-online-title {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
-}
-
-.snp-filter-row i.snp-online-clear {
-  color: #ff5500 !important;
-  cursor: pointer;
 }
 
 .snp-filter-row .snp-online-inline {
   display: inline-flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: 6px;
   margin-left: 8px;
+}
+
+.snp-filter-row .snp-online-apply {
+  padding: 0 16px 8px;
+  border-bottom: 1px solid #0f1e35;
+}
+
+.snp-filter-row .snp-online-apply:has(.snp-filter-apply[hidden]) {
+  display: none;
+}
+
+.snp-filter-row:has(.snp-online-apply:not(:has(.snp-filter-apply[hidden]))) .list-item-level-2 {
+  border-bottom: 0;
 }
 
 .snp-filter-row .snp-gender-option,
@@ -75,39 +79,36 @@
   width: 100%;
   max-width: 480px;
   min-height: 402px;
-  border-radius: 12px 12px 0 0;
-  background: #0e1825;
-  color: #ffffff;
+  border-top: 5px solid #4b84e6;
+  border-radius: 6px 6px 0 0;
+  background: #07101e;
+  color: #d4d9e4;
   font-family: inherit;
+  font-size: 16px;
 }
 
 @media (min-width: 768px) {
   .snp-flyout-backdrop {
     align-items: center;
   }
-
-  .snp-flyout {
-    border-radius: 12px;
-  }
 }
 
 .snp-flyout-header {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr;
   align-items: center;
-  padding: 12px 16px;
-  border-bottom: 1px solid #1c2b3a;
-}
-
-.snp-flyout-header h1 {
-  flex: 1;
-  margin: 0;
-  font-size: 16px;
-  font-weight: 600;
+  min-height: 50px;
+  margin-bottom: 6px;
+  padding: 0 15px;
+  background: #000000;
   text-align: center;
 }
 
-.snp-flyout-action {
-  flex: 0 0 72px;
+.snp-flyout-header h1 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 700;
 }
 
 .snp-flyout-action.right {
@@ -116,38 +117,50 @@
 
 .snp-flyout-action button {
   border: 0;
-  padding: 4px 0;
+  padding: 6px;
   background: transparent;
-  color: #ff5500;
-  font-size: 15px;
+  color: #4b84e6;
+  font-size: 16px;
   cursor: pointer;
-}
-
-.snp-flyout-action.right button {
-  font-weight: 700;
 }
 
 .snp-wheel-container {
   display: flex;
   justify-content: center;
   gap: 12px;
-  padding: 12px 16px 20px;
+  padding: 10px 20px;
+  background: #0f1e35;
+  border-bottom: 1px solid #2c4669;
 }
 
+.snp-flyout-prompt,
 .snp-flyout-option {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 0 16px 20px;
-  font-size: 13px;
+  margin: 0;
+  padding: 16px 10px;
+  font-size: 16px;
   cursor: pointer;
 }
 
+.snp-flyout-prompt {
+  cursor: default;
+}
+
 .snp-flyout-option input {
-  accent-color: #ff5500;
-  width: 14px;
-  height: 14px;
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.snp-flyout-option i {
+  color: #7a90a4;
+}
+
+.snp-flyout-option i.checked {
+  color: #ff5500;
 }
 
 .snp-wheel-column {
@@ -171,11 +184,12 @@
 
 .snp-wheel {
   position: relative;
-  height: 238px;
+  height: 262px;
   overflow-y: scroll;
   scroll-snap-type: y mandatory;
   scrollbar-width: none;
-  background: linear-gradient(#1c2b3a, #1c2b3a) center / 100% 34px no-repeat;
+  background: linear-gradient(rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.1)) center / 100% 34px
+    no-repeat;
   border-radius: 8px;
   mask-image: linear-gradient(transparent, #000 35%, #000 65%, transparent);
 }
@@ -188,14 +202,14 @@
 .snp-wheel::after {
   content: "";
   display: block;
-  height: 102px;
+  height: 114px;
 }
 
 .snp-wheel-item {
   height: 34px;
   line-height: 34px;
-  font-size: 18px;
-  color: #7a90a4;
+  font-size: 16.5px;
+  color: #d4d9e4;
   cursor: pointer;
   scroll-snap-align: center;
   white-space: nowrap;
@@ -203,4 +217,15 @@
 
 .snp-wheel-item.selected {
   color: #ffffff;
+}
+
+.snp-filter-row .list-item.parent-enabled label.active i {
+  color: #4b84e6;
+}
+
+.snp-filter-row .list-item:not(.parent-enabled) label,
+.snp-filter-row .list-item:not(.parent-enabled) label i,
+.snp-filter-row .list-item:not(.parent-enabled) .stat-button {
+  color: #768eb8;
+  cursor: default;
 }

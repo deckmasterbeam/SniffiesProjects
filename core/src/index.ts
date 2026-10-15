@@ -49,8 +49,13 @@ export { recordBlockedBotIds, countDistinctBlockedBotsLast24h } from "./blocked-
 export type { ProfileBorderHookResult } from "./profile-border-hook.js";
 export { installProfileBorderRedirect } from "./profile-border-hook.js";
 export { logInit } from "./log-init.js";
-export { GEO_OVERRIDE_HTML, GEO_OVERRIDE_CSS, wireGeoOverrideForm } from "./geo-override-ui.js";
-export type { GeoOverrideFormHandle } from "./geo-override-ui.js";
+export {
+  PREMIUM_FEATURES_HTML,
+  PREMIUM_FEATURES_CSS,
+  wirePremiumFeaturesForm,
+} from "./premium-features-ui.js";
+export type { PremiumFeaturesFormHandle } from "./premium-features-ui.js";
+export { installPlusHook, isPlusMembership } from "./plus-hook.js";
 export { mountFab } from "./mount-fab.js";
 export { default as PANEL_CSS } from "./panel.css";
 export type { ReleaseChannel } from "./update-check.js";
@@ -59,16 +64,18 @@ export { UPDATE_BANNER_HTML, UPDATE_BANNER_CSS, wireUpdateBanner } from "./updat
 export {
   getProfileBorderOpen,
   setProfileBorderOpen,
-  getProfileBorderSectionOpen,
-  setProfileBorderSectionOpen,
-  getHidePhotosEnabled,
-  setHidePhotosEnabled,
-  getHidePhotosSectionOpen,
-  setHidePhotosSectionOpen,
+  getPremiumSectionOpen,
+  setPremiumSectionOpen,
+  getHasPlus,
+  setHasPlus,
   getProfileFiltersEnabled,
   setProfileFiltersEnabled,
   getProfileFiltersSectionOpen,
   setProfileFiltersSectionOpen,
+  getPremiumFeaturesEnabled,
+  setPremiumFeaturesEnabled,
+  getPremiumFeatureFlags,
+  setPremiumFeatureFlags,
 } from "./local-storage.js";
 export { VERSION_BADGE_HTML, VERSION_BADGE_CSS, wireVersionBadge } from "./version-badge.js";
 export type { TravelClickArmer } from "./travel-capture-hook.js";
@@ -86,22 +93,25 @@ export { installLocationOverrideController } from "./location-override-controlle
 export { REPORT_MODAL_HTML, REPORT_MODAL_CSS, wireReportModal } from "./report-ui.js";
 export type { ReportModalHandle } from "./report-ui.js";
 export { installReportButtonInjection, refreshBlockedBotsIfStale } from "./report-button-hook.js";
-export {
-  PROFILE_BORDER_HTML,
-  PROFILE_BORDER_CSS,
-  wireProfileBorderForm,
-} from "./profile-border-ui.js";
 export { BOT_BLOCK_HTML, BOT_BLOCK_CSS, wireBotBlockForm } from "./bot-block-ui.js";
 export {
   DEFAULT_GEO_OVERRIDE,
   DEFAULT_PROFILE_BORDER_OPEN,
+  resolvePremiumFeaturesEnabled,
+  DEFAULT_PREMIUM_FEATURE_FLAGS,
+  parsePremiumFeatureFlags,
   PHONE_E164_REGEX,
   SNIFFIES_USER_ID_REGEX,
   SETTINGS_KEYS,
   DEFAULT_LOCAL_SETTINGS,
   hasCapturedCoords,
 } from "./settings.js";
-export type { GeoOverride, ProfileBorderOpen, ExtensionLocalSettings } from "./settings.js";
+export type {
+  GeoOverride,
+  ProfileBorderOpen,
+  PremiumFeatureFlags,
+  ExtensionLocalSettings,
+} from "./settings.js";
 export type { Logger } from "./log.js";
 export { createLogger } from "./log.js";
 export {
@@ -127,4 +137,3 @@ export type { SentPhotoHider, ThreadSnapshot } from "./sent-photos.js";
 export { installSentPhotoHider } from "./sent-photos.js";
 export { installHidePhotoClick } from "./hide-photo-click-hook.js";
 export { installHidePhotoMenuButtons } from "./hide-photo-menu-hook.js";
-export { HIDE_PHOTOS_HTML, HIDE_PHOTOS_CSS, wireHidePhotosForm } from "./hide-photos-ui.js";

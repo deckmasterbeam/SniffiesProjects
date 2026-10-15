@@ -1,10 +1,6 @@
-// Isolated world. Receives the observed Sniffies user id from the MAIN world
-// hook via window.postMessage, persists it to extension storage, and reports
-// client init telemetry to the server (once per content-script lifetime).
-
 import { logInit, createLogger } from "@sniffies-projects/core";
 import { CLIENT_SECRET, SERVER_BASE } from "../shared/env.js";
-import { setSniffiesUserId } from "../shared/settings.js";
+import { setHasPlus, setSniffiesUserId } from "../shared/settings.js";
 
 const log = createLogger("user-id-relay");
 
@@ -15,6 +11,10 @@ window.addEventListener("message", (event) => {
     return;
   }
   const msg = event.data as Record<string, unknown> | null;
+  if (msg?.source === "sniffies-plus-hook" && typeof msg.hasPlus === "boolean") {
+    void setHasPlus(msg.hasPlus);
+    return;
+  }
   if (!msg || msg.source !== "sniffies-user-id-hook" || typeof msg.userId !== "string") {
     return;
   }

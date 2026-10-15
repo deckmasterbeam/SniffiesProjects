@@ -1,5 +1,5 @@
 import type { ProfileFilters } from "./profile-filter.js";
-import type { GeoOverride, ProfileBorderOpen } from "./settings.js";
+import type { GeoOverride, PremiumFeatureFlags, ProfileBorderOpen } from "./settings.js";
 
 // ---- UI forms ----
 
@@ -8,15 +8,23 @@ export interface CollapsibleSectionContract {
   onToggle: (open: boolean) => void;
 }
 
-export interface GeoOverrideFormContract extends CollapsibleSectionContract {
-  initial: GeoOverride;
-  onSave: (override: GeoOverride) => void | Promise<void>;
-  onClear: (cleared: GeoOverride) => void | Promise<void>;
-}
-
-export interface ProfileBorderFormContract extends CollapsibleSectionContract {
-  initial: ProfileBorderOpen;
-  onSave: (next: ProfileBorderOpen) => void | Promise<void>;
+export interface PremiumFeaturesFormContract extends CollapsibleSectionContract {
+  initialEnabled: boolean;
+  onToggleEnabled: (enabled: boolean) => void | Promise<void>;
+  /** Each feature's own switch; only live while the master switch is on. */
+  flags: PremiumFeatureFlags;
+  onFlagChange: (key: keyof PremiumFeatureFlags, enabled: boolean) => void | Promise<void>;
+  /** True when the account is known to have Sniffies Plus; null when unknown. */
+  hasPlus: boolean | null;
+  /** Omitted where location spoofing isn't supported (the bookmarklet). */
+  geo?: {
+    initial: GeoOverride;
+    onClear: (cleared: GeoOverride) => void | Promise<void>;
+  };
+  border: {
+    initial: ProfileBorderOpen;
+    onSave: (next: ProfileBorderOpen) => void | Promise<void>;
+  };
 }
 
 export interface BotBlockFormContract extends CollapsibleSectionContract {
@@ -24,11 +32,6 @@ export interface BotBlockFormContract extends CollapsibleSectionContract {
   userEnabledReporting: boolean;
   /** Distinct accounts blocked in roughly the last 24 hours, for the stat line. 0 renders no stat. */
   initialCount: number;
-  onToggleEnabled: (enabled: boolean) => void | Promise<void>;
-}
-
-export interface HidePhotosFormContract extends CollapsibleSectionContract {
-  initialEnabled: boolean;
   onToggleEnabled: (enabled: boolean) => void | Promise<void>;
 }
 
@@ -73,6 +76,8 @@ export interface ReportButtonInjectionOptions {
 
 export interface LocationOverrideControllerOptions {
   initialOverride: GeoOverride;
+  /** Master "Premium features" switch, read live. Spoofing only happens while it is on. */
+  isPremiumEnabled: () => boolean;
   onOverrideChanged: (next: GeoOverride) => void;
   onPosition?: (coords: { latitude: number; longitude: number }) => void;
   reloadPage?: () => void;

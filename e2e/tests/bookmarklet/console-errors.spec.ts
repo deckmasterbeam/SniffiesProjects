@@ -23,11 +23,10 @@ test("full pass produces no console or page errors", async ({ page, context }) =
   await expect(page.locator('[data-testid="cruiserNameLabel"]')).toBeVisible();
 
   await page.locator("#snp-fab").click();
-  await page.locator("#profile-border-details > summary").click();
-  await page.locator("#profile-border-enabled").check();
+  await page.locator("#premium-details > summary").click();
   await page.locator("#profile-border-tab").selectOption("current-tab");
   await page.locator("#profile-border-save").click();
-  await page.locator("#profile-border-enabled").uncheck();
+  await page.locator("#premium-enabled").uncheck();
   await page.locator("#snp-close").click();
   await tapBookmarklet(page);
 
