@@ -218,3 +218,14 @@
 .snp-wheel-item.selected {
   color: #ffffff;
 }
+
+.snp-filter-row .list-item.parent-enabled label.active i {
+  color: #4b84e6;
+}
+
+.snp-filter-row .list-item:not(.parent-enabled) label,
+.snp-filter-row .list-item:not(.parent-enabled) label i,
+.snp-filter-row .list-item:not(.parent-enabled) .stat-button {
+  color: #768eb8;
+  cursor: default;
+}

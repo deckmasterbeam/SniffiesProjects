@@ -229,7 +229,6 @@ const buildStatRow =
 
     group.classList.remove("no-border-bottom");
     item.classList.remove("last");
-    item.classList.add("parent-enabled");
     label.removeAttribute("for");
     name.textContent = title;
 
@@ -246,8 +245,34 @@ const buildStatRow =
         root.closest("smart-select-filter"),
         checkbox,
       );
+    const nativeList = anchor.closest(".smart-options-container");
+    let suspended = false;
+    const followCruiserStats = (): void => {
+      const on = nativeList?.classList.contains("active") ?? true;
+      item.classList.toggle("parent-enabled", on);
+      if (!on && filter.enabled) {
+        suspended = true;
+        filter.enabled = false;
+        changed();
+      } else if (on && suspended) {
+        suspended = false;
+        filter.enabled = true;
+        changed();
+      }
+    };
+    if (nativeList) {
+      new MutationObserver(followCruiserStats).observe(nativeList, {
+        attributes: true,
+        attributeFilter: ["class"],
+      });
+    }
+    followCruiserStats();
+
     label.addEventListener("click", (event) => {
       event.preventDefault();
+      if (!item.classList.contains("parent-enabled")) {
+        return;
+      }
       if (!filter.enabled && filter.min === null && filter.max === null) {
         openSheet();
         return;
@@ -255,7 +280,11 @@ const buildStatRow =
       filter.enabled = !filter.enabled;
       changed();
     });
-    statButton.addEventListener("click", openSheet);
+    statButton.addEventListener("click", () => {
+      if (item.classList.contains("parent-enabled")) {
+        openSheet();
+      }
+    });
 
     return {
       root,
