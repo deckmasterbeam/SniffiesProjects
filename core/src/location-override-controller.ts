@@ -25,7 +25,12 @@ export const installLocationOverrideController = (
   const reloadPage = options.reloadPage ?? (() => location.reload());
 
   let currentOverride: GeoOverride = options.initialOverride;
-  const hook = installGeoHook(() => currentOverride, options.onPosition);
+  
+  const active = (): boolean => options.isPremiumEnabled();
+  const hook = installGeoHook(
+    () => ({ ...currentOverride, enabled: active() }),
+    options.onPosition,
+  );
 
   const nativeFetch = window.fetch.bind(window);
   let lastLocationRequest: { url: string; init: RequestInit } | null = null;
@@ -106,8 +111,8 @@ export const installLocationOverrideController = (
 
   // City search (GET /api/city/{id})
   installCitySearchXhrObserver((result) => {
-    log("city search response seen (XHR)", { result, spoofingEnabled: currentOverride.enabled });
-    if (!currentOverride.enabled) {
+    log("city search response seen (XHR)", { result, spoofingEnabled: active() });
+    if (!active()) {
       log("spoofing not enabled — skipping city search capture");
       return;
     }
@@ -140,9 +145,9 @@ export const installLocationOverrideController = (
       lastLocationRequest = { url, init: { ...init } };
       const wasArmed = travelArmer.consume();
 
-      log("location PUT seen", { url, wasArmed, spoofingEnabled: currentOverride.enabled });
+      log("location PUT seen", { url, wasArmed, spoofingEnabled: active() });
 
-      if (wasArmed && currentOverride.enabled) {
+      if (wasArmed && active()) {
         try {
           const body = JSON.parse((init?.body as string) ?? "{}") as LocationPutBody;
           const captured = extractTravelDestination(body);
@@ -156,7 +161,7 @@ export const installLocationOverrideController = (
         } catch (err) {
           log("failed to parse/capture travel PUT body", err);
         }
-      } else if (currentOverride.enabled && hasCapturedCoords(currentOverride)) {
+      } else if (active() && hasCapturedCoords(currentOverride)) {
         try {
           const body = JSON.parse((init?.body as string) ?? "{}") as LocationPutBody;
           const spoofed = { lat: currentOverride.latitude, lng: currentOverride.longitude };

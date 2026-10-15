@@ -37,6 +37,24 @@ export const WEIGHT_LIMITS = { lb: { min: 90, max: 400 }, kg: { min: 40, max: 18
 export const CM_PER_INCH = 2.54;
 export const LB_PER_KG = 2.20462;
 
+// ── Account ──────────────────────────────────────────────────────────────────
+
+/** POST — the logged-in user's own account. */
+export const AUTHENTICATE_CURRENT_PATH = "/api/authenticate/current";
+
+export interface AuthenticateCurrentPayload {
+  user?: {
+    private?: {
+      appstoreMembership?: {
+        name?: string;
+        subscriptionStatus?: string;
+        /** ISO date the membership ends. */
+        end?: string;
+      } | null;
+    };
+  };
+}
+
 // ── Map + chat endpoints ─────────────────────────────────────────────────────
 
 /** POST — the map init. */

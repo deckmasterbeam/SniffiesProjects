@@ -36,7 +36,12 @@ describe("sniffies-geo-relay — initial load", () => {
     await flushPromises();
 
     expect(postMessageSpy).toHaveBeenCalledWith(
-      { source: "sniffies-geo-relay", kind: "override", override: LONDON },
+      {
+        source: "sniffies-geo-relay",
+        kind: "override",
+        override: LONDON,
+        premiumFeaturesEnabled: true,
+      },
       "*",
     );
     const registered = addListenerSpy.mock.calls.find(([type]) => type === "message");
@@ -72,10 +77,18 @@ describe("sniffies-geo-relay", () => {
     postMessageSpy.mockRestore();
   });
 
-  it("relays an external storage change (e.g. from the popup) to the MAIN world", () => {
+  it("relays an external storage change (e.g. from the popup) to the MAIN world", async () => {
+    await chrome.storage.local.set({ geoOverride: LONDON });
+    postMessageSpy.mockClear();
     storageChangeListener?.({ geoOverride: { newValue: LONDON } }, "local");
+    await flushPromises();
     expect(postMessageSpy).toHaveBeenCalledWith(
-      { source: "sniffies-geo-relay", kind: "override", override: LONDON },
+      {
+        source: "sniffies-geo-relay",
+        kind: "override",
+        override: LONDON,
+        premiumFeaturesEnabled: true,
+      },
       "*",
     );
   });
@@ -94,6 +107,17 @@ describe("sniffies-geo-relay", () => {
     dispatchHookMessage({ source: "sniffies-geo-hook", kind: "persistOverride", override: LONDON });
     await flushPromises();
     expect(chrome.storage.local.set).toHaveBeenCalledWith({ geoOverride: LONDON });
+  });
+
+  it("relays a premium-features change", async () => {
+    await chrome.storage.local.set({ premiumFeaturesEnabled: false });
+    postMessageSpy.mockClear();
+    storageChangeListener?.({ premiumFeaturesEnabled: { newValue: false } }, "local");
+    await flushPromises();
+    expect(postMessageSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ kind: "override", premiumFeaturesEnabled: false }),
+      "*",
+    );
   });
 
   it("does not persist for a position message", async () => {

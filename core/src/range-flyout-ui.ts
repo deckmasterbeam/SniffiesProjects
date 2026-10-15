@@ -96,6 +96,7 @@ export const openRangeFlyout = (
   current: RangeChoice,
   onDone: (next: RangeChoice) => void,
   host?: Element | null,
+  checkIcon?: Element | null,
 ): void => {
   document.getElementById(FLYOUT_ID)?.remove();
 
@@ -197,11 +198,24 @@ export const openRangeFlyout = (
   const unspecified = document.createElement("input");
   unspecified.type = "checkbox";
   unspecified.checked = current.includeUnspecified;
+  const box = document.createElement("i");
+  box.className = checkIcon?.className ?? "fa fa-square";
+  const syncBox = (): void => {
+    box.classList.toggle("fa-check-square", unspecified.checked);
+    box.classList.toggle("fa-square", !unspecified.checked);
+    box.classList.toggle("checked", unspecified.checked);
+  };
+  unspecified.addEventListener("change", syncBox);
+  syncBox();
   const unspecifiedLabel = document.createElement("label");
   unspecifiedLabel.className = "snp-flyout-option";
-  unspecifiedLabel.append(unspecified, ` Include profiles with no ${title.toLowerCase()} listed`);
+  unspecifiedLabel.append(
+    unspecified,
+    box,
+    ` Include profiles with no ${title.toLowerCase()} listed`,
+  );
 
-  sheet.append(header, body, unspecifiedLabel);
+  sheet.append(header, unspecifiedLabel, body);
 
   backdrop.addEventListener("click", (event) => {
     if (event.target === backdrop) {
@@ -217,4 +231,80 @@ export const openRangeFlyout = (
   for (const wheel of [unit, min, max]) {
     wheel.reveal();
   }
+};
+
+export const openChoiceFlyout = (
+  title: string,
+  items: WheelItem<number>[],
+  current: number | null,
+  onDone: (value: number) => void,
+  host?: Element | null,
+): void => {
+  document.getElementById(FLYOUT_ID)?.remove();
+
+  const backdrop = document.createElement("div");
+  backdrop.id = FLYOUT_ID;
+  backdrop.className = "snp-flyout-backdrop";
+  const sheet = document.createElement("div");
+  sheet.className = "snp-flyout";
+  sheet.setAttribute("role", "dialog");
+  sheet.setAttribute("aria-label", `${title}: Make a Selection`);
+  backdrop.appendChild(sheet);
+
+  const close = (): void => {
+    document.removeEventListener("keydown", onKey);
+    backdrop.remove();
+  };
+  const onKey = (event: KeyboardEvent): void => {
+    if (event.key === "Escape") {
+      close();
+    }
+  };
+  const action = (text: string, side: string, onClick: () => void): HTMLElement => {
+    const wrap = document.createElement("span");
+    wrap.className = `snp-flyout-action ${side}`;
+    const button = document.createElement("button");
+    button.type = "button";
+    button.textContent = text;
+    button.addEventListener("click", onClick);
+    wrap.appendChild(button);
+    return wrap;
+  };
+
+  const wheel = createWheel<number>("choice", title);
+  wheel.fill(items, current ?? items[0]!.value);
+
+  const heading = document.createElement("h1");
+  heading.textContent = title;
+  const header = document.createElement("div");
+  header.className = "snp-flyout-header";
+  header.append(
+    action("Cancel", "left", close),
+    heading,
+    action("Done", "right", () => {
+      close();
+      onDone(wheel.value());
+    }),
+  );
+  wheel.el.querySelector("p")?.remove();
+  const prompt = document.createElement("p");
+  prompt.className = "snp-flyout-prompt";
+  prompt.textContent = "Select a value:";
+  const body = document.createElement("div");
+  body.className = "snp-wheel-container";
+  body.append(wheel.el);
+  sheet.append(header, prompt, body);
+
+  backdrop.addEventListener("click", (event) => {
+    if (event.target === backdrop) {
+      close();
+    }
+  });
+  for (const type of ["click", "mousedown", "pointerdown", "touchstart"]) {
+    backdrop.addEventListener(type, (event) => event.stopPropagation());
+  }
+  document.addEventListener("keydown", onKey);
+
+  (host ?? document.body).appendChild(backdrop);
+  wheel.reveal();
 };

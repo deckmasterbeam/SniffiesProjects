@@ -5,21 +5,15 @@ import {
   createLogger,
   DEFAULT_GEO_OVERRIDE,
   DEFAULT_PROFILE_BORDER_OPEN,
-  GEO_OVERRIDE_CSS,
-  GEO_OVERRIDE_HTML,
-  HIDE_PHOTOS_CSS,
-  HIDE_PHOTOS_HTML,
-  wireHidePhotosForm,
-  PROFILE_BORDER_CSS,
-  PROFILE_BORDER_HTML,
+  PREMIUM_FEATURES_CSS,
+  PREMIUM_FEATURES_HTML,
   UPDATE_BANNER_CSS,
   UPDATE_BANNER_HTML,
   VERSION_BADGE_CSS,
   VERSION_BADGE_HTML,
   wireUpdateBanner,
   wireVersionBadge,
-  wireGeoOverrideForm,
-  wireProfileBorderForm,
+  wirePremiumFeaturesForm,
   wireBotBlockForm,
   PROFILE_FILTERS_HTML,
   PROFILE_FILTERS_CSS,
@@ -33,25 +27,20 @@ import {
   setFavoritesEnabled,
   setFavoritesSectionOpen,
   setGeoOverride,
-  setGeoSectionOpen,
-  setHidePhotosEnabled,
-  setHidePhotosSectionOpen,
+  setPremiumFeatureFlags,
+  setPremiumFeaturesEnabled,
+  setPremiumSectionOpen,
   setProfileBorderOpen,
-  setProfileBorderSectionOpen,
   setProfileFiltersEnabled,
   setProfileFiltersSectionOpen,
 } from "../shared/settings.js";
 
 const log = createLogger("popup");
 
-// Inject geo form, profile border form, bot-block form, profile filters form, and version badge styles from core
-const geoStyle = document.createElement("style");
-geoStyle.textContent = GEO_OVERRIDE_CSS;
-document.head.appendChild(geoStyle);
-
-const profileBorderStyle = document.createElement("style");
-profileBorderStyle.textContent = PROFILE_BORDER_CSS;
-document.head.appendChild(profileBorderStyle);
+// Inject premium features form, bot-block form, profile filters form, and version badge styles from core
+const premiumStyle = document.createElement("style");
+premiumStyle.textContent = PREMIUM_FEATURES_CSS;
+document.head.appendChild(premiumStyle);
 
 const botBlockStyle = document.createElement("style");
 botBlockStyle.textContent = BOT_BLOCK_CSS;
@@ -60,10 +49,6 @@ document.head.appendChild(botBlockStyle);
 const profileFiltersStyle = document.createElement("style");
 profileFiltersStyle.textContent = PROFILE_FILTERS_CSS;
 document.head.appendChild(profileFiltersStyle);
-
-const hidePhotosStyle = document.createElement("style");
-hidePhotosStyle.textContent = HIDE_PHOTOS_CSS;
-document.head.appendChild(hidePhotosStyle);
 
 const versionStyle = document.createElement("style");
 versionStyle.textContent = VERSION_BADGE_CSS;
@@ -97,28 +82,30 @@ const init = async (): Promise<void> => {
   updateRoot.innerHTML = UPDATE_BANNER_HTML;
   wireUpdateBanner(updateRoot, "chrome", chrome.runtime.getManifest().version);
 
-  // Geo form — inject HTML from core and wire up logic
-  const geoRoot = document.getElementById("snp-geo-root")!;
-  geoRoot.innerHTML = GEO_OVERRIDE_HTML;
-  wireGeoOverrideForm(geoRoot, {
-    initial: { ...DEFAULT_GEO_OVERRIDE, ...settings.geoOverride },
-    onSave: setGeoOverride,
-    onClear: setGeoOverride,
-    initialOpen: settings.geoSectionOpen,
-    onToggle: (open) => {
-      void setGeoSectionOpen(open);
+  // Premium features form — inject HTML from core and wire up logic
+  const premiumRoot = document.getElementById("snp-premium-root")!;
+  premiumRoot.innerHTML = PREMIUM_FEATURES_HTML;
+  let premiumFlags = { ...settings.premiumFeatureFlags };
+  wirePremiumFeaturesForm(premiumRoot, {
+    initialEnabled: settings.premiumFeaturesEnabled,
+    onToggleEnabled: setPremiumFeaturesEnabled,
+    flags: premiumFlags,
+    onFlagChange: (key, enabled) => {
+      premiumFlags = { ...premiumFlags, [key]: enabled };
+      return setPremiumFeatureFlags(premiumFlags);
     },
-  });
-
-  // Profile border form — inject HTML from core and wire up logic
-  const profileBorderRoot = document.getElementById("snp-profile-border-root")!;
-  profileBorderRoot.innerHTML = PROFILE_BORDER_HTML;
-  wireProfileBorderForm(profileBorderRoot, {
-    initial: { ...DEFAULT_PROFILE_BORDER_OPEN, ...settings.profileBorderOpen },
-    onSave: setProfileBorderOpen,
-    initialOpen: settings.profileBorderSectionOpen,
+    hasPlus: settings.hasPlus,
+    geo: {
+      initial: { ...DEFAULT_GEO_OVERRIDE, ...settings.geoOverride },
+      onClear: setGeoOverride,
+    },
+    border: {
+      initial: { ...DEFAULT_PROFILE_BORDER_OPEN, ...settings.profileBorderOpen },
+      onSave: setProfileBorderOpen,
+    },
+    initialOpen: settings.premiumSectionOpen,
     onToggle: (open) => {
-      void setProfileBorderSectionOpen(open);
+      void setPremiumSectionOpen(open);
     },
   });
 
@@ -158,18 +145,6 @@ const init = async (): Promise<void> => {
     initialOpen: settings.profileFiltersSectionOpen,
     onToggle: (open) => {
       void setProfileFiltersSectionOpen(open);
-    },
-  });
-
-  // Hide sent photos — inject HTML from core and wire up logic
-  const hidePhotosRoot = document.getElementById("snp-hide-photos-root")!;
-  hidePhotosRoot.innerHTML = HIDE_PHOTOS_HTML;
-  wireHidePhotosForm(hidePhotosRoot, {
-    initialEnabled: settings.hidePhotosEnabled,
-    onToggleEnabled: setHidePhotosEnabled,
-    initialOpen: settings.hidePhotosSectionOpen,
-    onToggle: (open) => {
-      void setHidePhotosSectionOpen(open);
     },
   });
 };

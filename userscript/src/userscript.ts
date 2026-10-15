@@ -6,44 +6,42 @@ import {
   DEFAULT_PROFILE_FILTERS,
   DEFAULT_GEO_OVERRIDE,
   DEFAULT_PROFILE_BORDER_OPEN,
-  GEO_OVERRIDE_CSS,
-  GEO_OVERRIDE_HTML,
-  getHidePhotosEnabled,
-  getHidePhotosSectionOpen,
+  getHasPlus,
+  getPremiumFeatureFlags,
+  getPremiumFeaturesEnabled,
+  getPremiumSectionOpen,
   getProfileBorderOpen,
-  getProfileBorderSectionOpen,
   hasCapturedCoords,
-  HIDE_PHOTOS_CSS,
-  HIDE_PHOTOS_HTML,
   installHidePhotoClick,
   installHidePhotoMenuButtons,
   installSentPhotoHider,
   installProfileFiltersMenu,
   installSelectionLimitOverride,
   installLocationOverrideController,
+  installPlusHook,
   installProfileBorderRedirect,
   mountFab,
   PANEL_CSS,
-  PROFILE_BORDER_CSS,
-  PROFILE_BORDER_HTML,
+  PREMIUM_FEATURES_CSS,
+  PREMIUM_FEATURES_HTML,
   PROFILE_FILTERS_CSS,
   PROFILE_FILTERS_HTML,
-  setHidePhotosEnabled,
-  setHidePhotosSectionOpen,
+  setHasPlus,
+  setPremiumFeatureFlags,
+  setPremiumFeaturesEnabled,
+  setPremiumSectionOpen,
   setProfileBorderOpen,
-  setProfileBorderSectionOpen,
   VERSION_BADGE_CSS,
   VERSION_BADGE_HTML,
   wireBotBlockForm,
-  wireGeoOverrideForm,
-  wireProfileBorderForm,
-  wireHidePhotosForm,
+  wirePremiumFeaturesForm,
   wireProfileFiltersForm,
   wireVersionBadge,
   UPDATE_BANNER_CSS,
   UPDATE_BANNER_HTML,
   wireUpdateBanner,
   type LocationOverrideController,
+  type PremiumFeatureFlags,
   type ProfileBorderOpen,
 } from "@sniffies-projects/core";
 import FAB_ICON_PNG from "../../client/icons/icon48.png";
@@ -60,14 +58,12 @@ import {
   getBotBlockingSectionOpen,
   getProfileFilters,
   getGeoOverride,
-  getGeoSectionOpen,
   getProfileFiltersEnabled,
   getProfileFiltersSectionOpen,
   setBotBlockingEnabled,
   setBotBlockingSectionOpen,
   setProfileFilters,
   setGeoOverride,
-  setGeoSectionOpen,
   setProfileFiltersEnabled,
   setProfileFiltersSectionOpen,
 } from "./shared/local-storage.js";
@@ -83,7 +79,18 @@ declare global {
 
 // ── Hooks (runs at document-start, before page scripts) ──────────────────────
 
+interface PremiumState {
+  enabled: boolean;
+  flags: PremiumFeatureFlags;
+}
+
+const readPremium = (): PremiumState => ({
+  enabled: getPremiumFeaturesEnabled(),
+  flags: getPremiumFeatureFlags(),
+});
+
 interface HookState {
+  premium: PremiumState;
   geoController: LocationOverrideController;
   currentProfileBorderOpen: ProfileBorderOpen;
   updateProfileBorderOpen: (next: ProfileBorderOpen) => void;
@@ -97,19 +104,28 @@ function installHooks(): HookState {
   });
   refreshBlockedBotsIfStale(reportState);
   installSelectionLimitOverride(getProfileFiltersEnabled);
+  installPlusHook(setHasPlus);
+
+  // Each premium hook is live only while the master switch and its own switch are both on.
+  const premium = readPremium();
+  const isPhotosEnabled = (): boolean => premium.enabled && premium.flags.photos;
   installHidePhotoClick(
     installSentPhotoHider(() => reportState.currentSniffiesUserId),
-    getHidePhotosEnabled,
+    isPhotosEnabled,
   );
-  installHidePhotoMenuButtons(getHidePhotosEnabled);
+  installHidePhotoMenuButtons(isPhotosEnabled);
 
   const geoController = installLocationOverrideController({
     initialOverride: getGeoOverride(),
+    isPremiumEnabled: () => premium.enabled && premium.flags.location,
     onOverrideChanged: setGeoOverride,
   });
 
   let currentProfileBorderOpen: ProfileBorderOpen = getProfileBorderOpen();
-  installProfileBorderRedirect(() => currentProfileBorderOpen);
+  installProfileBorderRedirect(
+    () => currentProfileBorderOpen,
+    () => premium.enabled && premium.flags.boundary,
+  );
   const updateProfileBorderOpen = (next: ProfileBorderOpen): void => {
     currentProfileBorderOpen = next;
   };
@@ -118,16 +134,16 @@ function installHooks(): HookState {
   log("init", {
     version: VERSION,
     reportingBuildFlag: REPORTING_ENABLED,
+    premiumFeatures: premium.enabled,
     geoSpoofing: {
-      enabled: initialOverride.enabled,
       hasLocation: hasCapturedCoords(initialOverride),
     },
-    profileBorderOpen: currentProfileBorderOpen.enabled,
     botBlocking: reportState.botBlockState.enabled,
     profileFilters: reportState.appliedProfileFilters,
   });
 
   return {
+    premium,
     geoController,
     currentProfileBorderOpen,
     updateProfileBorderOpen,
@@ -138,6 +154,7 @@ function installHooks(): HookState {
 // ── UI (runs after DOMContentLoaded) ─────────────────────────────────────────
 
 export function mountUI(state: HookState | null): void {
+  const premium = state?.premium ?? readPremium();
   const geoController = state?.geoController ?? null;
   const updateProfileBorderOpen = state?.updateProfileBorderOpen ?? (() => {});
   const currentProfileBorderOpen = state?.currentProfileBorderOpen ?? {
@@ -153,21 +170,13 @@ export function mountUI(state: HookState | null): void {
   shellStyle.textContent = PANEL_CSS;
   document.head.appendChild(shellStyle);
 
-  const geoStyle = document.createElement("style");
-  geoStyle.textContent = GEO_OVERRIDE_CSS;
-  document.head.appendChild(geoStyle);
-
-  const profileBorderStyle = document.createElement("style");
-  profileBorderStyle.textContent = PROFILE_BORDER_CSS;
-  document.head.appendChild(profileBorderStyle);
+  const premiumStyle = document.createElement("style");
+  premiumStyle.textContent = PREMIUM_FEATURES_CSS;
+  document.head.appendChild(premiumStyle);
 
   const botBlockStyle = document.createElement("style");
   botBlockStyle.textContent = BOT_BLOCK_CSS;
   document.head.appendChild(botBlockStyle);
-
-  const hidePhotosStyle = document.createElement("style");
-  hidePhotosStyle.textContent = HIDE_PHOTOS_CSS;
-  document.head.appendChild(hidePhotosStyle);
 
   const profileFiltersStyle = document.createElement("style");
   profileFiltersStyle.textContent = PROFILE_FILTERS_CSS;
@@ -205,37 +214,56 @@ export function mountUI(state: HookState | null): void {
   updateRoot.innerHTML = UPDATE_BANNER_HTML;
   wireUpdateBanner(updateRoot, "userscript", VERSION);
 
-  const geoRoot = panel.querySelector<HTMLElement>("#snp-geo-root")!;
-  geoRoot.innerHTML = GEO_OVERRIDE_HTML;
+  const premiumRoot = panel.querySelector<HTMLElement>("#snp-premium-root")!;
+  premiumRoot.innerHTML = PREMIUM_FEATURES_HTML;
 
-  const geoFormHandle = wireGeoOverrideForm(geoRoot, {
-    initial: geoController?.getOverride() ?? { ...DEFAULT_GEO_OVERRIDE },
-    onSave: (next) => {
-      geoController?.setOverride(next);
-      if (next.enabled) {
-        void geoController?.sendLocationUpdate(next);
+  // Re-run the spoof (or un-spoof) on any active location watches.
+  const resyncLocation = (): void => {
+    if (geoController) {
+      geoController.syncOverride(geoController.getOverride());
+      if (
+        premium.enabled &&
+        premium.flags.location &&
+        hasCapturedCoords(geoController.getOverride())
+      ) {
+        void geoController.sendLocationUpdate(geoController.getOverride());
+      }
+    }
+  };
+
+  const premiumFormHandle = wirePremiumFeaturesForm(premiumRoot, {
+    initialEnabled: premium.enabled,
+    onToggleEnabled: (enabled) => {
+      setPremiumFeaturesEnabled(enabled);
+      premium.enabled = enabled;
+      resyncLocation();
+    },
+    flags: premium.flags,
+    onFlagChange: (key, enabled) => {
+      premium.flags = { ...premium.flags, [key]: enabled };
+      setPremiumFeatureFlags(premium.flags);
+      if (key === "location") {
+        resyncLocation();
       }
     },
-    onClear: (next) => geoController?.setOverride(next),
-    initialOpen: getGeoSectionOpen(),
-    onToggle: setGeoSectionOpen,
+    hasPlus: getHasPlus(),
+    geo: {
+      initial: geoController?.getOverride() ?? { ...DEFAULT_GEO_OVERRIDE },
+      onClear: (next) => geoController?.setOverride(next),
+    },
+    border: {
+      initial: currentProfileBorderOpen,
+      onSave: (next) => {
+        setProfileBorderOpen(next);
+        updateProfileBorderOpen(next);
+      },
+    },
+    initialOpen: getPremiumSectionOpen(),
+    onToggle: setPremiumSectionOpen,
   });
 
   geoController?.subscribeChange((next) => {
-    geoFormHandle.setOverride(next);
-  });
-
-  const profileBorderRoot = panel.querySelector<HTMLElement>("#snp-profile-border-root")!;
-  profileBorderRoot.innerHTML = PROFILE_BORDER_HTML;
-
-  wireProfileBorderForm(profileBorderRoot, {
-    initial: currentProfileBorderOpen,
-    onSave: (next) => {
-      setProfileBorderOpen(next);
-      updateProfileBorderOpen(next);
-    },
-    initialOpen: getProfileBorderSectionOpen(),
-    onToggle: setProfileBorderSectionOpen,
+    premiumFormHandle.setOverride(next);
   });
 
   const botBlockRoot = panel.querySelector<HTMLElement>("#snp-bot-block-root")!;
@@ -279,15 +307,6 @@ export function mountUI(state: HookState | null): void {
     },
     initialOpen: getProfileFiltersSectionOpen(),
     onToggle: setProfileFiltersSectionOpen,
-  });
-
-  const hidePhotosRoot = panel.querySelector<HTMLElement>("#snp-hide-photos-root")!;
-  hidePhotosRoot.innerHTML = HIDE_PHOTOS_HTML;
-  wireHidePhotosForm(hidePhotosRoot, {
-    initialEnabled: getHidePhotosEnabled(),
-    onToggleEnabled: setHidePhotosEnabled,
-    initialOpen: getHidePhotosSectionOpen(),
-    onToggle: setHidePhotosSectionOpen,
   });
 
   const closeBtn = panel.querySelector<HTMLButtonElement>("#snp-close")!;

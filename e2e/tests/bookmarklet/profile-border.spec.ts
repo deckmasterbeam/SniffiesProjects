@@ -13,8 +13,13 @@ const INSIDE_MARKER = '[data-testid="markerUserContainer"][data-within-radius="t
 const NAME_LABEL = '[data-testid="cruiserNameLabel"]';
 const PROFILE_URL = `${SNIFFIES_ORIGIN}/profile/${OUTSIDE_ID}`;
 
-const seed = (page: Page, enabled: boolean, openInNewTab: boolean) =>
-  seedBookmarkletStorage(page, { [STORAGE_KEY]: JSON.stringify({ enabled, openInNewTab }) });
+const PREMIUM_KEY = "sniffies-premium-features-enabled";
+
+const seed = (page: Page, premiumEnabled: boolean, openInNewTab: boolean) =>
+  seedBookmarkletStorage(page, {
+    [PREMIUM_KEY]: String(premiumEnabled),
+    [STORAGE_KEY]: JSON.stringify({ enabled: true, openInNewTab }),
+  });
 
 const addCompetingListener = async (page: Page): Promise<() => Promise<number>> => {
   await page.locator(OUTSIDE_MARKER).evaluate((marker) => {
@@ -65,7 +70,7 @@ test("outside-radius marker navigates the current tab when openInNewTab is false
   expect(context.pages()).toHaveLength(1);
 });
 
-test("feature disabled: the click falls through to the site's handler", async ({
+test("premium features off: the click falls through to the site's handler", async ({
   page,
   context,
 }) => {
@@ -109,17 +114,15 @@ test("enabling in the panel saves to localStorage and takes effect without a rel
   page,
   context,
 }) => {
+  await seedBookmarkletStorage(page, { [PREMIUM_KEY]: "false" });
   await page.goto(`${SNIFFIES_ORIGIN}/`);
   await tapBookmarklet(page);
 
   await page.locator("#snp-fab").click();
-  await page.locator("#profile-border-details > summary").click();
-  await page.locator("#profile-border-enabled").check();
+  await page.locator("#premium-details > summary").click();
+  await page.locator("#premium-enabled").check();
 
-  // openInNewTab defaults to true (DEFAULT_PROFILE_BORDER_OPEN).
-  expect(await page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY)).toBe(
-    JSON.stringify({ enabled: true, openInNewTab: true }),
-  );
+  expect(await page.evaluate((key) => localStorage.getItem(key), PREMIUM_KEY)).toBe("true");
 
   await page.locator("#snp-close").click();
   const [popup] = await Promise.all([
@@ -133,8 +136,7 @@ test("panel settings persist across a page load and re-tap", async ({ page }) =>
   await page.goto(`${SNIFFIES_ORIGIN}/`);
   await tapBookmarklet(page);
   await page.locator("#snp-fab").click();
-  await page.locator("#profile-border-details > summary").click();
-  await page.locator("#profile-border-enabled").check();
+  await page.locator("#premium-details > summary").click();
   await page.locator("#profile-border-tab").selectOption("current-tab");
   await page.locator("#profile-border-save").click();
   await expect(page.locator("#profile-border-save")).toBeHidden();
@@ -144,6 +146,6 @@ test("panel settings persist across a page load and re-tap", async ({ page }) =>
   await page.locator("#snp-fab").click();
 
   // The section's own open/closed state is remembered too.
-  await expect(page.locator("#profile-border-enabled")).toBeChecked();
+  await expect(page.locator("#premium-enabled")).toBeChecked();
   await expect(page.locator("#profile-border-tab")).toHaveValue("current-tab");
 });

@@ -1,0 +1,92 @@
+<details class="section collapsible" id="premium-details">
+  <summary class="snp-row">
+    <label class="snp-switch">
+      <input id="premium-enabled" type="checkbox" aria-label="Enable Premium features" />
+      <span class="snp-switch-slider"></span>
+    </label>
+    <p class="snp-label">Premium Features</p>
+  </summary>
+  <div class="collapsible-body">
+    <p id="premium-plus-notice" class="hint notice" style="display: none">
+      You have Sniffies Plus, so you don't need these features.
+    </p>
+    <p class="hint">
+      Unlocks things Sniffies normally reserves for Plus: location spoofing, opening profiles
+      outside your boundary, and hiding photos you've sent.
+    </p>
+    <div id="premium-config" class="premium-section">
+      <div id="premium-geo" class="premium-feature">
+        <div class="premium-feature-head snp-row">
+          <label class="snp-switch">
+            <input id="premium-flag-location" type="checkbox" aria-label="Location spoofing" />
+            <span class="snp-switch-slider"></span>
+          </label>
+          <button class="premium-feature-toggle" type="button" aria-expanded="false">
+            <span class="snp-label">Location Spoofing</span>
+          </button>
+        </div>
+        <div class="premium-feature-body premium-section" hidden>
+          <p class="hint">
+            Use the built-in Sniffies "Travel Mode" to select a location to travel to. From that
+            mode, search for anywhere and click "Travel here". This can pick up a location you
+            search for by name, but not one you reach by manually dragging the map.
+          </p>
+          <div class="actions">
+            <button id="geo-clear" class="secondary" type="button">Clear location</button>
+            <span id="geo-saved" class="hint" aria-live="polite"></span>
+          </div>
+        </div>
+      </div>
+      <div id="premium-border" class="premium-feature">
+        <div class="premium-feature-head snp-row">
+          <label class="snp-switch">
+            <input
+              id="premium-flag-boundary"
+              type="checkbox"
+              aria-label="Profiles outside boundary"
+            />
+            <span class="snp-switch-slider"></span>
+          </label>
+          <button class="premium-feature-toggle" type="button" aria-expanded="false">
+            <span class="snp-label">Profiles Outside Boundary</span>
+          </button>
+        </div>
+        <div class="premium-feature-body premium-section" hidden>
+          <p class="hint">
+            Profiles outside your boundary open directly. Recommend opening in a new tab, current
+            tab triggers current page reload.
+          </p>
+          <label id="profile-border-tab-field" class="field">
+            <span>Open in</span>
+            <select id="profile-border-tab">
+              <option value="current-tab">Current tab</option>
+              <option value="new-tab">New tab</option>
+            </select>
+          </label>
+          <div class="actions">
+            <button id="profile-border-save" class="primary" type="button" style="display: none">
+              Save
+            </button>
+          </div>
+        </div>
+      </div>
+      <div id="premium-photos" class="premium-feature">
+        <div class="premium-feature-head snp-row">
+          <label class="snp-switch">
+            <input id="premium-flag-photos" type="checkbox" aria-label="Hide sent photos" />
+            <span class="snp-switch-slider"></span>
+          </label>
+          <button class="premium-feature-toggle" type="button" aria-expanded="false">
+            <span class="snp-label">Hide Sent Photos</span>
+          </button>
+        </div>
+        <div class="premium-feature-body premium-section" hidden>
+          <p class="hint">
+            Adds Sniffies' Hide Photo action to photos you've sent, so you can hide them again
+            without Plus. Nothing to configure.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</details>

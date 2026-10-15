@@ -14,18 +14,20 @@ export interface ProfileBorderHookResult {
  * listeners on document (e.g. favorites marker handling) don't also fire for
  * the same click.
  *
- * @param getSettings - Called on every click to read the current enabled/openInNewTab state.
+ * @param getSettings - Called on every click to read the current openInNewTab state.
+ * @param isPremiumEnabled - The master "Premium features" switch; clicks pass through untouched while off.
  */
 export const installProfileBorderRedirect = (
   getSettings: () => ProfileBorderOpen,
+  isPremiumEnabled: () => boolean,
 ): ProfileBorderHookResult => {
   const log = createLogger("profile-border");
 
   const handler = (event: MouseEvent): void => {
-    const settings = getSettings();
-    if (!settings.enabled) {
+    if (!isPremiumEnabled()) {
       return;
     }
+    const settings = getSettings();
     const target = event.target;
     if (!(target instanceof Element)) {
       return;

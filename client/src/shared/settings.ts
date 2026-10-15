@@ -4,11 +4,14 @@ import {
   ExtensionLocalSettings,
   ProfileFilters,
   GeoOverride,
+  PremiumFeatureFlags,
+  parsePremiumFeatureFlags,
   PHONE_E164_REGEX,
   ProfileBorderOpen,
   SETTINGS_KEYS,
   SNIFFIES_USER_ID_REGEX,
   recordBlockedBotIds,
+  resolvePremiumFeaturesEnabled,
 } from "@sniffies-projects/core";
 
 export {
@@ -21,8 +24,36 @@ export {
 export type { ExtensionLocalSettings, ProfileBorderOpen };
 
 export const getLocalSettings = async (): Promise<ExtensionLocalSettings> => {
-  const stored = await chrome.storage.local.get(DEFAULT_LOCAL_SETTINGS);
-  return { ...DEFAULT_LOCAL_SETTINGS, ...stored } as ExtensionLocalSettings;
+  // Read raw (no defaults) so "never set" is visible to the premium-features migration.
+  const stored = await chrome.storage.local.get(null);
+  const premiumFeaturesEnabled = resolvePremiumFeaturesEnabled(
+    stored.premiumFeaturesEnabled,
+    stored.geoOverride?.enabled,
+    stored.profileBorderOpen?.enabled,
+  );
+  const premiumFeatureFlags = parsePremiumFeatureFlags(stored.premiumFeatureFlags);
+  return {
+    ...DEFAULT_LOCAL_SETTINGS,
+    ...stored,
+    premiumFeaturesEnabled,
+    premiumFeatureFlags,
+  } as ExtensionLocalSettings;
+};
+
+export const setPremiumFeaturesEnabled = async (enabled: boolean): Promise<void> => {
+  await chrome.storage.local.set({ [SETTINGS_KEYS.premiumFeaturesEnabled]: enabled });
+};
+
+export const setPremiumFeatureFlags = async (flags: PremiumFeatureFlags): Promise<void> => {
+  await chrome.storage.local.set({ [SETTINGS_KEYS.premiumFeatureFlags]: flags });
+};
+
+export const setPremiumSectionOpen = async (open: boolean): Promise<void> => {
+  await chrome.storage.local.set({ [SETTINGS_KEYS.premiumSectionOpen]: open });
+};
+
+export const setHasPlus = async (hasPlus: boolean): Promise<void> => {
+  await chrome.storage.local.set({ [SETTINGS_KEYS.hasPlus]: hasPlus });
 };
 
 export const setGeoOverride = async (next: GeoOverride): Promise<void> => {
@@ -31,14 +62,6 @@ export const setGeoOverride = async (next: GeoOverride): Promise<void> => {
 
 export const setProfileBorderOpen = async (next: ProfileBorderOpen): Promise<void> => {
   await chrome.storage.local.set({ [SETTINGS_KEYS.profileBorderOpen]: next });
-};
-
-export const setGeoSectionOpen = async (open: boolean): Promise<void> => {
-  await chrome.storage.local.set({ [SETTINGS_KEYS.geoSectionOpen]: open });
-};
-
-export const setProfileBorderSectionOpen = async (open: boolean): Promise<void> => {
-  await chrome.storage.local.set({ [SETTINGS_KEYS.profileBorderSectionOpen]: open });
 };
 
 export const setBotBlockingSectionOpen = async (open: boolean): Promise<void> => {
@@ -87,14 +110,6 @@ export const setProfileFilters = async (next: ProfileFilters): Promise<void> => 
 
 export const setProfileFiltersEnabled = async (enabled: boolean): Promise<void> => {
   await chrome.storage.local.set({ [SETTINGS_KEYS.profileFiltersEnabled]: enabled });
-};
-
-export const setHidePhotosEnabled = async (enabled: boolean): Promise<void> => {
-  await chrome.storage.local.set({ [SETTINGS_KEYS.hidePhotosEnabled]: enabled });
-};
-
-export const setHidePhotosSectionOpen = async (open: boolean): Promise<void> => {
-  await chrome.storage.local.set({ [SETTINGS_KEYS.hidePhotosSectionOpen]: open });
 };
 
 export const setProfileFiltersSectionOpen = async (open: boolean): Promise<void> => {

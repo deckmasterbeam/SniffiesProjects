@@ -4,7 +4,7 @@ Chrome extension that enhances sniffies.com with additional features.
 
 Supported features:
 
-- Location spoofing
+- Location spoofing, profiles outside your boundary and hiding sent photos (all behind one "Premium Features" switch)
 - Opening profiles outside geofence
 - Profile online notification service _(in progress)_
 - Bot reporting and blocking _(in progress)_

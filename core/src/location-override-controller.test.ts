@@ -96,12 +96,13 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-const install = (initialOverride: GeoOverride = DISABLED) => {
+const install = (initialOverride: GeoOverride = DISABLED, premiumEnabled = true) => {
   const addEventListenerSpy = vi.spyOn(document, "addEventListener");
   const reloadPage = vi.fn();
   const onOverrideChanged = vi.fn();
   const controller = installLocationOverrideController({
     initialOverride,
+    isPremiumEnabled: () => premiumEnabled,
     onOverrideChanged,
     reloadPage,
   });
@@ -154,8 +155,8 @@ describe("installLocationOverrideController", () => {
       );
     });
 
-    it("passes through real coords while disabled", () => {
-      install(DISABLED);
+    it("passes through real coords while premium features are off", () => {
+      install(ENABLED_WITH_COORDS, false);
       const success = vi.fn();
       navigator.geolocation.getCurrentPosition(success);
       expect(success).toHaveBeenCalledWith(
@@ -186,8 +187,8 @@ describe("installLocationOverrideController", () => {
       expect(el?.textContent).toContain("pending");
     });
 
-    it("ignores the search result entirely while spoofing is disabled", () => {
-      install(DISABLED);
+    it("ignores the search result entirely while premium features are off", () => {
+      install(DISABLED, false);
       searchForLondon();
       const el = document.getElementById("snp-city-search-status");
       expect(el?.textContent).not.toContain("London");
@@ -279,8 +280,8 @@ describe("installLocationOverrideController", () => {
       expect(onOverrideChanged).toHaveBeenCalled();
     });
 
-    it("does not capture an armed PUT while spoofing is disabled", async () => {
-      const { controller } = install(DISABLED);
+    it("does not capture an armed PUT while premium features are off", async () => {
+      const { controller } = install(DISABLED, false);
       click(travelButton);
       await putLocation({ virtualLocation: { lat: 47.6, lng: -122.3 } });
       expect(controller.getOverride()).toEqual(DISABLED);

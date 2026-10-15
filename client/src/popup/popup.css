@@ -1,17 +1,25 @@
+@font-face {
+  font-family: Roboto;
+  font-weight: 400;
+  src: url("fonts/roboto-latin-400-normal.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: Roboto;
+  font-weight: 700;
+  src: url("fonts/roboto-latin-700-normal.woff2") format("woff2");
+}
+
 :root {
-  --bg: #080e18;
-  --surface: #0e1825;
-  --border: #1c2b3a;
+  --bg: #07101e;
+  --surface: #0f1e35;
+  --border: #2c4669;
   --text: #ffffff;
   --muted: #7a90a4;
   --accent: #ff5500;
   --accent-hover: #e04a00;
   --radius: 8px;
-  font-family:
-    system-ui,
-    -apple-system,
-    "Segoe UI",
-    sans-serif;
+  font-family: Roboto, RedactionSquare, sans-serif;
 }
 
 * {
@@ -21,15 +29,21 @@
 body {
   margin: 0;
   background: var(--bg);
-  color: var(--text);
-  min-width: 280px;
+  color: #d4d9e4;
+  width: 300px;
 }
 
+/* The popup scrolls inside itself (Chrome caps popups at 600px tall) so the window never resizes. */
 .popup {
-  padding: 14px 16px;
+  max-height: 600px;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  border-top: 8px solid #4b84e6;
+  border-bottom: 8px solid #4b84e6;
+  padding: 14px 16px 0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 0;
 }
 
 .popup h1 {
@@ -56,8 +70,8 @@ body {
 }
 
 .hint {
-  font-size: 11px;
-  color: var(--muted);
+  font-size: 12px;
+  color: #aebcd0;
   margin: 0;
 }
 
@@ -110,6 +124,7 @@ button.secondary:disabled {
 }
 
 .popup-header {
+  margin-bottom: 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -136,14 +151,17 @@ button.secondary:disabled {
   color: var(--accent-hover);
 }
 
+#favorites-details {
+  margin: 0 -16px;
+}
+
 .section {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 14px;
+  background: transparent;
+  box-shadow: inset 0 -1px var(--surface);
+  padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 0;
 }
 
 .section h2 {
@@ -200,7 +218,9 @@ details.collapsible {
 details.collapsible summary {
   list-style: none;
   cursor: pointer;
-  padding: 14px;
+  padding: 0 12px;
+  min-height: 56px;
+  background: var(--surface);
   display: flex;
   align-items: center;
   gap: 6px;
@@ -230,7 +250,7 @@ details.collapsible summary h2 {
 }
 
 .collapsible-body {
-  padding: 0 14px 14px;
+  padding: 12px 12px 12px 56px;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -266,4 +286,17 @@ details.collapsible summary h2 {
 .field select option {
   background: var(--surface);
   color: var(--text);
+}
+
+/* Scrollbar copied from Sniffies' dark mode */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+  border-radius: 3px;
+  background-color: #000000;
+}
+
+::-webkit-scrollbar-thumb {
+  border-radius: 3px;
+  background-color: #aebcd0;
 }

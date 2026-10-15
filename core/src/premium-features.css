@@ -1,0 +1,248 @@
+#snp-premium-root {
+  margin: 0 -16px;
+}
+
+#snp-premium-root .section {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  box-shadow: inset 0 -1px #0f1e35;
+}
+
+#snp-premium-root .section h2 {
+  margin: 0;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #7a90a4;
+}
+
+#snp-premium-root details.collapsible {
+  padding: 0;
+  display: block;
+}
+
+#snp-premium-root details.collapsible summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 0 12px;
+  min-height: 56px;
+  background: #0f1e35;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  user-select: none;
+}
+
+#snp-premium-root details.collapsible summary::-webkit-details-marker {
+  display: none;
+}
+
+#snp-premium-root details.collapsible summary:hover::after {
+  color: #768eb8;
+}
+
+#snp-premium-root details.collapsible summary::after {
+  content: "›";
+  margin-left: auto;
+  font-size: 20px;
+  line-height: 1;
+  color: #d4d9e4;
+  transform: rotate(90deg);
+  transition:
+    transform 0.15s,
+    color 0.25s;
+}
+
+#snp-premium-root details.collapsible[open] summary::after {
+  transform: rotate(270deg);
+}
+
+#snp-premium-root details.collapsible summary h2 {
+  margin: 0;
+}
+
+#snp-premium-root .collapsible-body {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* Form fields — shared with popup.css .row, .hint, .field, button.primary/secondary, .actions */
+
+#snp-premium-root .row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  color: #ffffff;
+}
+
+#snp-premium-root > .section .collapsible-body > .hint,
+#snp-premium-root > .section .collapsible-body > .notice {
+  margin: 12px 12px 12px 56px;
+}
+
+#snp-premium-root #premium-config {
+  border-top: 1px solid #0f1e35;
+  gap: 0;
+  background: #07101e;
+}
+
+#snp-premium-root .premium-feature {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  box-shadow: inset 0 -1px #0f1e35;
+}
+
+#snp-premium-root .premium-feature .snp-label {
+  font-size: 14px;
+  line-height: 21px;
+}
+
+#snp-premium-root .premium-feature-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px 8px 24px;
+  min-height: 49px; /* 8 + 32 + 8 + 1px divider, as the Cruiser Stats rows */
+}
+
+#snp-premium-root .premium-feature-toggle {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+#snp-premium-root .premium-feature-head:hover .premium-feature-toggle::after {
+  color: #768eb8;
+}
+
+#snp-premium-root .premium-feature-toggle::after {
+  content: "›";
+  margin-left: auto;
+  font-size: 20px;
+  line-height: 1;
+  color: #d4d9e4;
+  transform: rotate(90deg);
+  transition:
+    transform 0.15s,
+    color 0.25s;
+}
+
+#snp-premium-root .premium-feature-toggle[aria-expanded="true"]::after {
+  transform: rotate(270deg);
+}
+
+#snp-premium-root .premium-feature-body {
+  padding: 0 12px 12px 72px;
+}
+
+#snp-premium-root .premium-feature-body[hidden] {
+  display: none;
+}
+
+#snp-premium-root .hint {
+  font-size: 12px;
+  color: #aebcd0;
+  margin: 0;
+}
+
+#snp-premium-root button.primary {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 7px 16px;
+  border-radius: 20px;
+  border: none;
+  background: #ff5500;
+  color: #fff;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  transition: background 0.15s;
+}
+
+#snp-premium-root button.primary:hover:not(:disabled) {
+  background: #e04a00;
+}
+
+#snp-premium-root button.primary:disabled {
+  background: #0f1e35;
+  color: #7a90a4;
+  cursor: not-allowed;
+}
+
+#snp-premium-root .field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11px;
+  color: #7a90a4;
+}
+
+#snp-premium-root .field select {
+  font-size: 13px;
+  padding: 7px 10px;
+  border-radius: 6px;
+  border: 1px solid #0f1e35;
+  background: #080e18;
+  color: #ffffff;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+#snp-premium-root .field select:focus {
+  border-color: #ff5500;
+}
+
+#snp-premium-root .actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+#snp-premium-root button.secondary {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 7px 16px;
+  border-radius: 20px;
+  border: 1px solid #0f1e35;
+  background: transparent;
+  color: #7a90a4;
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    color 0.15s;
+}
+
+#snp-premium-root button.secondary:hover:not(:disabled) {
+  border-color: #7a90a4;
+  color: #ffffff;
+}
+
+#snp-premium-root .premium-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+#snp-premium-root .notice {
+  color: #ffffff;
+  background: #0f1e35;
+  border-radius: 6px;
+  padding: 8px 10px;
+}

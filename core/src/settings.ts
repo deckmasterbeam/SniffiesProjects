@@ -28,6 +28,27 @@ export const DEFAULT_PROFILE_BORDER_OPEN: ProfileBorderOpen = {
   openInNewTab: true,
 };
 
+export interface PremiumFeatureFlags {
+  location: boolean;
+  boundary: boolean;
+  photos: boolean;
+}
+
+export const DEFAULT_PREMIUM_FEATURE_FLAGS: PremiumFeatureFlags = {
+  location: true,
+  boundary: true,
+  photos: true,
+};
+
+export const parsePremiumFeatureFlags = (value: unknown): PremiumFeatureFlags => {
+  const raw = (value ?? {}) as Partial<Record<keyof PremiumFeatureFlags, unknown>>;
+  return {
+    location: raw.location !== false,
+    boundary: raw.boundary !== false,
+    photos: raw.photos !== false,
+  };
+};
+
 export const PHONE_E164_REGEX = /^\+[1-9]\d{6,14}$/;
 
 // Sniffies user ids are 24-character hex Mongo ObjectIds (confirmed via HAR).
@@ -37,9 +58,8 @@ export const SETTINGS_KEYS = {
   guid: "guid",
   phone: "phone",
   geoOverride: "geoOverride",
-  geoSectionOpen: "geoSectionOpen",
   profileBorderOpen: "profileBorderOpen",
-  profileBorderSectionOpen: "profileBorderSectionOpen",
+  premiumSectionOpen: "premiumSectionOpen",
   favoritesEnabled: "favoritesEnabled",
   favoritesSectionOpen: "favoritesSectionOpen",
   sniffiesUserId: "sniffiesUserId",
@@ -51,17 +71,17 @@ export const SETTINGS_KEYS = {
   profileFilters: "profileFilters",
   profileFiltersEnabled: "profileFiltersEnabled",
   profileFiltersSectionOpen: "profileFiltersSectionOpen",
-  hidePhotosEnabled: "hidePhotosEnabled",
-  hidePhotosSectionOpen: "hidePhotosSectionOpen",
+  hasPlus: "hasPlus",
+  premiumFeaturesEnabled: "premiumFeaturesEnabled",
+  premiumFeatureFlags: "premiumFeatureFlags",
 } as const;
 
 export interface ExtensionLocalSettings {
   guid: string;
   phone: string;
   geoOverride: GeoOverride;
-  geoSectionOpen: boolean;
   profileBorderOpen: ProfileBorderOpen;
-  profileBorderSectionOpen: boolean;
+  premiumSectionOpen: boolean;
   favoritesEnabled: boolean;
   favoritesSectionOpen: boolean;
   sniffiesUserId: string;
@@ -73,17 +93,18 @@ export interface ExtensionLocalSettings {
   profileFilters: ProfileFilters;
   profileFiltersEnabled: boolean;
   profileFiltersSectionOpen: boolean;
-  hidePhotosEnabled: boolean;
-  hidePhotosSectionOpen: boolean;
+  /** Whether the account has Sniffies Plus; null until observed. */
+  hasPlus: boolean | null;
+  premiumFeaturesEnabled: boolean;
+  premiumFeatureFlags: PremiumFeatureFlags;
 }
 
 export const DEFAULT_LOCAL_SETTINGS: ExtensionLocalSettings = {
   guid: "",
   phone: "",
   geoOverride: DEFAULT_GEO_OVERRIDE,
-  geoSectionOpen: false,
   profileBorderOpen: DEFAULT_PROFILE_BORDER_OPEN,
-  profileBorderSectionOpen: false,
+  premiumSectionOpen: false,
   favoritesEnabled: false,
   favoritesSectionOpen: false,
   sniffiesUserId: "",
@@ -95,6 +116,21 @@ export const DEFAULT_LOCAL_SETTINGS: ExtensionLocalSettings = {
   profileFilters: DEFAULT_PROFILE_FILTERS,
   profileFiltersEnabled: false,
   profileFiltersSectionOpen: false,
-  hidePhotosEnabled: true,
-  hidePhotosSectionOpen: false,
+  hasPlus: null,
+  premiumFeaturesEnabled: true,
+  premiumFeatureFlags: DEFAULT_PREMIUM_FEATURE_FLAGS,
+};
+
+export const resolvePremiumFeaturesEnabled = (
+  stored: boolean | undefined,
+  legacyGeoEnabled: boolean | undefined,
+  legacyBorderEnabled: boolean | undefined,
+): boolean => {
+  if (stored !== undefined) {
+    return stored;
+  }
+  if (legacyGeoEnabled === undefined && legacyBorderEnabled === undefined) {
+    return DEFAULT_LOCAL_SETTINGS.premiumFeaturesEnabled;
+  }
+  return legacyGeoEnabled === true || legacyBorderEnabled === true;
 };
