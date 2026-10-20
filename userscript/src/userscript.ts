@@ -5,12 +5,10 @@ import {
   createLogger,
   DEFAULT_PROFILE_FILTERS,
   DEFAULT_GEO_OVERRIDE,
-  DEFAULT_PROFILE_BORDER_OPEN,
   getHasPlus,
   getPremiumFeatureFlags,
   getPremiumFeaturesEnabled,
   getPremiumSectionOpen,
-  getProfileBorderOpen,
   hasCapturedCoords,
   installHidePhotoClick,
   installHidePhotoMenuButtons,
@@ -19,7 +17,6 @@ import {
   installSelectionLimitOverride,
   installLocationOverrideController,
   installPlusHook,
-  installProfileBorderRedirect,
   mountFab,
   PANEL_CSS,
   PREMIUM_FEATURES_CSS,
@@ -30,7 +27,6 @@ import {
   setPremiumFeatureFlags,
   setPremiumFeaturesEnabled,
   setPremiumSectionOpen,
-  setProfileBorderOpen,
   VERSION_BADGE_CSS,
   VERSION_BADGE_HTML,
   wireBotBlockForm,
@@ -42,7 +38,6 @@ import {
   wireUpdateBanner,
   type LocationOverrideController,
   type PremiumFeatureFlags,
-  type ProfileBorderOpen,
 } from "@sniffies-projects/core";
 import FAB_ICON_PNG from "../../client/icons/icon48.png";
 import PANEL_HTML from "./panel.html";
@@ -92,13 +87,12 @@ const readPremium = (): PremiumState => ({
 interface HookState {
   premium: PremiumState;
   geoController: LocationOverrideController;
-  currentProfileBorderOpen: ProfileBorderOpen;
-  updateProfileBorderOpen: (next: ProfileBorderOpen) => void;
   reportState: ReportFeatureState;
 }
 
 function installHooks(): HookState {
-  const reportState = installReportFeature();
+  const premium = readPremium();
+  const reportState = installReportFeature(() => premium.enabled && premium.flags.boundary);
   installUserIdLogging((userId) => {
     reportState.currentSniffiesUserId = userId;
   });
@@ -107,7 +101,6 @@ function installHooks(): HookState {
   installPlusHook(setHasPlus);
 
   // Each premium hook is live only while the master switch and its own switch are both on.
-  const premium = readPremium();
   const isPhotosEnabled = (): boolean => premium.enabled && premium.flags.photos;
   installHidePhotoClick(
     installSentPhotoHider(() => reportState.currentSniffiesUserId),
@@ -120,15 +113,6 @@ function installHooks(): HookState {
     isPremiumEnabled: () => premium.enabled && premium.flags.location,
     onOverrideChanged: setGeoOverride,
   });
-
-  let currentProfileBorderOpen: ProfileBorderOpen = getProfileBorderOpen();
-  installProfileBorderRedirect(
-    () => currentProfileBorderOpen,
-    () => premium.enabled && premium.flags.boundary,
-  );
-  const updateProfileBorderOpen = (next: ProfileBorderOpen): void => {
-    currentProfileBorderOpen = next;
-  };
 
   const initialOverride = geoController.getOverride();
   log("init", {
@@ -145,8 +129,6 @@ function installHooks(): HookState {
   return {
     premium,
     geoController,
-    currentProfileBorderOpen,
-    updateProfileBorderOpen,
     reportState,
   };
 }
@@ -156,10 +138,6 @@ function installHooks(): HookState {
 export function mountUI(state: HookState | null): void {
   const premium = state?.premium ?? readPremium();
   const geoController = state?.geoController ?? null;
-  const updateProfileBorderOpen = state?.updateProfileBorderOpen ?? (() => {});
-  const currentProfileBorderOpen = state?.currentProfileBorderOpen ?? {
-    ...DEFAULT_PROFILE_BORDER_OPEN,
-  };
   const reportState = state?.reportState ?? {
     currentSniffiesUserId: "",
     botBlockState: { blockedIds: new Set<string>(), enabled: true },
@@ -250,13 +228,6 @@ export function mountUI(state: HookState | null): void {
     geo: {
       initial: geoController?.getOverride() ?? { ...DEFAULT_GEO_OVERRIDE },
       onClear: (next) => geoController?.setOverride(next),
-    },
-    border: {
-      initial: currentProfileBorderOpen,
-      onSave: (next) => {
-        setProfileBorderOpen(next);
-        updateProfileBorderOpen(next);
-      },
     },
     initialOpen: getPremiumSectionOpen(),
     onToggle: setPremiumSectionOpen,

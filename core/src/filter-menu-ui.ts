@@ -9,6 +9,7 @@ import {
   ONLINE_MINUTES,
   onlineKey,
   onlineLabel,
+  onlineSinceLabel,
   rangeKey,
   rangeLabel,
   type Gender,
@@ -24,6 +25,8 @@ import {
 } from "./sniffies-selectors.js";
 
 const STYLE_ID = "snp-filter-menu-style";
+
+const PAGE_LOADED_AT = Date.now();
 
 interface MountedRow {
   root: HTMLElement;
@@ -146,7 +149,9 @@ const buildOnlineRow = (
   const icon = label?.querySelector("i");
   const title = root.querySelector("p");
   const toggle = root.querySelector<HTMLInputElement>('.trailing input[type="checkbox"]');
-  if (!header || !titleLine || !label || !icon || !title || !toggle) {
+  const trailing = root.querySelector(".trailing");
+  const switchLabel = toggle?.closest("label");
+  if (!header || !titleLine || !label || !icon || !title || !toggle || !trailing || !switchLabel) {
     return null;
   }
   stripTestIds(root);
@@ -155,54 +160,47 @@ const buildOnlineRow = (
   toggle.disabled = false;
   label.removeAttribute("for");
   icon.classList.replace("fa-plug", "fa-clock");
-  title.textContent = " Last Online";
+  title.textContent = " Online After";
   toggle.addEventListener("change", () => {
     filters.online.enabled = toggle.checked;
     changed();
   });
 
-  const inline = document.createElement("span");
-  inline.className = "snp-online-inline";
-  const select = document.createElement("button");
-  select.type = "button";
-  select.className = "snp-gender-option";
-  select.addEventListener("click", () =>
+  // The cutoff, under the title.
+  const since = document.createElement("p");
+  since.className = "snp-online-since";
+  titleLine.after(since);
+
+  // Clicking the title picks the lookback.
+  label.addEventListener("click", (event) => {
+    event.preventDefault();
     openChoiceFlyout(
-      "Last Online",
+      "Online After",
       ONLINE_MINUTES.map((value) => ({ value, label: onlineLabel(value) })),
       filters.online.minutes,
       (minutes) => {
-        filters.online = { enabled: true, minutes };
+        filters.online = { enabled: true, minutes, pickedAt: Date.now() };
         changed();
       },
       root.closest("smart-select-filter"),
-    ),
-  );
-  label.addEventListener("click", (event) => {
-    if (!(event.target as Element).closest("button")) {
-      event.preventDefault();
-    }
+    );
   });
-  inline.appendChild(select);
-  titleLine.classList.add("snp-online-title");
-  titleLine.appendChild(inline);
 
   return {
     root,
-    placeApply: (apply) => {
-      const line = document.createElement("div");
-      line.className = "snp-online-apply";
-      line.appendChild(apply);
-      root.appendChild(line);
-    },
-    sync: () => {
+    placeApply: (apply) => trailing.appendChild(apply),
+    sync: (needsReload) => {
       const { enabled, minutes } = filters.online;
-      const picked = minutes !== null;
-      select.textContent = picked ? onlineLabel(minutes) : "Select";
-      select.classList.toggle("active", picked);
-      toggle.checked = enabled && picked;
-      toggle.disabled = !picked;
-      header.classList.toggle("active", enabled && picked);
+      const on = enabled && minutes !== null;
+      // Something to apply: "Reload to apply" stands in for the switch.
+      switchLabel.style.display = needsReload ? "none" : "";
+      toggle.checked = on;
+      toggle.disabled = minutes === null;
+      header.classList.toggle("active", on);
+      // The applied cutoff is fixed at page load; a pending pick counts back from when it was made.
+      const from = needsReload ? (filters.online.pickedAt ?? Date.now()) : PAGE_LOADED_AT;
+      since.textContent = on ? onlineSinceLabel(minutes, from) : "";
+      since.style.display = on ? "" : "none";
     },
   };
 };
@@ -323,7 +321,7 @@ const ROWS: Row[] = [
   {
     id: ONLINE_ROW_ID,
     anchor: cruisingNowRow,
-    key: (f) => onlineKey(f.online),
+    key: (f) => (onlineKey(f.online) ? `${onlineKey(f.online)}@${f.online.pickedAt ?? ""}` : ""),
     build: buildOnlineRow,
   },
   {

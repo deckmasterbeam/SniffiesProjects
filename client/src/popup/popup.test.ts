@@ -40,7 +40,6 @@ const getElements = () => ({
   geoClear: document.getElementById("geo-clear") as HTMLButtonElement,
   geoSaved: document.getElementById("geo-saved") as HTMLElement,
   profileBorderTab: document.getElementById("profile-border-tab") as HTMLSelectElement,
-  profileBorderSave: document.getElementById("profile-border-save") as HTMLButtonElement,
 });
 
 const loadModule = async () => {
@@ -173,28 +172,8 @@ describe("popup — premium features master toggle", () => {
 describe("popup — profiles outside boundary", () => {
   beforeEach(loadModule);
 
-  it("save button is hidden on init and appears when the select differs", () => {
-    const { profileBorderTab, profileBorderSave } = getElements();
-    expect(profileBorderSave.style.display).toBe("none");
-    profileBorderTab.value = "current-tab";
-    profileBorderTab.dispatchEvent(new Event("change"));
-    expect(profileBorderSave.style.display).toBe("");
-    profileBorderTab.value = "new-tab";
-    profileBorderTab.dispatchEvent(new Event("change"));
-    expect(profileBorderSave.style.display).toBe("none");
-  });
-
-  it("saves openInNewTab and hides the button afterwards", async () => {
-    const { profileBorderTab, profileBorderSave } = getElements();
-    profileBorderTab.value = "current-tab";
-    profileBorderTab.dispatchEvent(new Event("change"));
-    profileBorderSave.click();
-    await flushPromises();
-    expect(chrome.storage.local.set).toHaveBeenCalledWith({
-      profileBorderOpen: expect.objectContaining({ openInNewTab: false }),
-    });
-    expect(profileBorderSave.style.display).toBe("none");
-    expect(profileBorderTab.options[0]?.text).toContain("(saved)");
+  it("has no open-in picker, since those profiles open natively", () => {
+    expect(getElements().profileBorderTab.closest("label")!.style.display).toBe("none");
   });
 });
 

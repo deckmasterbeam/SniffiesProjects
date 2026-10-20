@@ -60,6 +60,21 @@ export const filterPostAuthenticationPayload = (
   return payload;
 };
 
+/** The farthest two points on Earth can be apart, so every profile counts as inside the radius. */
+const ANTIPODE_MILES = 12500;
+
+export const raiseRadiusInPayload = (payload: NearbyVisitorsPayload): NearbyVisitorsPayload => {
+  const nearby = payload.nearbyVisitors;
+  expectShape(
+    typeof nearby?.emitRadiusInMiles === "number",
+    "map payload has no nearbyVisitors.emitRadiusInMiles",
+  );
+  if (nearby && typeof nearby.emitRadiusInMiles === "number") {
+    nearby.emitRadiusInMiles = Math.max(nearby.emitRadiusInMiles, ANTIPODE_MILES);
+  }
+  return payload;
+};
+
 /** Removes hidden accounts from the chat init payload's conversation lists. */
 export const filterChatDataPayload = (
   payload: ChatDataPayload,
@@ -242,7 +257,11 @@ const classifyXhrUrl = (url: string): FilterKind | null => {
   }
 };
 
-const installXhrFilter = (matcher: ProfileMatcher, log: Logger): boolean => {
+const installXhrFilter = (
+  matcher: ProfileMatcher,
+  log: Logger,
+  raiseRadius: () => boolean,
+): boolean => {
   const proto = XMLHttpRequest.prototype as PatchedXHRPrototype;
   if (proto.__sniffiesBotBlockPatched) {
     log("XHR filter not installed (already patched)");
@@ -279,6 +298,9 @@ const installXhrFilter = (matcher: ProfileMatcher, log: Logger): boolean => {
             return cached;
           }
           const shouldFilter = matcher.isActive();
+          const shouldRaise =
+            raiseRadius() && (kind === "post-authentication" || kind === "soft-reload");
+          const shouldRewrite = shouldFilter || shouldRaise;
           log(`${kind} response read`, {
             filtering: shouldFilter,
             ms: Math.round(performance.now()),
@@ -289,7 +311,7 @@ const installXhrFilter = (matcher: ProfileMatcher, log: Logger): boolean => {
             json = responseDescriptor.get!.call(this);
           } else {
             text = responseTextDescriptor.get!.call(this) as string;
-            if (shouldFilter) {
+            if (shouldRewrite) {
               try {
                 json = JSON.parse(text);
               } catch {
@@ -298,10 +320,15 @@ const installXhrFilter = (matcher: ProfileMatcher, log: Logger): boolean => {
               }
             }
           }
-          if (shouldFilter) {
-            json = applyFilter(kind, json, matcher);
-            for (const { rule, ids } of matcher.flush()) {
-              log.warn(`${rule} filtered account(s) from ${kind} response:`, ids);
+          if (shouldRewrite) {
+            if (shouldFilter) {
+              json = applyFilter(kind, json, matcher);
+              for (const { rule, ids } of matcher.flush()) {
+                log.warn(`${rule} filtered account(s) from ${kind} response:`, ids);
+              }
+            }
+            if (shouldRaise) {
+              json = raiseRadiusInPayload(json as NearbyVisitorsPayload);
             }
             if (responseType !== "json") {
               text = JSON.stringify(json);
@@ -446,8 +473,7 @@ const patchSocketInstance = (
 
 const installWebSocketFilter = (matcher: ProfileMatcher, log: Logger): boolean => {
   const NativeWebSocket = (typeof WebSocket !== "undefined" ? WebSocket : undefined) as
-    | PatchedWebSocketCtor
-    | undefined;
+    PatchedWebSocketCtor | undefined;
   if (!NativeWebSocket || NativeWebSocket.__sniffiesBotBlockPatched) {
     log("WebSocket filter not installed (no WebSocket or already patched)");
     return false;
@@ -491,14 +517,14 @@ export interface ProfileFilterHookResult {
   wsInstalled: boolean;
 }
 
-/** Installs the network filters that hide every profile one of `rules` rejects. */
 export const installProfileFilterHook = (
   rules: readonly ProfileFilterRule[],
+  raiseRadius: () => boolean = () => false,
 ): ProfileFilterHookResult => {
   const log = createLogger("profile-filter");
   const matcher = createProfileMatcher(rules);
   return {
-    xhrInstalled: installXhrFilter(matcher, log),
+    xhrInstalled: installXhrFilter(matcher, log, raiseRadius),
     wsInstalled: installWebSocketFilter(matcher, log),
   };
 };

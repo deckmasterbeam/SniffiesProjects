@@ -68,9 +68,12 @@ export const wirePremiumFeaturesForm = (
     const body = toggle
       .closest(".premium-feature")!
       .querySelector<HTMLElement>(".premium-feature-body")!;
-    toggle.addEventListener("click", () => {
+    toggle.addEventListener("click", (event) => {
       body.hidden = !body.hidden;
       toggle.setAttribute("aria-expanded", String(!body.hidden));
+      if (event.detail > 0) {
+        toggle.blur();
+      }
     });
   }
 
@@ -78,6 +81,11 @@ export const wirePremiumFeaturesForm = (
   const geoClear = el<HTMLButtonElement>("geo-clear");
   const geoSaved = el("geo-saved");
   let current: GeoOverride | null = options.geo ? { ...options.geo.initial } : null;
+
+  const setOverride = (next: GeoOverride): void => {
+    current = { ...next };
+    renderGeo();
+  };
 
   const renderGeo = (): void => {
     const captured = current !== null && hasCapturedCoords(current);
@@ -97,6 +105,12 @@ export const wirePremiumFeaturesForm = (
   });
 
   // Profiles outside boundary
+  const border = options.border;
+  if (!border) {
+    el("profile-border-hint").textContent = "Profiles outside your boundary open like any other.";
+    el("profile-border-tab-field").style.display = "none";
+    return { setOverride };
+  }
   const tabSelect = el<HTMLSelectElement>("profile-border-tab");
   const optionCurrent = tabSelect.querySelector<HTMLOptionElement>('option[value="current-tab"]')!;
   const optionNew = tabSelect.querySelector<HTMLOptionElement>('option[value="new-tab"]')!;
@@ -107,7 +121,7 @@ export const wirePremiumFeaturesForm = (
     optionNew.text = openInNewTab ? TAB_LABELS.newSaved : TAB_LABELS.new;
   };
 
-  let saved: ProfileBorderOpen = { ...options.border.initial };
+  let saved: ProfileBorderOpen = { ...border.initial };
   tabSelect.value = saved.openInNewTab ? "new-tab" : "current-tab";
   applyLabels(saved.openInNewTab);
   saveBtn.style.display = "none";
@@ -118,17 +132,12 @@ export const wirePremiumFeaturesForm = (
 
   saveBtn.addEventListener("click", () => {
     const next = { ...saved, openInNewTab: tabSelect.value === "new-tab" };
-    void Promise.resolve(options.border.onSave(next)).then(() => {
+    void Promise.resolve(border.onSave(next)).then(() => {
       saved = next;
       applyLabels(next.openInNewTab);
       saveBtn.style.display = "none";
     });
   });
 
-  return {
-    setOverride: (next) => {
-      current = { ...next };
-      renderGeo();
-    },
-  };
+  return { setOverride };
 };

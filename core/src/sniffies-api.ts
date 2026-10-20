@@ -63,7 +63,10 @@ export const POST_AUTH_PATH = "/api/post-authentication";
 export const SOFT_RELOAD_PATH = "/api/softReload";
 
 export interface NearbyVisitorsPayload {
-  nearbyVisitors?: { visitors?: FilterableProfile[] };
+  nearbyVisitors?: {
+    visitors?: FilterableProfile[];
+    emitRadiusInMiles?: number;
+  };
   partialVisitorData?: FilterableProfile[];
   [key: string]: unknown;
 }

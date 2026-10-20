@@ -7,21 +7,13 @@ import {
 } from "../shared/env.js";
 import {
   createLogger,
-  installProfileBorderRedirect,
   installReportButtonInjection,
-  parsePremiumFeatureFlags,
   refreshBlockedBotsIfStale,
   APP_SCREEN_SELECTOR,
   NAME_LABEL_SELECTOR,
   type MarkerSelection,
 } from "@sniffies-projects/core";
-import {
-  DEFAULT_PROFILE_BORDER_OPEN,
-  SETTINGS_KEYS,
-  getLocalSettings,
-  setBlockedBots,
-  type ProfileBorderOpen,
-} from "../shared/settings.js";
+import { SETTINGS_KEYS, getLocalSettings, setBlockedBots } from "../shared/settings.js";
 
 const clientHeaders = (): Record<string, string> => ({
   "Content-Type": "application/json",
@@ -42,9 +34,6 @@ interface ApiFavoriteEntry {
 let favoritedIds = new Set<string>();
 let currentGuid = "";
 let currentSniffiesUserId = "";
-let currentProfileBorderOpen: ProfileBorderOpen = { ...DEFAULT_PROFILE_BORDER_OPEN };
-let currentPremiumEnabled = false;
-let currentBoundaryEnabled = true;
 
 let lastMarkerSelection: MarkerSelection | null = null;
 
@@ -201,11 +190,6 @@ const injectIntoNameLabel = (
   log("injected for user", userId);
 };
 
-installProfileBorderRedirect(
-  () => currentProfileBorderOpen,
-  () => currentPremiumEnabled && currentBoundaryEnabled,
-);
-
 installReportButtonInjection({
   serverBase: SERVER_BASE,
   getAuthHeaders: clientHeaders,
@@ -225,34 +209,22 @@ installReportButtonInjection({
   },
 });
 
-void getLocalSettings().then(
-  ({
-    guid,
-    profileBorderOpen,
-    sniffiesUserId,
-    blockedBotsFetchedAt,
-    premiumFeaturesEnabled,
-    premiumFeatureFlags,
-  }) => {
-    currentPremiumEnabled = premiumFeaturesEnabled;
-    currentBoundaryEnabled = premiumFeatureFlags.boundary;
-    currentGuid = guid;
-    currentSniffiesUserId = sniffiesUserId;
-    currentProfileBorderOpen = { ...DEFAULT_PROFILE_BORDER_OPEN, ...profileBorderOpen };
-    if (guid) {
-      void fetchFavorites(guid);
-    }
-    if (REPORTING_ENABLED) {
-      refreshBlockedBotsIfStale(
-        blockedBotsFetchedAt,
-        SERVER_BASE,
-        clientHeaders,
-        (userIds, fetchedAt) => setBlockedBots(userIds, fetchedAt),
-      );
-    }
-    log(`initialized, guid ${guid ? "present" : "missing"}`);
-  },
-);
+void getLocalSettings().then(({ guid, sniffiesUserId, blockedBotsFetchedAt }) => {
+  currentGuid = guid;
+  currentSniffiesUserId = sniffiesUserId;
+  if (guid) {
+    void fetchFavorites(guid);
+  }
+  if (REPORTING_ENABLED) {
+    refreshBlockedBotsIfStale(
+      blockedBotsFetchedAt,
+      SERVER_BASE,
+      clientHeaders,
+      (userIds, fetchedAt) => setBlockedBots(userIds, fetchedAt),
+    );
+  }
+  log(`initialized, guid ${guid ? "present" : "missing"}`);
+});
 
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area !== "local") {
@@ -269,20 +241,5 @@ chrome.storage.onChanged.addListener((changes, area) => {
   if (sniffiesUserIdChange) {
     currentSniffiesUserId =
       typeof sniffiesUserIdChange.newValue === "string" ? sniffiesUserIdChange.newValue : "";
-  }
-  const premiumChange = changes[SETTINGS_KEYS.premiumFeaturesEnabled];
-  if (premiumChange) {
-    currentPremiumEnabled = premiumChange.newValue === true;
-  }
-  const flagsChange = changes[SETTINGS_KEYS.premiumFeatureFlags];
-  if (flagsChange) {
-    currentBoundaryEnabled = parsePremiumFeatureFlags(flagsChange.newValue).boundary;
-  }
-  const profileBorderChange = changes[SETTINGS_KEYS.profileBorderOpen];
-  if (profileBorderChange) {
-    currentProfileBorderOpen = {
-      ...DEFAULT_PROFILE_BORDER_OPEN,
-      ...(profileBorderChange.newValue as ProfileBorderOpen | undefined),
-    };
   }
 });

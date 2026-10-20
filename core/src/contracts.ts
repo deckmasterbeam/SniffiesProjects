@@ -21,7 +21,7 @@ export interface PremiumFeaturesFormContract extends CollapsibleSectionContract 
     initial: GeoOverride;
     onClear: (cleared: GeoOverride) => void | Promise<void>;
   };
-  border: {
+  border?: {
     initial: ProfileBorderOpen;
     onSave: (next: ProfileBorderOpen) => void | Promise<void>;
   };

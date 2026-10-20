@@ -125,6 +125,15 @@ than replacing it.
 - [ ] Marker with `data-within-radius="true"` (or missing) is never intercepted.
   - [x] Bookmarklet — `e2e/tests/bookmarklet/profile-border.spec.ts`.
 
+The click-redirect is now bookmarklet-only. The extension and userscript instead raise
+`nearbyVisitors.emitRadiusInMiles` in the `post-authentication` / `softReload` responses
+(`core/src/profile-filter-hook.ts`), so Sniffies opens out-of-radius profiles itself:
+
+- [ ] E2E (`e2e/fixtures/sniffies-mock.html`): mock a soft reload with a visitor beyond the radius.
+      Assert the marker ends up `data-within-radius="true"` with "Profiles Outside Boundary" on, and
+      still `"false"` with it off. The mock needs to derive `data-within-radius` from
+      `emitRadiusInMiles` the way Sniffies does. Cover the extension and the userscript.
+
 ## 3. Bot blocking (XHR + WebSocket filtering) — `core/src/bot-block-hook.ts`
 
 Explicitly called out in the source as untestable against live Sniffies, but fully testable

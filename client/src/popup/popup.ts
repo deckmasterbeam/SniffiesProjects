@@ -4,7 +4,6 @@ import {
   countDistinctBlockedBotsLast24h,
   createLogger,
   DEFAULT_GEO_OVERRIDE,
-  DEFAULT_PROFILE_BORDER_OPEN,
   PREMIUM_FEATURES_CSS,
   PREMIUM_FEATURES_HTML,
   UPDATE_BANNER_CSS,
@@ -30,7 +29,6 @@ import {
   setPremiumFeatureFlags,
   setPremiumFeaturesEnabled,
   setPremiumSectionOpen,
-  setProfileBorderOpen,
   setProfileFiltersEnabled,
   setProfileFiltersSectionOpen,
 } from "../shared/settings.js";
@@ -98,10 +96,6 @@ const init = async (): Promise<void> => {
     geo: {
       initial: { ...DEFAULT_GEO_OVERRIDE, ...settings.geoOverride },
       onClear: setGeoOverride,
-    },
-    border: {
-      initial: { ...DEFAULT_PROFILE_BORDER_OPEN, ...settings.profileBorderOpen },
-      onSave: setProfileBorderOpen,
     },
     initialOpen: settings.premiumSectionOpen,
     onToggle: (open) => {

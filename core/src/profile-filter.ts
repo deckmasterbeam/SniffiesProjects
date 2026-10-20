@@ -251,6 +251,8 @@ export interface OnlineFilter {
   enabled: boolean;
   /** Seen within this many minutes of now. */
   minutes: number | null;
+  /** When the menu's Done last confirmed the pick; the cutoff moves to then on the next reload. Not restored from storage. */
+  pickedAt?: number;
 }
 
 export const DEFAULT_ONLINE_FILTER: OnlineFilter = { enabled: false, minutes: null };
@@ -269,22 +271,37 @@ const parseOnlineFilter = (value: unknown): OnlineFilter => {
 export const onlineKey = (filter: OnlineFilter): string =>
   filter.enabled && filter.minutes !== null ? String(filter.minutes) : "";
 
-export const onlineRule = (getFilter: () => OnlineFilter): ProfileFilterRule => ({
-  name: "online",
-  mapOnly: true,
-  keepsOnMap: true,
-  isActive: () => onlineKey(getFilter()) !== "",
-  hides: (profile) => {
-    if (!profile.data) {
-      return false;
-    }
-    // A missing connect time is NaN, it wasn't online recently.
-    return !(
-      Date.parse(profile.data.connectUpdateTime ?? "") >=
-      Date.now() - getFilter().minutes! * 60_000
-    );
-  },
-});
+export const onlineSinceLabel = (minutes: number, from: number): string => {
+  const cutoff = new Date(from - minutes * 60_000);
+  const time = cutoff
+    .toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
+    .replace(/\s+/g, "");
+  const day =
+    cutoff.toDateString() === new Date(from).toDateString()
+      ? ""
+      : `${cutoff.toLocaleDateString([], { weekday: "short" })} `;
+  return `Cruisers online after ${day}${time}`;
+};
+
+export const onlineRule = (getFilter: () => OnlineFilter): ProfileFilterRule => {
+  const loadedAt = Date.now();
+  return {
+    name: "online",
+    mapOnly: true,
+    keepsOnMap: true,
+    isActive: () => onlineKey(getFilter()) !== "",
+    hides: (profile) => {
+      if (!profile.data) {
+        return false;
+      }
+      // A missing connect time is NaN, it wasn't online recently.
+      return !(
+        Date.parse(profile.data.connectUpdateTime ?? "") >=
+        loadedAt - getFilter().minutes! * 60_000
+      );
+    },
+  };
+};
 
 export interface RangeChoices {
   unit: string;
