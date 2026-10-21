@@ -6,7 +6,7 @@ A monorepo of tools to recreate and expand functionality for [sniffies.com](http
 
 ### Premium Features
 
-These features recreate or bypass premium Sniffies functionality. In the extension and userscript, they're grouped behind one "Premium Features" switch (on by default; the section notes if your account already has Sniffies Plus). Extension and userscript only.
+These features recreate or bypass premium Sniffies functionality. In the extension and userscript, they're grouped behind one "Premium Features" switch (on by default; the section notes if your account already has Sniffies Plus, in which case you don't really need any of these features). Extension and userscript only.
 
 #### Location spoofing
 Override the GPS coordinates Sniffies sees, letting you browse any location on the map. This works by intercepting Sniffies' "Travel Here" location search, extracting the coordinates from the response, and injecting them into the browser's geolocation API. Because of this implementation, the project can only see location searches, not map drags within "Travel Here".
@@ -17,21 +17,16 @@ Click profiles outside the free radius to view them without hitting the paywall.
 #### Hiding sent photos
 Hide photos you've sent in conversations.
 
-### Other Features
-
-#### Auto Age Filter
-*(In progress)* — When Height and/or Weight are enabled, automatically enable Sniffies' Age filter at the full range (18–90+) so your filter choices persist across page reloads.
-
-#### Profile online notification service
+### Profile online notification service
 *(In progress)* — Favorite profiles and receive an SMS when they come online.
 
-#### Bot reporting/blocking
+### Bot reporting/blocking
 Flag a profile as a suspected bot from its profile screen; confirmed reports get hidden from the map, chat, and live updates for everyone with blocking enabled.
 
-#### Profile filters
-Extra filters in the Cruisers section of Sniffies' Map Layers menu, and no cap on how many options you can pick in some of Sniffies' own.
+### Profile filters
+Extra filters in the Sniffies' filter menu, and no cap on how many options you can pick in some of Sniffies' existing filters.
 
-### Profile filter support
+#### Profile filter support
 
 | Filter       | What it does                                                                        | Chrome extension | Userscript | Bookmarklet |
 | ------------ | ----------------------------------------------------------------------------------- | ---------------- | ---------- | ----------- |
@@ -42,11 +37,8 @@ Extra filters in the Cruisers section of Sniffies' Map Layers menu, and no cap o
 | Sexuality    | Choose any number of options                                 | Yes              | Yes        | Yes         |
 | Body Type    | Choose any number of options                                 | Yes              | Yes        | Yes         |
 | Position     | Choose any number of options                                 | Yes              | Yes        | Yes         |
-| Blocked bots | Hides confirmed bot accounts from the map, chat, and live updates                   | Yes              | Yes        | No          |
 
-Everything except Blocked bots is switched on by the "Profile Filters" section of the popup (Chrome extension) or panel (userscript, bookmarklet). It is off by default.
-
-Gender, Height, Weight, Online After, and Blocked bots work by filtering Sniffies' network responses as the page loads, which a bookmarklet is too late for. Changing them needs a page reload to take effect.
+Gender, Height, Weight, Online After (and Blocked bots) work by filtering Sniffies' network responses as the page loads, which a bookmarklet is too late for. Changing them needs a page reload to take effect.
 
 ## Packages
 
