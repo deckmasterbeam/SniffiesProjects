@@ -32,7 +32,7 @@ const clientHeaders = (): Record<string, string> => ({
 });
 
 /** Installs the profile-filter network hook (blocked bots + the filter menu's filters) */
-export const installReportFeature = (): ReportFeatureState => {
+export const installReportFeature = (raiseRadius?: () => boolean): ReportFeatureState => {
   const state: ReportFeatureState = {
     currentSniffiesUserId: "",
     botBlockState: { blockedIds: new Set(getBlockedBots()), enabled: getBotBlockingEnabled() },
@@ -40,13 +40,16 @@ export const installReportFeature = (): ReportFeatureState => {
     appliedProfileFilters: gateProfileFilters(getProfileFilters(), getProfileFiltersEnabled()),
   };
 
-  installProfileFilterHook([
-    botBlockRule(
-      () => state.botBlockState,
-      (ids) => recordBlockedBotEvent(ids),
-    ),
-    ...profileFilterRules(() => state.appliedProfileFilters),
-  ]);
+  installProfileFilterHook(
+    [
+      botBlockRule(
+        () => state.botBlockState,
+        (ids) => recordBlockedBotEvent(ids),
+      ),
+      ...profileFilterRules(() => state.appliedProfileFilters),
+    ],
+    raiseRadius,
+  );
 
   if (REPORTING_ENABLED) {
     installReportButtonInjection({

@@ -4,32 +4,41 @@ A monorepo of tools to recreate and expand functionality for [sniffies.com](http
 
 ## Features
 
-- **Location spoofing** — Override the GPS coordinates Sniffies sees, letting you browse any location on the map. Together with opening profiles outside your boundary and hiding sent photos, it sits behind one "Premium Features" switch (on by default; the section notes if your account already has Sniffies Plus, extension and userscript only).
+### Premium Features
 
-- **Opening profiles outside geofence** — Click profiles outside the free radius to view them without hitting the paywall.
+These features recreate or bypass premium Sniffies functionality. In the extension and userscript, they're grouped behind one "Premium Features" switch (on by default; the section notes if your account already has Sniffies Plus, in which case you don't really need any of these features). Extension and userscript only.
 
-- **Profile online notification service** *(In progress)* — Favorite profiles and receive an SMS when they come online.
+#### Location spoofing
+Override the GPS coordinates Sniffies sees, letting you browse any location on the map. This works by intercepting Sniffies' "Travel Here" location search, extracting the coordinates from the response, and injecting them into the browser's geolocation API. Because of this implementation, the project can only see location searches, not map drags within "Travel Here".
 
-- **Bot reporting/blocking** — Flag a profile as a suspected bot from its profile screen; confirmed reports get hidden from the map, chat, and live updates for everyone with blocking enabled.
+#### Opening profiles outside geofence
+Click profiles outside the free radius to view them without hitting the paywall. In the bookmarklet, this works as a standalone feature without needing location spoofing.
 
-- **Profile filters** — Extra filters in the Cruisers section of Sniffies' Map Layers menu, and no cap on how many options you can pick in some of Sniffies' own.
+#### Hiding sent photos
+Hide photos you've sent in conversations.
 
-### Profile filter support
+### Profile online notification service
+*(In progress)* — Favorite profiles and receive an SMS when they come online.
+
+### Bot reporting/blocking
+Flag a profile as a suspected bot from its profile screen; confirmed reports get hidden from the map, chat, and live updates for everyone with blocking enabled.
+
+### Profile filters
+Extra filters in the Sniffies' filter menu, and no cap on how many options you can pick in some of Sniffies' existing filters.
+
+#### Profile filter support
 
 | Filter       | What it does                                                                        | Chrome extension | Userscript | Bookmarklet |
 | ------------ | ----------------------------------------------------------------------------------- | ---------------- | ---------- | ----------- |
 | Gender       | New filter with: Male / Female / Nonbinary / Not specified buttons | Yes              | Yes        | No          |
-| Last Online  | Row under Cruising Now: pick 15 min to 48 hours; people stay after going offline   | Yes              | Yes        | No          |
+| Online After | Pick how long to look back (15 min to 48 hours) for recently online people         | Yes              | Yes        | No          |
 | Height       | New filter under Cruiser Stats                   | Yes              | Yes        | No          |
 | Weight       | New filter under Cruiser Stats                 | Yes              | Yes        | No          |
 | Sexuality    | Choose any number of options                                 | Yes              | Yes        | Yes         |
 | Body Type    | Choose any number of options                                 | Yes              | Yes        | Yes         |
 | Position     | Choose any number of options                                 | Yes              | Yes        | Yes         |
-| Blocked bots | Hides confirmed bot accounts from the map, chat, and live updates                   | Yes              | Yes        | No          |
 
-Everything except Blocked bots is switched on by the "Profile Filters" section of the popup (Chrome extension) or panel (userscript, bookmarklet). It is off by default.
-
-Gender, Height, Weight, Last Online and Blocked bots work by filtering Sniffies' network responses as the page loads, which a bookmarklet is too late for. Changing them needs a page reload to take effect.
+Gender, Height, Weight, Online After (and Blocked bots) work by filtering Sniffies' network responses as the page loads, which a bookmarklet is too late for. Changing them needs a page reload to take effect.
 
 ## Packages
 
@@ -57,7 +66,6 @@ A separate Chrome extension that runs alongside the client. It hooks into the Sn
 
 Location spoofing packaged as a userscript for the [Userscripts](https://apps.apple.com/us/app/userscripts/id1463298887) iOS app. Preferred path for iOS install, installs once and runs automatically on sniffies.com.
 
-
 **User Install:** Install the [Userscripts](https://apps.apple.com/us/app/userscripts/id1463298887) iOS app, then open the `dist/sniffies-tools.user.js` file from the most recent `userscript-*` entry on the [releases page](https://github.com/deckmasterbeam/SniffiesProjects/releases) directly in Safari (not as a downloaded file — see `userscript/README.md` for the exact URL and why that distinction matters) to trigger the install prompt.
 
 **Dev Install:** See `userscript/README.md` for build instructions.
@@ -66,7 +74,7 @@ Location spoofing packaged as a userscript for the [Userscripts](https://apps.ap
 
 ### `bookmarklet/` — iOS Safari Bookmarklet
 
-Reduced-feature version for iOS Safari with no app required. A bookmarklet can't hook the page's init behavior, so it supports opening profiles outside your boundary, hiding sent photos, and the raised selection caps on Sniffies' own stat filters, but not location spoofing, bot filtering, or the Gender / Height / Weight / Last Online filters — use the userscript for those.
+Reduced-feature version for iOS Safari with no app required. A bookmarklet can't hook the page's init behavior, so it supports opening profiles outside your boundary, hiding sent photos, and the raised selection caps on Sniffies' own stat filters, but not location spoofing, bot filtering, or the Gender / Height / Weight / Online After filters — use the userscript for those.
 
 **Install:** Create a Safari bookmark and replace its URL with the bookmarklet code from `bookmarklet/README.md`.
 

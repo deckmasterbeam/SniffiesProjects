@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { installProfileFiltersMenu } from "./filter-menu-ui.js";
 import {
   GENDERS,
+  onlineSinceLabel,
   parseProfileFilters,
   type Gender,
   type ProfileFilters,
@@ -611,11 +612,19 @@ describe("installProfileFiltersMenu", () => {
   });
 
   describe("last online", () => {
+    // 3:00PM local, so a 3 hour pick reads "after 12:00PM".
+    const freezeAt3pm = (): void => {
+      vi.useFakeTimers({ toFake: ["Date"] });
+      vi.setSystemTime(new Date(2026, 9, 20, 15, 0));
+    };
+    afterEach(() => vi.useRealTimers());
     const toggle = (): HTMLInputElement =>
       document.querySelector<HTMLInputElement>("#snp-online-filter-enabled")!;
-    const selectButton = (): HTMLButtonElement =>
-      row("online").querySelector<HTMLButtonElement>(".snp-gender-option")!;
+    const switchShown = (): boolean => toggle().closest("label")!.style.display === "";
+    const since = (): HTMLElement => row("online").querySelector<HTMLElement>(".snp-online-since")!;
+    const sinceShown = (): boolean => since().style.display !== "none";
     const title = (): string => row("online").querySelector("p")!.textContent!.trim();
+    const openSheet = (): void => row("online").querySelector("label")!.click();
 
     it("mounts right under Cruising Now, leaving its own switch alone", () => {
       install(filters());
@@ -626,16 +635,19 @@ describe("installProfileFiltersMenu", () => {
       expect(row("online").querySelector("[data-testid]")).toBeNull();
     });
 
-    it("reads Last Online [Select] with its switch off while empty", () => {
+    it("off and empty: Online After with its switch off and no cutoff line", () => {
       install(filters());
-      expect(title()).toBe("Last Online");
-      expect(selectButton().textContent).toBe("Select");
+      expect(title()).toBe("Online After");
+      expect(toggle().checked).toBe(false);
       expect(toggle().disabled).toBe(true);
+      expect(switchShown()).toBe(true);
+      expect(sinceShown()).toBe(false);
+      expect(applyButton("online").hidden).toBe(true);
     });
 
     it("offers 15 min to 48 hours in a scrolling sheet", () => {
       install(filters());
-      selectButton().click();
+      openSheet();
       expect(wheelLabels("choice")).toEqual([
         "< 15 min ago",
         "< 30 min ago",
@@ -651,34 +663,68 @@ describe("installProfileFiltersMenu", () => {
       ]);
     });
 
-    it("saves the pick on Done and shows it on the button", () => {
+    it("picking: Reload to apply replaces the switch and the cutoff shows below", () => {
+      freezeAt3pm();
       install(filters());
-      selectButton().click();
+      openSheet();
       pick("choice", "< 3 hours ago");
       expect(onChange).not.toHaveBeenCalled();
       sheetButton("Done").click();
-      expect(lastChange().online).toEqual({ enabled: true, minutes: 180 });
-      expect(selectButton().textContent).toBe("< 3 hours ago");
+      expect(lastChange().online).toEqual({ enabled: true, minutes: 180, pickedAt: Date.now() });
+      expect(switchShown()).toBe(false);
+      expect(applyButton("online").hidden).toBe(false);
+      expect(applyButton("online").parentElement).toBe(row("online").querySelector(".trailing"));
+      expect(since().textContent).toBe(onlineSinceLabel(180, Date.now()));
+      expect(since().textContent).toMatch(/^Cruisers online after 12:00(PM)?$/);
+    });
+
+    it("applied and on: the switch is back, on, with the cutoff from page load", () => {
+      install(filters({ online: { enabled: true, minutes: 60 } }));
+      expect(switchShown()).toBe(true);
       expect(toggle().checked).toBe(true);
+      expect(applyButton("online").hidden).toBe(true);
+      expect(sinceShown()).toBe(true);
+      expect(since().textContent).toMatch(/^Cruisers online after /);
+    });
+
+    it("switching it off: Reload to apply replaces the switch and the cutoff goes", () => {
+      install(filters({ online: { enabled: true, minutes: 60 } }));
+      toggle().click();
+      expect(lastChange().online).toEqual({ enabled: false, minutes: 60 });
+      expect(switchShown()).toBe(false);
+      expect(applyButton("online").hidden).toBe(false);
+      expect(sinceShown()).toBe(false);
+    });
+
+    it("switching it back on before reloading puts the switch back", () => {
+      install(filters({ online: { enabled: true, minutes: 60 } }));
+      toggle().click();
+      toggle().click();
+      expect(lastChange().online).toEqual({ enabled: true, minutes: 60 });
+      expect(switchShown()).toBe(true);
+      expect(applyButton("online").hidden).toBe(true);
+    });
+
+    it("Done re-anchors the time even when the same option is confirmed again", () => {
+      freezeAt3pm();
+      install(filters({ online: { enabled: true, minutes: 180 } }));
+      expect(applyButton("online").hidden).toBe(true);
+      vi.setSystemTime(new Date(2026, 9, 20, 15, 30));
+      openSheet();
+      pick("choice", "< 3 hours ago");
+      sheetButton("Done").click();
+      expect(since().textContent).toBe(onlineSinceLabel(180, Date.now()));
+      expect(since().textContent).toMatch(/^Cruisers online after 12:30(PM)?$/);
       expect(applyButton("online").hidden).toBe(false);
     });
 
     it("Cancel leaves the filter alone", () => {
       install(filters());
-      selectButton().click();
+      openSheet();
       pick("choice", "< 3 hours ago");
       sheetButton("Cancel").click();
       expect(onChange).not.toHaveBeenCalled();
-      expect(selectButton().textContent).toBe("Select");
-    });
-
-    it("the switch turns the filter off and on without losing the pick", () => {
-      install(filters({ online: { enabled: true, minutes: 60 } }));
-      toggle().click();
-      expect(lastChange().online).toEqual({ enabled: false, minutes: 60 });
-      expect(selectButton().textContent).toBe("< 1 hour ago");
-      toggle().click();
-      expect(lastChange().online).toEqual({ enabled: true, minutes: 60 });
+      expect(sinceShown()).toBe(false);
     });
   });
 

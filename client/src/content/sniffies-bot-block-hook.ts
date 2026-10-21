@@ -14,6 +14,7 @@ import {
   let state: BotBlockState = { blockedIds: new Set(), enabled: false };
   let profileFilters = parseProfileFilters(null);
   let profileFiltersEnabled = false;
+  let boundaryEnabled = false;
 
   window.addEventListener("message", (event) => {
     if (event.source !== window) {
@@ -27,6 +28,7 @@ import {
     state = { blockedIds: new Set(blockedIds), enabled: msg.enabled === true };
     profileFilters = parseProfileFilters(msg.profileFilters);
     profileFiltersEnabled = msg.profileFiltersEnabled === true;
+    boundaryEnabled = msg.boundaryEnabled === true;
     log("state updated", {
       count: state.blockedIds.size,
       enabled: state.enabled,
@@ -35,15 +37,18 @@ import {
     });
   });
 
-  const result = installProfileFilterHook([
-    botBlockRule(
-      () => state,
-      (ids) => {
-        window.postMessage({ source: "sniffies-bot-block-hook", kind: "filtered", ids }, "*");
-      },
-    ),
-    ...profileFilterRules(() => profileFilters),
-  ]);
+  const result = installProfileFilterHook(
+    [
+      botBlockRule(
+        () => state,
+        (ids) => {
+          window.postMessage({ source: "sniffies-bot-block-hook", kind: "filtered", ids }, "*");
+        },
+      ),
+      ...profileFilterRules(() => profileFilters),
+    ],
+    () => boundaryEnabled,
+  );
   log("profile-filter hook installed", result);
 
   installSelectionLimitOverride(() => profileFiltersEnabled);

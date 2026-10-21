@@ -16,6 +16,7 @@ import {
   filterMessagesPayload,
   filterPostAuthenticationPayload,
   installProfileFilterHook,
+  raiseRadiusInPayload,
   shouldFilterWebSocketFrame,
 } from "./profile-filter-hook.js";
 import type { SniffiesGender } from "./sniffies-api.js";
@@ -37,6 +38,24 @@ const installBotBlockHook = (getState: () => BotBlockState, onFiltered?: (ids: s
 const sniffiesPostAuth = "https://uswapi2.sniffies.com/api/post-authentication";
 
 // ── Pure filter functions ────────────────────────────────────────────────────
+
+describe("raiseRadiusInPayload", () => {
+  it("raises emitRadiusInMiles to cover the whole Earth", () => {
+    const payload = { nearbyVisitors: { emitRadiusInMiles: 0.585 } };
+    expect(raiseRadiusInPayload(payload).nearbyVisitors?.emitRadiusInMiles).toBe(12500);
+  });
+
+  it("never lowers an already-larger radius", () => {
+    const payload = { nearbyVisitors: { emitRadiusInMiles: 20000 } };
+    expect(raiseRadiusInPayload(payload).nearbyVisitors?.emitRadiusInMiles).toBe(20000);
+  });
+
+  it("passes through payloads with no nearbyVisitors or radius field", () => {
+    expect(raiseRadiusInPayload({})).toEqual({});
+    const noRadius = { nearbyVisitors: { visitors: [] } };
+    expect(raiseRadiusInPayload(noRadius)).toEqual({ nearbyVisitors: { visitors: [] } });
+  });
+});
 
 describe("filterPostAuthenticationPayload", () => {
   it("removes blocked visitors from nearbyVisitors.visitors and partialVisitorData", () => {
@@ -674,6 +693,29 @@ describe("installBotBlockHook — XHR", () => {
     });
   });
 
+  it("raises the radius on a map response only while the callback says so", () => {
+    let raise = true;
+    installProfileFilterHook(
+      [botBlockRule(() => ({ blockedIds: new Set(), enabled: false }))],
+      () => raise,
+    );
+    const read = (path: string) => {
+      const xhr = new window.XMLHttpRequest() as XMLHttpRequest & {
+        __setRawResponse: (t: string) => void;
+      };
+      xhr.open("POST", `https://uswapi2.sniffies.com${path}`);
+      xhr.__setRawResponse(
+        JSON.stringify({ nearbyVisitors: { emitRadiusInMiles: 1, maxRadiusInMiles: 3 } }),
+      );
+      xhr.send();
+      return JSON.parse(xhr.responseText).nearbyVisitors.emitRadiusInMiles;
+    };
+    expect(read("/api/post-authentication")).toBe(12500);
+    expect(read("/api/softReload")).toBe(12500);
+    raise = false;
+    expect(read("/api/softReload")).toBe(1);
+  });
+
   it("filters the chat-data response for a matching URL", () => {
     installBotBlockHook(() => state);
     const xhr = new window.XMLHttpRequest() as XMLHttpRequest & {
@@ -876,6 +918,13 @@ describe("online rule", () => {
     };
     const result = filterPostAuthenticationPayload(payload, matcher());
     expect(result.nearbyVisitors?.visitors?.map((p) => p._id)).toEqual(["recent", "exact"]);
+  });
+
+  it("keeps the cutoff fixed from when the rule was created, not from each check", () => {
+    const m = matcher(); // created at NOW, cutoff 06:00
+    vi.setSystemTime(NOW + 30 * 60_000);
+    const payload = { nearbyVisitors: { visitors: [seenAt("a", "2026-10-08T06:10:00Z")] } };
+    expect(filterPostAuthenticationPayload(payload, m).nearbyVisitors?.visitors).toHaveLength(1);
   });
 
   it("is inactive when disabled or empty", () => {

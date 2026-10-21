@@ -6,15 +6,15 @@ A bookmarklet only runs after the page has loaded, so it can never hook the page
 
 Supported features:
 
-- Open profiles outside your boundary
+- **Open profiles outside your boundary** — Works independently without location spoofing (bookmarklet-only feature)
 - Hide and unhide photos you've sent ("Hide Sent Photos" in the panel). Open the chat after tapping the bookmarklet, so it can see the conversation
 - No cap on how many options you can pick in Sniffies' own Sexuality, Body Type and Position filters (enable "Profile Filters" in the panel, then open the filter menu)
 
-Not supported (use the userscript):
+Not supported (use the userscript for these):
 
-- Location spoofing
-- Bot filtering
-- Gender, Height, Weight and Last Online filters
+- **Location spoofing** — Requires hooking the browser's geolocation API at page init time, which a bookmarklet can't do
+- **Bot filtering** — Requires intercepting network requests before the page loads
+- **Gender, Height, Weight and Online After filters** — Require filtering Sniffies' network responses at init time
 
 See the "Profile filter support" table in the root `README.md` for every build.
 
