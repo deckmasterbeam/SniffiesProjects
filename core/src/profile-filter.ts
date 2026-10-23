@@ -253,6 +253,8 @@ export interface OnlineFilter {
   minutes: number | null;
   /** When the menu's Done last confirmed the pick; the cutoff moves to then on the next reload. Not restored from storage. */
   pickedAt?: number;
+  /** Static mode: the fixed time to be seen after, instead of a lookback that moves with each reload. */
+  cutoff?: number;
 }
 
 export const DEFAULT_ONLINE_FILTER: OnlineFilter = { enabled: false, minutes: null };
@@ -263,25 +265,34 @@ export const onlineLabel = (minutes: number): string =>
   `< ${minutes < 60 ? `${minutes} min` : `${minutes / 60} hour${minutes === 60 ? "" : "s"}`} ago`;
 
 const parseOnlineFilter = (value: unknown): OnlineFilter => {
-  const raw = (value ?? {}) as { enabled?: unknown; minutes?: unknown };
+  const raw = (value ?? {}) as { enabled?: unknown; minutes?: unknown; cutoff?: unknown };
   const minutes = ONLINE_MINUTES.includes(raw.minutes as number) ? (raw.minutes as number) : null;
-  return { enabled: raw.enabled === true && minutes !== null, minutes };
+  const filter: OnlineFilter = { enabled: raw.enabled === true && minutes !== null, minutes };
+  if (minutes !== null && typeof raw.cutoff === "number" && isFinite(raw.cutoff)) {
+    filter.cutoff = raw.cutoff;
+  }
+  return filter;
 };
 
-export const onlineKey = (filter: OnlineFilter): string =>
-  filter.enabled && filter.minutes !== null ? String(filter.minutes) : "";
+export const onlineKey = (filter: OnlineFilter): string => {
+  if (!filter.enabled || filter.minutes === null) {
+    return "";
+  }
+  return filter.cutoff === undefined ? String(filter.minutes) : `static${filter.cutoff}`;
+};
 
-export const onlineSinceLabel = (minutes: number, from: number): string => {
-  const cutoff = new Date(from - minutes * 60_000);
-  const time = cutoff
-    .toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
-    .replace(/\s+/g, "");
+export const clockText = (time: number, now: number): string => {
+  const at = new Date(time);
+  const clock = at.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }).replace(/\s+/g, "");
   const day =
-    cutoff.toDateString() === new Date(from).toDateString()
+    at.toDateString() === new Date(now).toDateString()
       ? ""
-      : `${cutoff.toLocaleDateString([], { weekday: "short" })} `;
-  return `Cruisers online after ${day}${time}`;
+      : `${at.toLocaleDateString([], { weekday: "short" })} `;
+  return `${day}${clock}`;
 };
+
+export const onlineSinceLabel = (minutes: number, from: number): string =>
+  `Cruisers online after ${clockText(from - minutes * 60_000, from)}`;
 
 export const onlineRule = (getFilter: () => OnlineFilter): ProfileFilterRule => {
   const loadedAt = Date.now();
@@ -297,7 +308,7 @@ export const onlineRule = (getFilter: () => OnlineFilter): ProfileFilterRule => 
       // A missing connect time is NaN, it wasn't online recently.
       return !(
         Date.parse(profile.data.connectUpdateTime ?? "") >=
-        loadedAt - getFilter().minutes! * 60_000
+        (getFilter().cutoff ?? loadedAt - getFilter().minutes! * 60_000)
       );
     },
   };

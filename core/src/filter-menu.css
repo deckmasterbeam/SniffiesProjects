@@ -141,6 +141,29 @@
   cursor: default;
 }
 
+.snp-flyout-modes {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 10px 0;
+}
+
+.snp-flyout-modes button {
+  border: 1px solid #7a90a4;
+  border-radius: 12px;
+  padding: 4px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  background: transparent;
+  color: #7a90a4;
+}
+
+.snp-flyout-modes button.active {
+  border-color: #ff5500;
+  background: #ff5500;
+  color: #ffffff;
+}
+
 .snp-flyout-option input {
   position: absolute;
   opacity: 0;
@@ -159,6 +182,10 @@
   flex: 1;
   max-width: 140px;
   text-align: center;
+}
+
+.snp-wheel-column:has([data-wheel="choice"]) {
+  max-width: 280px;
 }
 
 .snp-wheel-column p {

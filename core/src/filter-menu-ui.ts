@@ -2,6 +2,7 @@ import type { ProfileFiltersMenuContract } from "./contracts.js";
 import { createLogger } from "./log.js";
 import FILTER_MENU_CSS from "./filter-menu.css";
 import {
+  clockText,
   GENDERS,
   HEIGHT_OPTIONS,
   WEIGHT_OPTIONS,
@@ -161,29 +162,58 @@ const buildOnlineRow = (
   label.removeAttribute("for");
   icon.classList.replace("fa-plug", "fa-clock");
   title.textContent = " Online After";
-  toggle.addEventListener("change", () => {
-    filters.online.enabled = toggle.checked;
-    changed();
-  });
-
   // The cutoff, under the title.
   const since = document.createElement("p");
   since.className = "snp-online-since";
   titleLine.after(since);
 
-  // Clicking the title picks the lookback.
-  label.addEventListener("click", (event) => {
-    event.preventDefault();
+  const openPicker = (): void => {
+    const now = Date.now();
     openChoiceFlyout(
       "Online After",
-      ONLINE_MINUTES.map((value) => ({ value, label: onlineLabel(value) })),
+      // Static shows the time each option works out to now.
+      (mode) =>
+        ONLINE_MINUTES.map((value) => ({
+          value,
+          label:
+            mode === "static"
+              ? `${onlineLabel(value)} (${clockText(now - value * 60_000, now)})`
+              : onlineLabel(value),
+        })),
       filters.online.minutes,
-      (minutes) => {
-        filters.online = { enabled: true, minutes, pickedAt: Date.now() };
+      (minutes, mode) => {
+        filters.online = {
+          enabled: true,
+          minutes,
+          pickedAt: Date.now(),
+          ...(mode === "static" && { cutoff: Date.now() - minutes * 60_000 }),
+        };
         changed();
       },
       root.closest("smart-select-filter"),
+      {
+        current: filters.online.cutoff === undefined ? "rolling" : "static",
+        choices: [
+          { value: "rolling", label: "Rolling" },
+          { value: "static", label: "Static" },
+        ],
+      },
     );
+  };
+
+  toggle.addEventListener("change", () => {
+    if (filters.online.minutes === null) {
+      toggle.checked = false;
+      openPicker();
+      return;
+    }
+    filters.online.enabled = toggle.checked;
+    changed();
+  });
+
+  label.addEventListener("click", (event) => {
+    event.preventDefault();
+    openPicker();
   });
 
   return {
@@ -195,11 +225,15 @@ const buildOnlineRow = (
       // Something to apply: "Reload to apply" stands in for the switch.
       switchLabel.style.display = needsReload ? "none" : "";
       toggle.checked = on;
-      toggle.disabled = minutes === null;
       header.classList.toggle("active", on);
       // The applied cutoff is fixed at page load; a pending pick counts back from when it was made.
       const from = needsReload ? (filters.online.pickedAt ?? Date.now()) : PAGE_LOADED_AT;
-      since.textContent = on ? onlineSinceLabel(minutes, from) : "";
+      const { cutoff } = filters.online;
+      since.textContent = !on
+        ? ""
+        : cutoff === undefined
+          ? onlineSinceLabel(minutes, from)
+          : `Cruisers online after ${clockText(cutoff, Date.now())}`;
       since.style.display = on ? "" : "none";
     },
   };

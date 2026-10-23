@@ -235,10 +235,11 @@ export const openRangeFlyout = (
 
 export const openChoiceFlyout = (
   title: string,
-  items: WheelItem<number>[],
+  items: (mode: string) => WheelItem<number>[],
   current: number | null,
-  onDone: (value: number) => void,
+  onDone: (value: number, mode: string) => void,
   host?: Element | null,
+  modes?: { current: string; choices: WheelItem<string>[] },
 ): void => {
   document.getElementById(FLYOUT_ID)?.remove();
 
@@ -271,8 +272,9 @@ export const openChoiceFlyout = (
     return wrap;
   };
 
+  let mode = modes?.current ?? "";
   const wheel = createWheel<number>("choice", title);
-  wheel.fill(items, current ?? items[0]!.value);
+  wheel.fill(items(mode), current ?? items(mode)[0]!.value);
 
   const heading = document.createElement("h1");
   heading.textContent = title;
@@ -283,9 +285,33 @@ export const openChoiceFlyout = (
     heading,
     action("Done", "right", () => {
       close();
-      onDone(wheel.value());
+      onDone(wheel.value(), mode);
     }),
   );
+  const modeRow = document.createElement("div");
+  modeRow.className = "snp-flyout-modes";
+  const modeButtons = (modes?.choices ?? []).map((choice) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.dataset.mode = choice.value;
+    button.textContent = choice.label;
+    button.addEventListener("click", () => {
+      mode = choice.value;
+      syncModes();
+      wheel.fill(items(mode), wheel.value());
+      wheel.reveal();
+    });
+    modeRow.appendChild(button);
+    return button;
+  });
+  const syncModes = (): void => {
+    for (const button of modeButtons) {
+      const on = button.dataset.mode === mode;
+      button.classList.toggle("active", on);
+      button.setAttribute("aria-pressed", String(on));
+    }
+  };
+  syncModes();
   wheel.el.querySelector("p")?.remove();
   const prompt = document.createElement("p");
   prompt.className = "snp-flyout-prompt";
@@ -293,7 +319,7 @@ export const openChoiceFlyout = (
   const body = document.createElement("div");
   body.className = "snp-wheel-container";
   body.append(wheel.el);
-  sheet.append(header, prompt, body);
+  sheet.append(header, ...(modeButtons.length ? [modeRow] : []), prompt, body);
 
   backdrop.addEventListener("click", (event) => {
     if (event.target === backdrop) {

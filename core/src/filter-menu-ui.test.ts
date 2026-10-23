@@ -639,10 +639,35 @@ describe("installProfileFiltersMenu", () => {
       install(filters());
       expect(title()).toBe("Online After");
       expect(toggle().checked).toBe(false);
-      expect(toggle().disabled).toBe(true);
+      expect(toggle().disabled).toBe(false);
       expect(switchShown()).toBe(true);
       expect(sinceShown()).toBe(false);
       expect(applyButton("online").hidden).toBe(true);
+    });
+
+    it("clicking the switch with nothing picked opens the sheet instead of turning on", () => {
+      install(filters());
+      toggle().click();
+      expect(sheet()).not.toBeNull();
+      expect(toggle().checked).toBe(false);
+      expect(onChange).not.toHaveBeenCalled();
+    });
+
+    it("Static mode: options show the time they work out to, and Done fixes the cutoff", () => {
+      freezeAt3pm();
+      install(filters());
+      openSheet();
+      sheetButton("Static").click();
+      expect(wheelLabels("choice")[0]).toMatch(/^< 15 min ago \(2:45(PM)?\)$/);
+      pick("choice", wheelLabels("choice")[5]!);
+      sheetButton("Done").click();
+      expect(lastChange().online).toEqual({
+        enabled: true,
+        minutes: 180,
+        pickedAt: Date.now(),
+        cutoff: Date.now() - 180 * 60_000,
+      });
+      expect(since().textContent).toMatch(/^Cruisers online after 12:00(PM)?$/);
     });
 
     it("offers 15 min to 48 hours in a scrolling sheet", () => {
