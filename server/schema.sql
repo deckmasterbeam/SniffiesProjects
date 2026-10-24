@@ -35,6 +35,17 @@ CREATE TABLE IF NOT EXISTS client_init_log (
   version     TEXT NOT NULL
 );
 
+-- Dashboard activity queries scan by time window and group by user.
+CREATE INDEX IF NOT EXISTS client_init_log_occurred_at_idx ON client_init_log (occurred_at);
+CREATE INDEX IF NOT EXISTS client_init_log_user_id_idx ON client_init_log (user_id, occurred_at);
+
+-- Manual labels for Sniffies accounts (e.g. "me", "test account"). Managed
+-- manually; user_id matches client_init_log.user_id.
+CREATE TABLE IF NOT EXISTS account_labels (
+  user_id     TEXT PRIMARY KEY,
+  description TEXT NOT NULL
+);
+
 -- Sniffies ids of reporters whose /report submissions should be silently
 -- dropped (no row written, no error). Managed manually.
 CREATE TABLE IF NOT EXISTS blocked_reporters (
