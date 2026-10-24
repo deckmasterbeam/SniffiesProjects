@@ -12,19 +12,20 @@ vercel deploy     # production
 
 ## Environment variables
 
-| Variable              | Required | Description                                                                             |
-| --------------------- | -------- | --------------------------------------------------------------------------------------- |
-| `POSTGRES_URL`        | Yes      | Neon connection string                                                                  |
-| `TEXTBELT_KEY`        | Yes      | Textbelt API key                                                                        |
-| `CLIENT_SECRET`       | Yes      | Bearer token baked into the client extension dist                                       |
-| `WATCHER_SECRET`      | Yes      | Bearer token baked into the watcher extension dist                                      |
-| `ALLOWED_ORIGINS`     | No       | Comma-separated allowed CORS origins. Defaults to all.                                  |
-| `DAILY_SMS_LIMIT`     | No       | Max SMS per phone per 24 h (default: `10`)                                              |
-| `SAVE_NUMBER_ENABLED` | No       | Must be exactly `"true"` to turn on `save-number`. See [Feature gates](#feature-gates). |
-| `SEND_GUID_ENABLED`   | No       | Must be exactly `"true"` to turn on `send-guid`. See [Feature gates](#feature-gates).   |
-| `FAVORITES_ENABLED`   | No       | Must be exactly `"true"` to turn on `favorites`. See [Feature gates](#feature-gates).   |
-| `NOTIFY_TEST_ENABLED` | No       | Must be exactly `"true"` to turn on `notify-test`. See [Feature gates](#feature-gates). |
-| `REPORTING_ENABLED`   | No       | Must be exactly `"true"` to turn on `report`. See [Feature gates](#feature-gates).      |
+| Variable              | Required | Description                                                                                              |
+| --------------------- | -------- | -------------------------------------------------------------------------------------------------------- |
+| `POSTGRES_URL`        | Yes      | Neon connection string                                                                                   |
+| `TEXTBELT_KEY`        | Yes      | Textbelt API key                                                                                         |
+| `CLIENT_SECRET`       | Yes      | Bearer token baked into the client extension dist                                                        |
+| `WATCHER_SECRET`      | Yes      | Bearer token baked into the watcher extension dist                                                       |
+| `DASHBOARD_ENABLED`   | No       | Must be exactly `"true"` to serve `/dashboard`. Set only on the Vercel-Authentication-protected project. |
+| `ALLOWED_ORIGINS`     | No       | Comma-separated allowed CORS origins. Defaults to all.                                                   |
+| `DAILY_SMS_LIMIT`     | No       | Max SMS per phone per 24 h (default: `10`)                                                               |
+| `SAVE_NUMBER_ENABLED` | No       | Must be exactly `"true"` to turn on `save-number`. See [Feature gates](#feature-gates).                  |
+| `SEND_GUID_ENABLED`   | No       | Must be exactly `"true"` to turn on `send-guid`. See [Feature gates](#feature-gates).                    |
+| `FAVORITES_ENABLED`   | No       | Must be exactly `"true"` to turn on `favorites`. See [Feature gates](#feature-gates).                    |
+| `NOTIFY_TEST_ENABLED` | No       | Must be exactly `"true"` to turn on `notify-test`. See [Feature gates](#feature-gates).                  |
+| `REPORTING_ENABLED`   | No       | Must be exactly `"true"` to turn on `report`. See [Feature gates](#feature-gates).                       |
 
 ### Two-secret model
 
@@ -61,6 +62,7 @@ Run [`schema.sql`](./schema.sql) against your Neon database to create all tables
 | `notify_log`          | Record of every SMS sent, used for rate-limiting                  |
 | `priority_numbers`    | Phones exempt from the daily SMS limit                            |
 | `client_init_log`     | Record of every client init telemetry ping                        |
+| `account_labels`      | Manual notes labelling Sniffies accounts, keyed by `user_id`      |
 | `blocked_reporters`   | Sniffies ids whose reports are silently dropped                   |
 | `pending_reports`     | Consolidated bot reports awaiting manual review                   |
 | `validated_reports`   | Manually confirmed bot reports; served as the "blocked bots" list |
@@ -227,6 +229,14 @@ Records a client init telemetry ping. Called by the chrome client and the usersc
 | 400    | `userId_and_version_required` | Missing `userId` or `version`       |
 | 400    | `invalid_client_type`         | `clientType` not a recognized value |
 | 500    | `db_error`                    | Database failure                    |
+
+---
+
+### `GET /dashboard`
+
+Server-rendered usage page (also at `/api/dashboard`), computed from `client_init_log`: total/new users (24h/7d/30d), DAU/WAU/MAU, stickiness, week-over-week retention, a 30-day active/new table, breakdowns by client type and version, plus feature totals (phones, favorites, SMS, reports). "Active" means at least one init ping in the window.
+
+**Auth:** none in code. Vercel Authentication is project-wide, so deploy this repo as a second Vercel project (same `server` root and `POSTGRES_URL`) with Vercel Authentication enabled and `DASHBOARD_ENABLED=true`. On the public API project leave `DASHBOARD_ENABLED` unset and the route 404s.
 
 ---
 
