@@ -41,6 +41,28 @@ describe("wireUpdateBanner", () => {
     expect(container.querySelector<HTMLElement>("#snp-update-banner")!.hidden).toBe(true);
   });
 
+  it("hides on dismiss and stays hidden for 24h, then returns", async () => {
+    fetchMock.mockResolvedValue(releasesResponse(["chrome-0.3"]));
+    const banner = () => container.querySelector<HTMLElement>("#snp-update-banner")!;
+    wireUpdateBanner(container, "chrome", "0.2");
+    await vi.waitFor(() => expect(banner().hidden).toBe(false));
+
+    container.querySelector<HTMLElement>("#snp-update-dismiss")!.click();
+    expect(banner().hidden).toBe(true);
+
+    // A fresh load within 24h doesn't re-show it.
+    container.innerHTML = UPDATE_BANNER_HTML;
+    wireUpdateBanner(container, "chrome", "0.2");
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(banner().hidden).toBe(true);
+
+    vi.spyOn(Date, "now").mockReturnValue(Date.now() + 24 * 60 * 60 * 1000 + 1);
+    wireUpdateBanner(container, "chrome", "0.2");
+    await vi.waitFor(() => expect(banner().hidden).toBe(false));
+    vi.restoreAllMocks();
+  });
+
   it("does nothing when the container has no #snp-update-banner element", () => {
     const empty = document.createElement("div");
     expect(() => wireUpdateBanner(empty, "chrome", "0.2")).not.toThrow();

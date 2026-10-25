@@ -6,6 +6,9 @@
   color: #ffcf8a;
   font-size: 12px;
   line-height: 1.4;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
 }
 
 .snp-update-banner[hidden] {
@@ -15,4 +18,15 @@
 .snp-update-banner a {
   color: #ffe1b0;
   font-weight: 600;
+}
+
+.snp-update-banner button {
+  margin-left: auto;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: inherit;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
 }

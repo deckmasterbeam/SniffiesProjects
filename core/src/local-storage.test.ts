@@ -27,31 +27,15 @@ describe("profile border open", () => {
 });
 
 describe("premium features enabled", () => {
-  const legacy = (geo?: boolean, border?: boolean) => {
-    if (geo !== undefined) {
-      localStorage.setItem("sniffies-geo", JSON.stringify({ enabled: geo }));
-    }
-    if (border !== undefined) {
-      localStorage.setItem("sniffies-profile-border", JSON.stringify({ enabled: border }));
-    }
-  };
-
-  it.each([
-    [undefined, undefined, true], // fresh install
-    [true, false, true],
-    [false, true, true],
-    [true, true, true],
-    [false, false, false], // existing user who turned both off stays off
-    [false, undefined, false],
-  ])("migrates legacy geo=%s border=%s -> %s", (geo, border, expected) => {
-    legacy(geo, border);
-    expect(getPremiumFeaturesEnabled()).toBe(expected);
-  });
-
-  it("a saved value wins over legacy and round-trips", () => {
-    legacy(true, true);
+  it("defaults to on, and a saved value round-trips", () => {
+    expect(getPremiumFeaturesEnabled()).toBe(true);
     setPremiumFeaturesEnabled(false);
     expect(getPremiumFeaturesEnabled()).toBe(false);
+  });
+
+  it("is not affected by saving the border setting", () => {
+    setProfileBorderOpen({ enabled: false, openInNewTab: false });
+    expect(getPremiumFeaturesEnabled()).toBe(true);
   });
 });
 

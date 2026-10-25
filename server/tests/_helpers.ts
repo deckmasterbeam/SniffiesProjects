@@ -19,6 +19,7 @@ export function makeReq(
 export function makeRes() {
   let _status = 0;
   let _body: Record<string, unknown> = {};
+  let _text = "";
   const res = {
     status(s: number) {
       _status = s;
@@ -27,10 +28,16 @@ export function makeRes() {
     json(b: unknown) {
       _body = b as Record<string, unknown>;
     },
+    send(t: string) {
+      _text = t;
+    },
     setHeader() {},
     end() {},
     get _status() {
       return _status;
+    },
+    get _text() {
+      return _text;
     },
     get _body() {
       return _body;

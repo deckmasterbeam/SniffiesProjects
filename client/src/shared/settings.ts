@@ -9,25 +9,17 @@ import {
   SETTINGS_KEYS,
   SNIFFIES_USER_ID_REGEX,
   recordBlockedBotIds,
-  resolvePremiumFeaturesEnabled,
 } from "@sniffies-projects/core";
 
 export { DEFAULT_LOCAL_SETTINGS, PHONE_E164_REGEX, SETTINGS_KEYS, SNIFFIES_USER_ID_REGEX };
 export type { ExtensionLocalSettings };
 
 export const getLocalSettings = async (): Promise<ExtensionLocalSettings> => {
-  // Read raw (no defaults) so "never set" is visible to the premium-features migration.
   const stored = await chrome.storage.local.get(null);
-  const premiumFeaturesEnabled = resolvePremiumFeaturesEnabled(
-    stored.premiumFeaturesEnabled,
-    stored.geoOverride?.enabled,
-    stored.profileBorderOpen?.enabled,
-  );
   const premiumFeatureFlags = parsePremiumFeatureFlags(stored.premiumFeatureFlags);
   return {
     ...DEFAULT_LOCAL_SETTINGS,
     ...stored,
-    premiumFeaturesEnabled,
     premiumFeatureFlags,
   } as ExtensionLocalSettings;
 };

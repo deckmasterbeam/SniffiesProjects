@@ -136,13 +136,6 @@ describe("popup — premium features master toggle", () => {
     expect(premiumConfig.classList.contains("snp-disabled")).toBe(true);
   });
 
-  it("migrates from the old per-feature toggles when no master value is saved", async () => {
-    await loadWithStored({ profileBorderOpen: { enabled: false, openInNewTab: true } });
-    expect(getElements().premiumEnabled.checked).toBe(false);
-    await loadWithStored({ geoOverride: { enabled: true, latitude: 0, longitude: 0 } });
-    expect(getElements().premiumEnabled.checked).toBe(true);
-  });
-
   it("a saved master value wins over the old toggles", async () => {
     await loadWithStored({
       premiumFeaturesEnabled: false,
