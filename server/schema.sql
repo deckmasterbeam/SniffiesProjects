@@ -39,8 +39,8 @@ CREATE TABLE IF NOT EXISTS client_init_log (
 CREATE INDEX IF NOT EXISTS client_init_log_occurred_at_idx ON client_init_log (occurred_at);
 CREATE INDEX IF NOT EXISTS client_init_log_user_id_idx ON client_init_log (user_id, occurred_at);
 
--- Manual labels for Sniffies accounts (e.g. "me", "test account"). Managed
--- manually; user_id matches client_init_log.user_id.
+-- Manual labels for Sniffies accounts (e.g. "me", "test account"). Managed manually, keyed by
+-- the same user_id as client_init_log.
 CREATE TABLE IF NOT EXISTS account_labels (
   user_id     TEXT PRIMARY KEY,
   description TEXT NOT NULL
