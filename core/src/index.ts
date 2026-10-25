@@ -97,7 +97,6 @@ export { BOT_BLOCK_HTML, BOT_BLOCK_CSS, wireBotBlockForm } from "./bot-block-ui.
 export {
   DEFAULT_GEO_OVERRIDE,
   DEFAULT_PROFILE_BORDER_OPEN,
-  resolvePremiumFeaturesEnabled,
   DEFAULT_PREMIUM_FEATURE_FLAGS,
   parsePremiumFeatureFlags,
   PHONE_E164_REGEX,
