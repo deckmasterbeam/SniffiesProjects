@@ -1,6 +1,9 @@
-import REPORT_MODAL_HTML from "./report-modal.html";
+import RAW_REPORT_MODAL_HTML from "./report-modal.html";
+import { STRINGS, render } from "./strings.js";
 import REPORT_MODAL_CSS from "./report-modal.css";
 import type { ReportFormContract } from "./contracts.js";
+
+const REPORT_MODAL_HTML = render(RAW_REPORT_MODAL_HTML);
 
 export { REPORT_MODAL_HTML, REPORT_MODAL_CSS };
 export type { ReportFormContract };
@@ -61,20 +64,20 @@ export const wireReportModal = (
   submitBtn.addEventListener("click", () => {
     const submittedGeneration = generation;
     submitBtn.disabled = true;
-    setStatus("Submitting…");
+    setStatus(STRINGS.report.submitting);
     Promise.resolve(options.onSubmit(messageField.value.trim()))
       .then(() => {
         if (generation !== submittedGeneration) {
           return;
         }
-        setStatus("Reported. Thanks.");
+        setStatus(STRINGS.report.submitted);
         setTimeout(close, 1200);
       })
       .catch(() => {
         if (generation !== submittedGeneration) {
           return;
         }
-        setStatus("Failed to submit report. Try again.", true);
+        setStatus(STRINGS.report.failed, true);
         submitBtn.disabled = false;
       });
   });

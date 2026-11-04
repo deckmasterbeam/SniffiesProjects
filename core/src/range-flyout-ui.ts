@@ -1,4 +1,5 @@
 import { nearestChoice, type RangeFilter, type RangeOptions } from "./profile-filter.js";
+import { STRINGS } from "./strings.js";
 
 const FLYOUT_ID = "snp-range-flyout";
 // Keep in sync with .snp-wheel-item's height in filter-menu.css.
@@ -106,7 +107,7 @@ export const openRangeFlyout = (
   const sheet = document.createElement("div");
   sheet.className = "snp-flyout";
   sheet.setAttribute("role", "dialog");
-  sheet.setAttribute("aria-label", `${title}: Make a Selection`);
+  sheet.setAttribute("aria-label", STRINGS.range.makeASelection(title));
   backdrop.appendChild(sheet);
 
   const close = (): void => {
@@ -150,8 +151,8 @@ export const openRangeFlyout = (
     const next = list[list.findIndex((choice) => choice.value === from) + step];
     other.set(next ? next.value : null);
   };
-  const min: Wheel<number | null> = createWheel("min", "Min", () => push(min, max, 1));
-  const max: Wheel<number | null> = createWheel("max", "Max", () => push(max, min, -1));
+  const min: Wheel<number | null> = createWheel("min", STRINGS.range.min, () => push(min, max, 1));
+  const max: Wheel<number | null> = createWheel("max", STRINGS.range.max, () => push(max, min, -1));
   const fillBounds = (metric: boolean, minValue: number | null, maxValue: number | null): void => {
     const list = choices(metric);
     const snap = (value: number | null): number | null =>
@@ -159,7 +160,7 @@ export const openRangeFlyout = (
     min.fill(withNone(list, " +"), snap(minValue));
     max.fill(withNone(list), snap(maxValue));
   };
-  const unit: Wheel<boolean> = createWheel("unit", "Unit", () =>
+  const unit: Wheel<boolean> = createWheel("unit", STRINGS.range.unit, () =>
     fillBounds(unit.value(), min.value(), max.value()),
   );
   unit.fill(
@@ -176,9 +177,9 @@ export const openRangeFlyout = (
   const header = document.createElement("div");
   header.className = "snp-flyout-header";
   header.append(
-    action("Cancel", "left", close),
+    action(STRINGS.range.cancel, "left", close),
     heading,
-    action("Done", "right", () => {
+    action(STRINGS.range.done, "right", () => {
       close();
       onDone({
         min: min.value(),
@@ -191,7 +192,7 @@ export const openRangeFlyout = (
 
   const to = document.createElement("span");
   to.className = "snp-wheel-middle";
-  to.textContent = "to";
+  to.textContent = STRINGS.range.to;
   const body = document.createElement("div");
   body.className = "snp-wheel-container";
   body.append(unit.el, min.el, to, max.el);
@@ -209,11 +210,7 @@ export const openRangeFlyout = (
   syncBox();
   const unspecifiedLabel = document.createElement("label");
   unspecifiedLabel.className = "snp-flyout-option";
-  unspecifiedLabel.append(
-    unspecified,
-    box,
-    ` Include profiles with no ${title.toLowerCase()} listed`,
-  );
+  unspecifiedLabel.append(unspecified, box, STRINGS.range.includeUnlisted(title.toLowerCase()));
 
   sheet.append(header, unspecifiedLabel, body);
 
@@ -249,7 +246,7 @@ export const openChoiceFlyout = (
   const sheet = document.createElement("div");
   sheet.className = "snp-flyout";
   sheet.setAttribute("role", "dialog");
-  sheet.setAttribute("aria-label", `${title}: Make a Selection`);
+  sheet.setAttribute("aria-label", STRINGS.range.makeASelection(title));
   backdrop.appendChild(sheet);
 
   const close = (): void => {
@@ -281,9 +278,9 @@ export const openChoiceFlyout = (
   const header = document.createElement("div");
   header.className = "snp-flyout-header";
   header.append(
-    action("Cancel", "left", close),
+    action(STRINGS.range.cancel, "left", close),
     heading,
-    action("Done", "right", () => {
+    action(STRINGS.range.done, "right", () => {
       close();
       onDone(wheel.value(), mode);
     }),
@@ -315,7 +312,7 @@ export const openChoiceFlyout = (
   wheel.el.querySelector("p")?.remove();
   const prompt = document.createElement("p");
   prompt.className = "snp-flyout-prompt";
-  prompt.textContent = "Select a value:";
+  prompt.textContent = STRINGS.range.selectAValue;
   const body = document.createElement("div");
   body.className = "snp-wheel-container";
   body.append(wheel.el);

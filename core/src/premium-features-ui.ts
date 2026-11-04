@@ -1,9 +1,11 @@
-import PREMIUM_FEATURES_HTML from "./premium-features.html";
+import RAW_PREMIUM_FEATURES_HTML from "./premium-features.html";
+import { STRINGS, render } from "./strings.js";
 import RAW_CSS from "./premium-features.css";
 import SWITCH_CSS from "./switch.css";
 import { hasCapturedCoords, type GeoOverride, type ProfileBorderOpen } from "./settings.js";
 import type { PremiumFeaturesFormContract } from "./contracts.js";
 
+const PREMIUM_FEATURES_HTML = render(RAW_PREMIUM_FEATURES_HTML);
 const PREMIUM_FEATURES_CSS = SWITCH_CSS + RAW_CSS;
 
 export { PREMIUM_FEATURES_HTML, PREMIUM_FEATURES_CSS };
@@ -12,13 +14,6 @@ export type { PremiumFeaturesFormContract };
 export interface PremiumFeaturesFormHandle {
   setOverride: (next: GeoOverride) => void;
 }
-
-const TAB_LABELS = {
-  current: "Current tab",
-  currentSaved: "Current tab (saved)",
-  new: "New tab",
-  newSaved: "New tab (saved)",
-} as const;
 
 const describeLocation = (override: GeoOverride): string =>
   override.label ?? `${override.latitude.toFixed(5)}, ${override.longitude.toFixed(5)}`;
@@ -90,7 +85,9 @@ export const wirePremiumFeaturesForm = (
   const renderGeo = (): void => {
     const captured = current !== null && hasCapturedCoords(current);
     geoClear.style.display = captured ? "" : "none";
-    geoSaved.textContent = captured ? `Saved: ${describeLocation(current!)}` : "";
+    geoSaved.textContent = captured
+      ? STRINGS.premium.location.saved(describeLocation(current!))
+      : "";
   };
 
   if (!options.geo) {
@@ -107,7 +104,7 @@ export const wirePremiumFeaturesForm = (
   // Profiles outside boundary
   const border = options.border;
   if (!border) {
-    el("profile-border-hint").textContent = "Profiles outside your boundary open like any other.";
+    el("profile-border-hint").textContent = STRINGS.premium.boundary.hintOff;
     el("profile-border-tab-field").style.display = "none";
     return { setOverride };
   }
@@ -117,8 +114,12 @@ export const wirePremiumFeaturesForm = (
   const saveBtn = el<HTMLButtonElement>("profile-border-save");
 
   const applyLabels = (openInNewTab: boolean): void => {
-    optionCurrent.text = openInNewTab ? TAB_LABELS.current : TAB_LABELS.currentSaved;
-    optionNew.text = openInNewTab ? TAB_LABELS.newSaved : TAB_LABELS.new;
+    optionCurrent.text = openInNewTab
+      ? STRINGS.premium.boundary.currentTab
+      : STRINGS.premium.boundary.currentTabSaved;
+    optionNew.text = openInNewTab
+      ? STRINGS.premium.boundary.newTabSaved
+      : STRINGS.premium.boundary.newTab;
   };
 
   let saved: ProfileBorderOpen = { ...border.initial };

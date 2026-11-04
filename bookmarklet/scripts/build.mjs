@@ -31,6 +31,8 @@ const buildOptions = {
   define: {
     __DEBUG__: String(process.env.DEBUG === "true"),
     __VERSION__: JSON.stringify(pkg.version),
+    __SERVER_BASE__: JSON.stringify(process.env.SERVER_BASE ?? ""),
+    __CLIENT_SECRET__: JSON.stringify(process.env.CLIENT_SECRET ?? ""),
   },
 };
 

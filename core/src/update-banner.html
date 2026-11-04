@@ -1,13 +1,6 @@
 <div id="snp-update-banner" class="snp-update-banner" hidden>
-  <span>
-    This extension is out of date. go to
-    <a
-      href="https://www.joshbarnett.dev/projects/sniffies-project/install/"
-      target="_blank"
-      rel="noopener noreferrer"
-      >https://www.joshbarnett.dev/projects/sniffies-project/install/</a
-    >
-    to update.
-  </span>
-  <button id="snp-update-dismiss" type="button" aria-label="Dismiss for 24 hours">&times;</button>
+  <span>{{updateBanner.message}}</span>
+  <button id="snp-update-dismiss" type="button" aria-label="{{updateBanner.dismiss}}">
+    &times;
+  </button>
 </div>

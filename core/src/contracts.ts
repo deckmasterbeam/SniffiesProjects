@@ -83,7 +83,7 @@ export interface LocationOverrideControllerOptions {
   reloadPage?: () => void;
 }
 
-export type ClientType = "chrome-client" | "userscript";
+export type ClientType = "chrome-client" | "userscript" | "bookmarklet";
 
 export interface LogInitOptions {
   serverBase: string;

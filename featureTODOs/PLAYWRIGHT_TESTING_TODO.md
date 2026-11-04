@@ -223,9 +223,11 @@ against a fixture that fakes the four surfaces:
 - [ ] FAB button mounts in `[data-testid="iconHolderRightBottom"]` when present at load, and via
       `MutationObserver` when it appears later (SPA nav).
   - [x] Bookmarklet — `e2e/tests/bookmarklet/fab-panel.spec.ts`.
+  - [x] Userscript, icon row present at load only — `e2e/tests/userscript/premium-panel.spec.ts`.
 - [ ] Clicking FAB opens/closes the panel; panel contains working geo-override and
       profile-border forms wired to userscript-local storage (not `chrome.storage`).
   - [x] Bookmarklet (profile-border form only; it has no geo override) — `e2e/tests/bookmarklet/fab-panel.spec.ts`, `e2e/tests/bookmarklet/profile-border.spec.ts`.
+  - [x] Userscript, open/close only (the geo and profile-border forms aren't exercised) — `e2e/tests/userscript/premium-panel.spec.ts`.
 - [ ] Double-injection guard: `window.__sniffiesInjected` prevents mounting twice if the script
       runs again.
   - [x] Bookmarklet (a second tap toggles the panel instead) — `e2e/tests/bookmarklet/fab-panel.spec.ts`.
@@ -246,6 +248,25 @@ against a fixture that fakes the four surfaces:
 - [ ] Console has no uncaught errors on a full "load fixture → click marker → open profile →
       toggle every feature" pass, for both packages.
   - [x] Bookmarklet — `e2e/tests/bookmarklet/console-errors.spec.ts`.
+
+---
+
+## 12. Premium Features panel (master toggle + per-feature switches)
+
+The bookmarklet's Premium panel specs pass (`e2e/tests/bookmarklet/`). No specs exist yet for the
+other clients. See also §1 (geo), §2 (extension/userscript outside-boundary) and §6 (popup).
+
+- [ ] Master toggle and per-feature switches (location, boundary, photos) persist across reload and
+      re-open in the popup (§6), the userscript FAB panel (§10) and the extension.
+  - [x] Userscript, including master off disabling the per-feature switches — `e2e/tests/userscript/premium-panel.spec.ts`.
+  - [x] Bookmarklet, master switch only — `e2e/tests/bookmarklet/profile-border.spec.ts`.
+  - [ ] Chrome extension popup.
+- [ ] "You don't need these" Plus notice: shown when the mocked `POST /api/authenticate/current`
+      returns an active `appstoreMembership`, hidden when it is absent. A free account has no
+      `appstoreMembership` key at all (confirmed from a free-account HAR). The paid shape (`name`,
+      `subscriptionStatus: "active"`, future `end`) needs mocking.
+  - [x] Userscript, active and free responses (the notice appears from the next load) — `e2e/tests/userscript/premium-panel.spec.ts`.
+  - [ ] Chrome extension popup, and the bookmarklet.
 
 ---
 

@@ -24,6 +24,7 @@ import {
   ENDOWMENT_FILTER_LABEL_SELECTOR,
   PROFILE_TYPE_FILTER_LABEL_SELECTOR,
 } from "./sniffies-selectors.js";
+import { STRINGS } from "./strings.js";
 
 const STYLE_ID = "snp-filter-menu-style";
 
@@ -59,10 +60,10 @@ const stripTestIds = (root: Element): void => {
 const GENDER_ROW_ID = "snp-gender-filter";
 
 const GENDER_LABELS: Record<Gender, string> = {
-  male: "Male",
-  female: "Female",
-  nonbinary: "Nonbinary",
-  undefined: "Not specified",
+  male: STRINGS.filterMenu.male,
+  female: STRINGS.filterMenu.female,
+  nonbinary: STRINGS.filterMenu.nonbinary,
+  undefined: STRINGS.filterMenu.notSpecified,
 };
 
 const buildGenderRow = (
@@ -87,7 +88,7 @@ const buildGenderRow = (
   toggle.disabled = false;
   label.htmlFor = toggle.id;
   label.querySelector("i")?.classList.replace("fa-user", "fa-venus-mars");
-  title.textContent = " Gender";
+  title.textContent = ` ${STRINGS.filterMenu.gender}`;
   toggle.addEventListener("change", () => {
     filters.gender.enabled = toggle.checked;
     changed();
@@ -161,7 +162,7 @@ const buildOnlineRow = (
   toggle.disabled = false;
   label.removeAttribute("for");
   icon.classList.replace("fa-plug", "fa-clock");
-  title.textContent = " Online After";
+  title.textContent = ` ${STRINGS.filterMenu.onlineAfter}`;
   // The cutoff, under the title.
   const since = document.createElement("p");
   since.className = "snp-online-since";
@@ -170,7 +171,7 @@ const buildOnlineRow = (
   const openPicker = (): void => {
     const now = Date.now();
     openChoiceFlyout(
-      "Online After",
+      STRINGS.filterMenu.onlineAfter,
       // Static shows the time each option works out to now.
       (mode) =>
         ONLINE_MINUTES.map((value) => ({
@@ -194,8 +195,8 @@ const buildOnlineRow = (
       {
         current: filters.online.cutoff === undefined ? "rolling" : "static",
         choices: [
-          { value: "rolling", label: "Rolling" },
-          { value: "static", label: "Static" },
+          { value: "rolling", label: STRINGS.filterMenu.rolling },
+          { value: "static", label: STRINGS.filterMenu.static },
         ],
       },
     );
@@ -233,7 +234,7 @@ const buildOnlineRow = (
         ? ""
         : cutoff === undefined
           ? onlineSinceLabel(minutes, from)
-          : `Cruisers online after ${clockText(cutoff, Date.now())}`;
+          : STRINGS.filterMenu.cruisersOnlineAfter(clockText(cutoff, Date.now()));
       since.style.display = on ? "" : "none";
     },
   };
@@ -331,7 +332,7 @@ const buildStatRow =
         const value = rangeLabel(filter, options);
         button.className = value ? "range" : "select";
         text.classList.toggle("placeholder", !value);
-        text.textContent = ` ${value ?? "Select"} `;
+        text.textContent = ` ${value ?? STRINGS.filterMenu.select} `;
       },
     };
   };
@@ -362,13 +363,13 @@ const ROWS: Row[] = [
     id: "snp-height-filter",
     anchor: endowmentLine,
     key: (f) => rangeKey(f.height),
-    build: buildStatRow("Height", (f) => f.height, HEIGHT_OPTIONS),
+    build: buildStatRow(STRINGS.filterMenu.height, (f) => f.height, HEIGHT_OPTIONS),
   },
   {
     id: "snp-weight-filter",
     anchor: endowmentLine,
     key: (f) => rangeKey(f.weight),
-    build: buildStatRow("Weight", (f) => f.weight, WEIGHT_OPTIONS),
+    build: buildStatRow(STRINGS.filterMenu.weight, (f) => f.weight, WEIGHT_OPTIONS),
   },
 ];
 
@@ -407,7 +408,7 @@ export const installProfileFiltersMenu = (options: ProfileFiltersMenuContract): 
     const apply = document.createElement("button");
     apply.type = "button";
     apply.className = "snp-filter-apply";
-    apply.textContent = "Reload to apply";
+    apply.textContent = STRINGS.filterMenu.reloadToApply;
     apply.addEventListener("click", (event) => {
       event.stopPropagation();
       (options.reloadPage ?? (() => location.reload()))();

@@ -4,6 +4,7 @@ import {
   PROFILE_OPTIONS_MENU_SELECTOR,
   UNHIDE_ALL_PHOTOS_BUTTON_SELECTOR,
 } from "./sniffies-selectors.js";
+import { STRINGS } from "./strings.js";
 
 const log = createLogger("hide-photo-menu");
 
@@ -14,13 +15,13 @@ const MENU_BUTTONS = [
   {
     selector: HIDE_ALL_PHOTOS_BUTTON_SELECTOR,
     testId: "hideAllPhotosButton",
-    label: "Hide All My Photos",
+    label: STRINGS.hidePhotoMenu.hideAll,
     icon: "fa-eye-slash",
   },
   {
     selector: UNHIDE_ALL_PHOTOS_BUTTON_SELECTOR,
     testId: "unhideAllPhotosButton",
-    label: "Unhide All My Photos",
+    label: STRINGS.hidePhotoMenu.unhideAll,
     icon: "fa-eye",
   },
 ] as const;

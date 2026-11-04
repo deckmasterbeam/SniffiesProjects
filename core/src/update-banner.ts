@@ -1,6 +1,9 @@
-import UPDATE_BANNER_HTML from "./update-banner.html";
+import RAW_UPDATE_BANNER_HTML from "./update-banner.html";
+import { STRINGS, render } from "./strings.js";
 import UPDATE_BANNER_CSS from "./update-banner.css";
 import { isUpdateAvailable, type ReleaseChannel } from "./update-check.js";
+
+const UPDATE_BANNER_HTML = render(RAW_UPDATE_BANNER_HTML);
 
 export { UPDATE_BANNER_HTML, UPDATE_BANNER_CSS };
 
@@ -20,7 +23,7 @@ const dismiss = (channel: ReleaseChannel): void => {
   try {
     localStorage.setItem(DISMISS_KEY_PREFIX + channel, String(Date.now()));
   } catch {
-    // Storage unavailable — it'll just reappear next time.
+    // Storage unavailable â€” it'll just reappear next time.
   }
 };
 

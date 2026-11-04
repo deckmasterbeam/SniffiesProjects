@@ -24,6 +24,8 @@ export default defineConfig({
   define: {
     __DEBUG__: "false",
     __VERSION__: JSON.stringify("0.0.0-test"),
+    __SERVER_BASE__: JSON.stringify("https://server.example"),
+    __CLIENT_SECRET__: JSON.stringify("test-secret"),
   },
   test: {
     environment: "jsdom",
