@@ -14,7 +14,6 @@ const REPORTER_USER_ID = "111111111111111111111111";
 const ENV: Record<string, string> = {
   CLIENT_SECRET: SECRET,
   POSTGRES_URL: "postgres://localhost/test",
-  REPORTING_ENABLED: "true",
 };
 
 const savedEnv: Record<string, string | undefined> = {};
@@ -60,27 +59,6 @@ describe("CORS preflight", () => {
     const res = makeRes();
     await handler(req, res as unknown as VercelResponse);
     expect(res._status).toBe(204);
-  });
-});
-
-describe("feature gate", () => {
-  it("returns 404 when REPORTING_ENABLED is not set", async () => {
-    delete process.env.REPORTING_ENABLED;
-    const { status, body } = await callPost({
-      reportType: "bot_suspected",
-      reportedUserId: REPORTED_USER_ID,
-      reporterUserId: REPORTER_USER_ID,
-    });
-    expect(status).toBe(404);
-    expect(body.error).toBe("not_found");
-  });
-
-  it("returns 404 for a disallowed method while disabled, not 405", async () => {
-    delete process.env.REPORTING_ENABLED;
-    const req = makeReq({ method: "GET", headers: { authorization: `Bearer ${SECRET}` } });
-    const res = makeRes();
-    await handler(req, res as unknown as VercelResponse);
-    expect(res._status).toBe(404);
   });
 });
 

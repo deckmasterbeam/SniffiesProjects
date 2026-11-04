@@ -7,7 +7,6 @@ vi.mock("./shared/env.js", () => ({
   SERVER_BASE: "https://server.example",
   CLIENT_SECRET: "test-secret",
   VERSION: "1.2.3",
-  REPORTING_ENABLED: true,
 }));
 
 // installBotBlockHook

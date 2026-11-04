@@ -104,7 +104,7 @@ export const wirePremiumFeaturesForm = (
   // Profiles outside boundary
   const border = options.border;
   if (!border) {
-    el("profile-border-hint").textContent = STRINGS.premium.boundary.hintOff;
+    el("profile-border-hint").textContent = STRINGS.premium.boundary.hintNoTabChoice;
     el("profile-border-tab-field").style.display = "none";
     return { setOverride };
   }

@@ -169,7 +169,6 @@ against a fixture that fakes the four surfaces:
 - [ ] Submit failure (mocked 500) shows "Failed to submit report" and re-enables the submit
       button.
 - [ ] Cancel / backdrop click closes without submitting and clears `reportTarget`.
-- [ ] `REPORTING_ENABLED` flag off → button never injected.
 - [ ] Switching profiles while modal-adjacent state exists doesn't leak the previous
       `reportTarget`.
 
@@ -187,8 +186,8 @@ against a fixture that fakes the four surfaces:
 
 - [ ] Geo section, profile-border section, favorites section, bot-blocking section each remember
       open/closed state across popup reopen.
-- [ ] Feature-flag gating: `FAVORITES_NOTIFICATIONS_ENABLED` / `REPORTING_ENABLED` off → checkbox
-      disabled, "Coming soon!" hint, strikethrough label.
+- [ ] Feature-flag gating: `FAVORITES_NOTIFICATIONS_ENABLED` off → checkbox disabled, "Coming soon!" hint,
+      strikethrough label.
 - [ ] Bot-blocking checkbox toggles `botBlockingEnabled` in storage.
 - [ ] "Open settings" opens the full settings page in a new tab and closes the popup.
 - [ ] Version badge shows `chrome.runtime.getManifest().version`.

@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { installProfileFiltersMenu } from "./filter-menu-ui.js";
+import { STRINGS } from "./strings.js";
 import {
   GENDERS,
   onlineSinceLabel,
@@ -95,6 +96,10 @@ const range = (overrides: Partial<RangeFilter>): RangeFilter => ({
   ...overrides,
 });
 
+// The cutoff line; its clock text is "12:00" or "12:00PM" depending on the locale.
+const onlineAfter = (time: string): RegExp =>
+  new RegExp(`^${STRINGS.filterMenu.cruisersOnlineAfter(time)}${time ? "(PM)?$" : ""}`);
+
 const row = (id: string): HTMLElement => document.getElementById(`snp-${id}-filter`)!;
 const applyButton = (id: string): HTMLButtonElement =>
   row(id).querySelector<HTMLButtonElement>(".snp-filter-apply")!;
@@ -178,8 +183,8 @@ describe("installProfileFiltersMenu", () => {
       expect(lines.map((l) => l.querySelector("label span")?.textContent)).toEqual([
         "Age",
         "Endowment",
-        "Height",
-        "Weight",
+        STRINGS.filterMenu.height,
+        STRINGS.filterMenu.weight,
         "Sexuality",
       ]);
       expect(row("height").tagName).toBe("UI-MENU-ITEM-GROUP");
@@ -201,7 +206,7 @@ describe("installProfileFiltersMenu", () => {
       genderToggle().click();
       openSheet("height");
       pick("min", `5'10"`);
-      sheetButton("Done").click();
+      sheetButton(STRINGS.range.done).click();
       document.body.innerHTML = "";
       document.body.innerHTML = MENU_HTML;
       await new Promise((resolve) => setTimeout(resolve, 0));
@@ -252,10 +257,10 @@ describe("installProfileFiltersMenu", () => {
     it("shows one button per gender, with the selected ones active", () => {
       install(filters(gender(true, "male", "female")));
       expect(genderButtons().map((b) => b.textContent)).toEqual([
-        "Male",
-        "Female",
-        "Nonbinary",
-        "Not specified",
+        STRINGS.filterMenu.male,
+        STRINGS.filterMenu.female,
+        STRINGS.filterMenu.nonbinary,
+        STRINGS.filterMenu.notSpecified,
       ]);
       expect(activeGenders()).toEqual(["male", "female"]);
     });
@@ -299,7 +304,7 @@ describe("installProfileFiltersMenu", () => {
   describe("height and weight lines", () => {
     it("look like an unset Sniffies stat line until a range is picked", () => {
       install(filters());
-      expect(statValue("height")).toBe("Select");
+      expect(statValue("height")).toBe(STRINGS.filterMenu.select);
       expect(row("height").querySelector("button")!.className).toBe("select");
       expect(row("height").querySelector(".text-value")!.classList).toContain("placeholder");
       expect(isChecked("height")).toBe(false);
@@ -363,7 +368,7 @@ describe("installProfileFiltersMenu", () => {
       expect(isChecked("height")).toBe(true);
       expect(statCheckbox("height").classList).toContain("active");
       expect(row("height").querySelector(".stat-button")!.classList).toContain("active");
-      expect(statValue("weight")).toBe("Up to 80kg");
+      expect(statValue("weight")).toBe(STRINGS.range.upTo("80kg"));
     });
 
     it("clicking the checkbox switches a set range off and on, keeping the range", () => {
@@ -421,11 +426,13 @@ describe("installProfileFiltersMenu", () => {
     it("opens from the line with Cancel / title / Done and unit, min and max wheels", () => {
       install(filters());
       openSheet("height");
-      expect(sheet()!.querySelector("h1")!.textContent).toBe("Height");
-      expect(sheet()!.getAttribute("aria-label")).toBe("Height: Make a Selection");
+      expect(sheet()!.querySelector("h1")!.textContent).toBe(STRINGS.filterMenu.height);
+      expect(sheet()!.getAttribute("aria-label")).toBe(
+        STRINGS.range.makeASelection(STRINGS.filterMenu.height),
+      );
       expect([...sheet()!.querySelectorAll("button")].map((b) => b.textContent)).toEqual([
-        "Cancel",
-        "Done",
+        STRINGS.range.cancel,
+        STRINGS.range.done,
       ]);
       expect(wheelLabels("unit")).toEqual(["ft", "cm"]);
       expect(picked("unit")).toBe("ft");
@@ -441,7 +448,7 @@ describe("installProfileFiltersMenu", () => {
       expect(heights.at(-1)).toBe(`7'0" +`);
       expect(heights).toHaveLength(1 + 37);
       expect(wheelLabels("max").at(-1)).toBe(`7'0"`);
-      sheetButton("Cancel").click();
+      sheetButton(STRINGS.range.cancel).click();
 
       openSheet("weight");
       const weights = wheelLabels("max");
@@ -456,7 +463,7 @@ describe("installProfileFiltersMenu", () => {
       pick("unit", "cm");
       expect(wheelLabels("min").slice(1, 3)).toEqual(["120cm", "121cm"]);
       expect(wheelLabels("min").at(-1)).toBe("210cm +");
-      sheetButton("Cancel").click();
+      sheetButton(STRINGS.range.cancel).click();
 
       openSheet("weight");
       pick("unit", "kg");
@@ -469,7 +476,7 @@ describe("installProfileFiltersMenu", () => {
       openSheet("height");
       pick("min", `5'10"`);
       pick("max", `6'3"`);
-      sheetButton("Done").click();
+      sheetButton(STRINGS.range.done).click();
       expect(sheet()).toBeNull();
       expect(lastChange().height).toEqual(range({ min: 178, max: 191 }));
       expect(statValue("height")).toBe(`5'10" - 6'3"`);
@@ -479,7 +486,7 @@ describe("installProfileFiltersMenu", () => {
       openSheet("weight");
       pick("min", "150lb");
       pick("max", "175lb");
-      sheetButton("Done").click();
+      sheetButton(STRINGS.range.done).click();
       expect(lastChange().weight).toEqual(range({ min: 68, max: 79 }));
     });
 
@@ -488,11 +495,11 @@ describe("installProfileFiltersMenu", () => {
       openSheet("height");
       const checkbox = sheet()!.querySelector<HTMLInputElement>(".snp-flyout-option input")!;
       expect(sheet()!.querySelector(".snp-flyout-option")!.textContent).toBe(
-        " Include profiles with no height listed",
+        STRINGS.range.includeUnlisted("height"),
       );
       expect(checkbox.checked).toBe(false);
       checkbox.click();
-      sheetButton("Done").click();
+      sheetButton(STRINGS.range.done).click();
       expect(lastChange().height).toEqual(range({ min: 178, includeUnspecified: true }));
       // It changes who is shown, so it needs a reload like any other change.
       expect(applyButton("height").hidden).toBe(false);
@@ -513,7 +520,7 @@ describe("installProfileFiltersMenu", () => {
     it("Cancel, Escape and a click outside the sheet all close it without changing anything", () => {
       install(filters());
       for (const dismiss of [
-        () => sheetButton("Cancel").click(),
+        () => sheetButton(STRINGS.range.cancel).click(),
         () => document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" })),
         () => document.querySelector<HTMLElement>(".snp-flyout-backdrop")!.click(),
       ]) {
@@ -523,16 +530,16 @@ describe("installProfileFiltersMenu", () => {
         expect(sheet()).toBeNull();
       }
       expect(onChange).not.toHaveBeenCalled();
-      expect(statValue("height")).toBe("Select");
+      expect(statValue("height")).toBe(STRINGS.filterMenu.select);
     });
 
     it("Done with both ends left open switches the filter off", () => {
       install(filters({ height: range({ min: 178 }) }));
       openSheet("height");
       pick("min", "-");
-      sheetButton("Done").click();
+      sheetButton(STRINGS.range.done).click();
       expect(lastChange().height).toEqual(range({ enabled: false }));
-      expect(statValue("height")).toBe("Select");
+      expect(statValue("height")).toBe(STRINGS.filterMenu.select);
     });
 
     it("pushes max up ahead of min as min is scrolled past it", () => {
@@ -544,7 +551,7 @@ describe("installProfileFiltersMenu", () => {
       expect(picked("max")).toBe("180lb");
       pick("min", "300lb");
       expect(picked("max")).toBe("305lb");
-      sheetButton("Done").click();
+      sheetButton(STRINGS.range.done).click();
       expect(lastChange().weight).toMatchObject({ min: 136, max: 138 });
     });
 
@@ -585,7 +592,7 @@ describe("installProfileFiltersMenu", () => {
       pick("unit", "kg");
       expect(picked("min")).toBe("70kg");
       expect(picked("max")).toBe("-");
-      sheetButton("Done").click();
+      sheetButton(STRINGS.range.done).click();
       expect(lastChange().weight).toEqual(range({ min: 70, metric: true }));
       expect(statValue("weight")).toBe("70kg +");
     });
@@ -595,7 +602,7 @@ describe("installProfileFiltersMenu", () => {
       openSheet("height");
       const mounted = document.getElementById("snp-range-flyout")!;
       expect(mounted.parentElement).toBe(document.querySelector("smart-select-filter"));
-      sheetButton("Cancel").click();
+      sheetButton(STRINGS.range.cancel).click();
       expect(document.getElementById("snp-range-flyout")).toBeNull();
     });
 
@@ -637,7 +644,7 @@ describe("installProfileFiltersMenu", () => {
 
     it("off and empty: Online After with its switch off and no cutoff line", () => {
       install(filters());
-      expect(title()).toBe("Online After");
+      expect(title()).toBe(STRINGS.filterMenu.onlineAfter);
       expect(toggle().checked).toBe(false);
       expect(toggle().disabled).toBe(false);
       expect(switchShown()).toBe(true);
@@ -657,17 +664,17 @@ describe("installProfileFiltersMenu", () => {
       freezeAt3pm();
       install(filters());
       openSheet();
-      sheetButton("Static").click();
+      sheetButton(STRINGS.filterMenu.static).click();
       expect(wheelLabels("choice")[0]).toMatch(/^< 15 min ago \(2:45(PM)?\)$/);
       pick("choice", wheelLabels("choice")[5]!);
-      sheetButton("Done").click();
+      sheetButton(STRINGS.range.done).click();
       expect(lastChange().online).toEqual({
         enabled: true,
         minutes: 180,
         pickedAt: Date.now(),
         cutoff: Date.now() - 180 * 60_000,
       });
-      expect(since().textContent).toMatch(/^Cruisers online after 12:00(PM)?$/);
+      expect(since().textContent).toMatch(onlineAfter("12:00"));
     });
 
     it("offers 15 min to 48 hours in a scrolling sheet", () => {
@@ -694,13 +701,13 @@ describe("installProfileFiltersMenu", () => {
       openSheet();
       pick("choice", "< 3 hours ago");
       expect(onChange).not.toHaveBeenCalled();
-      sheetButton("Done").click();
+      sheetButton(STRINGS.range.done).click();
       expect(lastChange().online).toEqual({ enabled: true, minutes: 180, pickedAt: Date.now() });
       expect(switchShown()).toBe(false);
       expect(applyButton("online").hidden).toBe(false);
       expect(applyButton("online").parentElement).toBe(row("online").querySelector(".trailing"));
       expect(since().textContent).toBe(onlineSinceLabel(180, Date.now()));
-      expect(since().textContent).toMatch(/^Cruisers online after 12:00(PM)?$/);
+      expect(since().textContent).toMatch(onlineAfter("12:00"));
     });
 
     it("applied and on: the switch is back, on, with the cutoff from page load", () => {
@@ -709,7 +716,7 @@ describe("installProfileFiltersMenu", () => {
       expect(toggle().checked).toBe(true);
       expect(applyButton("online").hidden).toBe(true);
       expect(sinceShown()).toBe(true);
-      expect(since().textContent).toMatch(/^Cruisers online after /);
+      expect(since().textContent).toMatch(onlineAfter(""));
     });
 
     it("switching it off: Reload to apply replaces the switch and the cutoff goes", () => {
@@ -737,9 +744,9 @@ describe("installProfileFiltersMenu", () => {
       vi.setSystemTime(new Date(2026, 9, 20, 15, 30));
       openSheet();
       pick("choice", "< 3 hours ago");
-      sheetButton("Done").click();
+      sheetButton(STRINGS.range.done).click();
       expect(since().textContent).toBe(onlineSinceLabel(180, Date.now()));
-      expect(since().textContent).toMatch(/^Cruisers online after 12:30(PM)?$/);
+      expect(since().textContent).toMatch(onlineAfter("12:30"));
       expect(applyButton("online").hidden).toBe(false);
     });
 
@@ -747,7 +754,7 @@ describe("installProfileFiltersMenu", () => {
       install(filters());
       openSheet();
       pick("choice", "< 3 hours ago");
-      sheetButton("Cancel").click();
+      sheetButton(STRINGS.range.cancel).click();
       expect(onChange).not.toHaveBeenCalled();
       expect(sinceShown()).toBe(false);
     });

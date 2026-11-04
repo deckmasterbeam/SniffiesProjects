@@ -7,17 +7,17 @@
     <p class="snp-label">{{premium.label}}</p>
   </summary>
   <div class="collapsible-body">
-    <p id="premium-plus-notice" class="hint notice" style="display: none">
-      {{premium.plusNotice}}
-    </p>
-    <p class="hint">
-      {{premium.hint}}
-    </p>
+    <p id="premium-plus-notice" class="hint notice" style="display: none">{{premium.plusNotice}}</p>
+    <p class="hint">{{premium.hint}}</p>
     <div id="premium-config" class="premium-section">
       <div id="premium-geo" class="premium-feature">
         <div class="premium-feature-head snp-row">
           <label class="snp-switch">
-            <input id="premium-flag-location" type="checkbox" aria-label="{{premium.location.label}}" />
+            <input
+              id="premium-flag-location"
+              type="checkbox"
+              aria-label="{{premium.location.label}}"
+            />
             <span class="snp-switch-slider"></span>
           </label>
           <button class="premium-feature-toggle" type="button" aria-expanded="false">
@@ -25,11 +25,11 @@
           </button>
         </div>
         <div class="premium-feature-body premium-section" hidden>
-          <p class="hint">
-            {{premium.location.hint}}
-          </p>
+          <p class="hint">{{premium.location.hint}}</p>
           <div class="actions">
-            <button id="geo-clear" class="secondary" type="button">{{premium.location.clear}}</button>
+            <button id="geo-clear" class="secondary" type="button">
+              {{premium.location.clear}}
+            </button>
             <span id="geo-saved" class="hint" aria-live="polite"></span>
           </div>
         </div>
@@ -49,9 +49,7 @@
           </button>
         </div>
         <div class="premium-feature-body premium-section" hidden>
-          <p id="profile-border-hint" class="hint">
-            {{premium.boundary.hint}}
-          </p>
+          <p id="profile-border-hint" class="hint">{{premium.boundary.hint}}</p>
           <label id="profile-border-tab-field" class="field">
             <span>{{premium.boundary.openIn}}</span>
             <select id="profile-border-tab">
@@ -77,9 +75,7 @@
           </button>
         </div>
         <div class="premium-feature-body premium-section" hidden>
-          <p class="hint">
-            {{premium.photos.hint}}
-          </p>
+          <p class="hint">{{premium.photos.hint}}</p>
         </div>
       </div>
     </div>

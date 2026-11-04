@@ -82,7 +82,6 @@ const buildOptions = {
     __SERVER_BASE__: JSON.stringify(process.env.SERVER_BASE ?? ""),
     __CLIENT_SECRET__: JSON.stringify(process.env.CLIENT_SECRET ?? ""),
     __VERSION__: JSON.stringify(pkg.version),
-    __REPORTING_ENABLED__: String(process.env.REPORTING_ENABLED === "true"),
   },
 };
 

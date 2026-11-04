@@ -189,7 +189,7 @@ export const installReportButtonInjection = (options: ReportButtonInjectionOptio
         const menu = node.matches(PROFILE_OPTIONS_MENU_SELECTOR)
           ? node
           : node.querySelector(PROFILE_OPTIONS_MENU_SELECTOR);
-        if (menu && options.reportingEnabled) {
+        if (menu) {
           mountReportButton(menu);
         }
         if (

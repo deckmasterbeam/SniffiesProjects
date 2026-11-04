@@ -44,7 +44,6 @@ export const AUTHENTICATE_CURRENT_PATH = "/api/authenticate/current";
 
 export interface AuthenticateCurrentPayload {
   user?: {
-    /** The logged-in account's own id. */
     _id?: string;
     private?: {
       appstoreMembership?: {

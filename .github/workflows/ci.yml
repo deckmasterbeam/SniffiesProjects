@@ -47,7 +47,6 @@ jobs:
           CLIENT_SECRET=$CLIENT_SECRET
           DEBUG=false
           FAVORITES_NOTIFICATIONS_ENABLED=false
-          REPORTING_ENABLED=true
           EOF
 
       - name: Write userscript .env
@@ -59,7 +58,6 @@ jobs:
           SERVER_BASE=$SERVER_BASE
           CLIENT_SECRET=$CLIENT_SECRET
           DEBUG=false
-          REPORTING_ENABLED=true
           EOF
 
       - name: Build extension

@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it } from "vitest";
 import { installHidePhotoMenuButtons } from "./hide-photo-menu-hook.js";
+import { STRINGS } from "./strings.js";
 
 const FREE_MENU = `
   <div data-testid="profileOptionsContainer">
@@ -34,9 +35,9 @@ describe("installHidePhotoMenuButtons", () => {
 
     const hide = menu.querySelector('[data-testid="hideAllPhotosButton"]')!;
     const unhide = menu.querySelector('[data-testid="unhideAllPhotosButton"]')!;
-    expect(hide.textContent).toBe("Hide All My Photos");
+    expect(hide.textContent).toBe(STRINGS.hidePhotoMenu.hideAll);
     expect(hide.querySelector("i")!.className).toContain("fa-eye-slash");
-    expect(unhide.textContent).toBe("Unhide All My Photos");
+    expect(unhide.textContent).toBe(STRINGS.hidePhotoMenu.unhideAll);
     expect(unhide.querySelector("i")!.className).toContain("fa-eye");
     expect(menu.querySelector("[data-testid=blockButton]")!.textContent).toBe("Block");
   });

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import REPORT_MODAL_HTML from "./report-modal.html";
-import { wireReportModal } from "./report-ui.js";
+import { REPORT_MODAL_HTML, wireReportModal } from "./report-ui.js";
+import { STRINGS } from "./strings.js";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -105,7 +105,7 @@ describe("wireReportModal", () => {
       const handle = wireReportModal(container, { onSubmit });
       handle.open();
       click(el(container, "snp-report-submit"));
-      expect(el(container, "snp-report-status").textContent).toBe("Submitting…");
+      expect(el(container, "snp-report-status").textContent).toBe(STRINGS.report.submitting);
     });
 
     it("shows a success status and closes after onSubmit resolves", async () => {
@@ -115,7 +115,7 @@ describe("wireReportModal", () => {
       handle.open();
       click(el(container, "snp-report-submit"));
       await vi.waitFor(() => {
-        expect(el(container, "snp-report-status").textContent).toBe("Reported. Thanks.");
+        expect(el(container, "snp-report-status").textContent).toBe(STRINGS.report.submitted);
       });
       vi.advanceTimersByTime(1200);
       expect(el(container, "snp-report-backdrop").style.display).toBe("none");
@@ -128,9 +128,7 @@ describe("wireReportModal", () => {
       handle.open();
       click(el(container, "snp-report-submit"));
       await vi.waitFor(() => {
-        expect(el(container, "snp-report-status").textContent).toBe(
-          "Failed to submit report. Try again.",
-        );
+        expect(el(container, "snp-report-status").textContent).toBe(STRINGS.report.failed);
       });
       expect(el<HTMLButtonElement>(container, "snp-report-submit").disabled).toBe(false);
     });
@@ -153,7 +151,7 @@ describe("wireReportModal", () => {
       await Promise.resolve();
       await Promise.resolve();
 
-      expect(el(container, "snp-report-status").textContent).not.toBe("Reported. Thanks.");
+      expect(el(container, "snp-report-status").textContent).not.toBe(STRINGS.report.submitted);
       expect(el<HTMLTextAreaElement>(container, "snp-report-message").value).toBe(
         "second profile's report",
       );
@@ -180,9 +178,7 @@ describe("wireReportModal", () => {
       await Promise.resolve();
       await Promise.resolve();
 
-      expect(el(container, "snp-report-status").textContent).not.toBe(
-        "Failed to submit report. Try again.",
-      );
+      expect(el(container, "snp-report-status").textContent).not.toBe(STRINGS.report.failed);
     });
   });
 });

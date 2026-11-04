@@ -49,6 +49,7 @@ export { recordBlockedBotIds, countDistinctBlockedBotsLast24h } from "./blocked-
 export type { ProfileBorderHookResult } from "./profile-border-hook.js";
 export { installProfileBorderRedirect } from "./profile-border-hook.js";
 export { logInit } from "./log-init.js";
+export { STRINGS } from "./strings.js";
 export { installOwnIdHook } from "./own-id-hook.js";
 export {
   PREMIUM_FEATURES_HTML,

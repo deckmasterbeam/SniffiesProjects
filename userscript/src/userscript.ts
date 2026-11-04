@@ -46,7 +46,7 @@ import {
   refreshBlockedBotsIfStale,
   type ReportFeatureState,
 } from "./report.js";
-import { REPORTING_ENABLED, VERSION } from "./shared/env.js";
+import { VERSION } from "./shared/env.js";
 import {
   getBlockedBotEventsByDay,
   getBotBlockingEnabled,
@@ -117,7 +117,6 @@ function installHooks(): HookState {
   const initialOverride = geoController.getOverride();
   log("init", {
     version: VERSION,
-    reportingBuildFlag: REPORTING_ENABLED,
     premiumFeatures: premium.enabled,
     geoSpoofing: {
       hasLocation: hasCapturedCoords(initialOverride),
@@ -241,7 +240,6 @@ export function mountUI(state: HookState | null): void {
   botBlockRoot.innerHTML = BOT_BLOCK_HTML;
 
   wireBotBlockForm(botBlockRoot, {
-    reportingEnabled: REPORTING_ENABLED,
     userEnabledReporting: getBotBlockingEnabled(),
     initialCount: countDistinctBlockedBotsLast24h(getBlockedBotEventsByDay()),
     initialOpen: getBotBlockingSectionOpen(),

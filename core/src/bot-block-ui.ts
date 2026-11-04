@@ -17,19 +17,10 @@ export const wireBotBlockForm = (container: Element, options: BotBlockFormContra
   const countEl = el<HTMLElement>("bot-block-count");
   const hintEl = el<HTMLElement>("bot-block-hint");
   const enabledCheckbox = el<HTMLInputElement>("bot-block-enabled");
-  const enableLabel = el<HTMLElement>("bot-block-enable-label");
 
   if (details) {
     details.open = options.initialOpen;
     details.addEventListener("toggle", () => options.onToggle(details.open));
-  }
-
-  if (!options.reportingEnabled) {
-    enabledCheckbox.checked = false;
-    enabledCheckbox.disabled = true;
-    hintEl.textContent = STRINGS.botBlock.comingSoon;
-    enableLabel.style.textDecoration = "line-through";
-    return;
   }
 
   enabledCheckbox.checked = options.userEnabledReporting;

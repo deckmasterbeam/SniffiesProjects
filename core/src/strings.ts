@@ -1,7 +1,3 @@
-/**
- * Every user-facing string in core. HTML templates reference these as `{{path.to.key}}`
- * (filled in by `render`, values may contain markup); TypeScript imports `STRINGS` directly.
- */
 export const STRINGS = {
   updateBanner: {
     message:
@@ -10,41 +6,40 @@ export const STRINGS = {
   },
   report: {
     title: "Report profile",
-    hint: "Flag this profile as a suspected bot for manual review.",
+    hint: "Flag this profile as a suspected bot account for manual review.",
     messageLabel: "Message (optional)",
-    messagePlaceholder: "Anything that would help review this report",
+    messagePlaceholder: "Any information that would help in reviewing this report",
     cancel: "Cancel",
     submit: "Report bot",
-    submitting: "Submitting…",
-    submitted: "Reported. Thanks.",
-    failed: "Failed to submit report. Try again.",
+    submitting: "Submitting...",
+    submitted: "Reported. Thank you!",
+    failed: "Failed to submit report. Please try again.",
     menuButton: "Sniffies Project: Report",
     menuButtonTitle: "Report as suspected bot",
   },
   botBlock: {
     label: "Block Bot Accounts",
-    comingSoon: "Coming soon!",
-    hint: "Hide profiles that have been confirmed as bots from the map and live updates.",
+    hint: "Hide bot profiles from the map.",
     count: (n: number): string => `${n} bot${n === 1 ? "" : "s"} blocked in the last 24 hours`,
   },
   profileFilters: {
     label: "Expanded Filters",
-    hint: "Add Gender, Height, and Weight filters. Choose an any number of options in the Sexuality, Body Type, and Position filters.",
+    hint: "Add Gender, Height, and Weight filters. Enable choosing any number of options in the Sexuality, Body Type, and Position filters.",
   },
   premium: {
     label: "Premium Features",
     plusNotice: "You have Sniffies Plus, so you don't need these features.",
-    hint: "Unlocks things Sniffies normally reserves for Plus: location spoofing, no boundary restrictions, and hiding photos you've sent.",
+    hint: "Unlocks features that Sniffies normally paywalls: location spoofing, no boundary restrictions, and hiding/unhiding sent photos.",
     location: {
       label: "Location Spoofing",
-      hint: 'Use the built-in Sniffies "Travel Mode" to select a location to travel to. From that mode, search for anywhere and click "Travel here". Only searching by name is supported for the override, manually dragging the map is not supported.',
+      hint: 'Use the Sniffies "Travel Mode" to select a location to travel to. In that mode, search for any location, then click "Travel here". Only searching by name is supported for the override, manually dragging the map is not supported.',
       clear: "Clear location",
       saved: (location: string): string => `Saved: ${location}`,
     },
     boundary: {
       label: "No Boundary Restrictions",
-      hint: "Ignore the boundary restrictions that Sniffies normally enforces. This allows you to see profiles outside your boundary.",
-      hintOff: "Click on profiles ",
+      hint: "Ignore the boundary restrictions that Sniffies normally enforces.",
+      hintNoTabChoice: "Click on profiles even if they would be outside the boundary.",
       openIn: "Open in",
       currentTab: "Current tab",
       currentTabSaved: "Current tab (saved)",
@@ -54,13 +49,13 @@ export const STRINGS = {
     },
     photos: {
       label: "Hide Sent Photos",
-      hint: "Adds Sniffies' Hide Photo action to photos you've sent, so you can hide them again without Plus. Nothing to configure.",
+      hint: "Enables Sniffies 'Hide Photo' action on photos you've sent.",
     },
   },
   citySearch: {
-    note: 'Location spoofing only picks up cities you search for here — moving the map before tapping "Travel here" won\'t be captured.',
+    note: 'Location spoofing only picks up on locations you search for. Moving the map before tapping "Travel here" won\'t be captured.',
     pending: (description: string): string =>
-      `Captured "${description}" — pending until you click "Travel here".`,
+      `Captured "${description}". Location change pending until you click "Travel here".`,
   },
   hidePhotoMenu: {
     hideAll: "Hide All My Photos",

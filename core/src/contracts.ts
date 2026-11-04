@@ -28,7 +28,6 @@ export interface PremiumFeaturesFormContract extends CollapsibleSectionContract 
 }
 
 export interface BotBlockFormContract extends CollapsibleSectionContract {
-  reportingEnabled: boolean;
   userEnabledReporting: boolean;
   /** Distinct accounts blocked in roughly the last 24 hours, for the stat line. 0 renders no stat. */
   initialCount: number;
@@ -68,7 +67,6 @@ export interface MarkerSelection {
 export interface ReportButtonInjectionOptions {
   serverBase: string;
   getAuthHeaders: () => Record<string, string>;
-  reportingEnabled: boolean;
   getReporterUserId: () => string;
   onProfileResolved?: (screen: Element, userId: string) => void;
   onMarkerClick?: (marker: HTMLElement, selection: MarkerSelection | null) => void;

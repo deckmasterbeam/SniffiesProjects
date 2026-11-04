@@ -25,7 +25,6 @@ vercel deploy     # production
 | `SEND_GUID_ENABLED`   | No       | Must be exactly `"true"` to turn on `send-guid`. See [Feature gates](#feature-gates).                    |
 | `FAVORITES_ENABLED`   | No       | Must be exactly `"true"` to turn on `favorites`. See [Feature gates](#feature-gates).                    |
 | `NOTIFY_TEST_ENABLED` | No       | Must be exactly `"true"` to turn on `notify-test`. See [Feature gates](#feature-gates).                  |
-| `REPORTING_ENABLED`   | No       | Must be exactly `"true"` to turn on `report`. See [Feature gates](#feature-gates).                       |
 
 ### Two-secret model
 
@@ -47,7 +46,6 @@ The phone/favorites flow (`save-number`, `send-guid`, `favorites`, `notify-test`
 | `send-guid`   | `SEND_GUID_ENABLED`   |
 | `favorites`   | `FAVORITES_ENABLED`   |
 | `notify-test` | `NOTIFY_TEST_ENABLED` |
-| `report`      | `REPORTING_ENABLED`   |
 
 Until an endpoint's flag is set to exactly `"true"` in the Vercel project's environment variables (and redeployed), it responds `404 { "error": "not_found" }` — before the auth check runs, so a disabled endpoint doesn't even confirm that it exists or that it expects a bearer token. Flip the relevant flag to `"true"` and redeploy when that endpoint is ready to launch; no code changes needed. Each flag can be turned on independently. The gate lives in `requireFeatureFlag` in [`_shared.ts`](./api/_shared.ts).
 
@@ -299,8 +297,6 @@ A 200 with `"sent": 0, "detail": "no_subscribers"` means no one has favorited th
 Reports a profile as a suspected bot. Called from the report button injected into a Sniffies profile panel.
 
 **Auth:** `Authorization: Bearer <CLIENT_SECRET>`
-
-**Feature gate:** `REPORTING_ENABLED=true` (see [Feature gates](#feature-gates))
 
 **Request**
 
