@@ -14,6 +14,9 @@ import {
   installProfileBorderRedirect,
   installSentPhotoHider,
   installSelectionLimitOverride,
+  installOwnIdHook,
+  installUserIdHook,
+  logInit,
   mountFab,
   PANEL_CSS,
   UPDATE_BANNER_CSS,
@@ -53,6 +56,25 @@ function main(): void {
     return;
   }
   alert("Sniffies Tools loaded! Tap the Sniffies Tools button on the map to open the panel.");
+
+  // A bookmarklet loads too late to see the id Sniffies sends at startup, so log the install the
+  // first time Sniffies' traffic reveals it: a socket (re)connect, or an API request or response that carries it.
+  let initLogged = false;
+  const logInstall = (userId: string): void => {
+    if (initLogged) {
+      return;
+    }
+    initLogged = true;
+    void logInit({
+      serverBase: __SERVER_BASE__,
+      clientSecret: __CLIENT_SECRET__,
+      userId,
+      clientType: "bookmarklet",
+      version: __VERSION__,
+    });
+  };
+  installUserIdHook(logInstall);
+  installOwnIdHook(logInstall);
 
   let currentProfileBorderOpen = getProfileBorderOpen();
   let premiumEnabled = getPremiumFeaturesEnabled();

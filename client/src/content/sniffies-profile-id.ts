@@ -2,7 +2,6 @@ import {
   CLIENT_SECRET,
   DEBUG,
   FAVORITES_NOTIFICATIONS_ENABLED,
-  REPORTING_ENABLED,
   SERVER_BASE,
 } from "../shared/env.js";
 import {
@@ -193,7 +192,6 @@ const injectIntoNameLabel = (
 installReportButtonInjection({
   serverBase: SERVER_BASE,
   getAuthHeaders: clientHeaders,
-  reportingEnabled: REPORTING_ENABLED,
   getReporterUserId: () => currentSniffiesUserId,
   onMarkerClick: (_marker, selection) => {
     lastMarkerSelection = selection;
@@ -215,14 +213,12 @@ void getLocalSettings().then(({ guid, sniffiesUserId, blockedBotsFetchedAt }) =>
   if (guid) {
     void fetchFavorites(guid);
   }
-  if (REPORTING_ENABLED) {
-    refreshBlockedBotsIfStale(
-      blockedBotsFetchedAt,
-      SERVER_BASE,
-      clientHeaders,
-      (userIds, fetchedAt) => setBlockedBots(userIds, fetchedAt),
-    );
-  }
+  refreshBlockedBotsIfStale(
+    blockedBotsFetchedAt,
+    SERVER_BASE,
+    clientHeaders,
+    (userIds, fetchedAt) => setBlockedBots(userIds, fetchedAt),
+  );
   log(`initialized, guid ${guid ? "present" : "missing"}`);
 });
 

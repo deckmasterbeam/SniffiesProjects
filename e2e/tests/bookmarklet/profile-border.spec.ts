@@ -137,6 +137,7 @@ test("panel settings persist across a page load and re-tap", async ({ page }) =>
   await tapBookmarklet(page);
   await page.locator("#snp-fab").click();
   await page.locator("#premium-details > summary").click();
+  await page.locator("#premium-border .premium-feature-toggle").click();
   await page.locator("#profile-border-tab").selectOption("current-tab");
   await page.locator("#profile-border-save").click();
   await expect(page.locator("#profile-border-save")).toBeHidden();

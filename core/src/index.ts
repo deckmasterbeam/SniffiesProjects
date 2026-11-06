@@ -49,6 +49,8 @@ export { recordBlockedBotIds, countDistinctBlockedBotsLast24h } from "./blocked-
 export type { ProfileBorderHookResult } from "./profile-border-hook.js";
 export { installProfileBorderRedirect } from "./profile-border-hook.js";
 export { logInit } from "./log-init.js";
+export { STRINGS } from "./strings.js";
+export { installOwnIdHook } from "./own-id-hook.js";
 export {
   PREMIUM_FEATURES_HTML,
   PREMIUM_FEATURES_CSS,
@@ -97,7 +99,6 @@ export { BOT_BLOCK_HTML, BOT_BLOCK_CSS, wireBotBlockForm } from "./bot-block-ui.
 export {
   DEFAULT_GEO_OVERRIDE,
   DEFAULT_PROFILE_BORDER_OPEN,
-  resolvePremiumFeaturesEnabled,
   DEFAULT_PREMIUM_FEATURE_FLAGS,
   parsePremiumFeatureFlags,
   PHONE_E164_REGEX,

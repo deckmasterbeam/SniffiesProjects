@@ -8,6 +8,7 @@ import {
   type FilterableProfile,
   type SniffiesGender,
 } from "./sniffies-api.js";
+import { STRINGS } from "./strings.js";
 
 export interface ProfileFilterRule {
   name: string;
@@ -283,7 +284,9 @@ export const onlineKey = (filter: OnlineFilter): string => {
 
 export const clockText = (time: number, now: number): string => {
   const at = new Date(time);
-  const clock = at.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }).replace(/\s+/g, "");
+  const clock = at
+    .toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
+    .replace(/\s+/g, "");
   const day =
     at.toDateString() === new Date(now).toDateString()
       ? ""
@@ -292,7 +295,7 @@ export const clockText = (time: number, now: number): string => {
 };
 
 export const onlineSinceLabel = (minutes: number, from: number): string =>
-  `Cruisers online after ${clockText(from - minutes * 60_000, from)}`;
+  STRINGS.filterMenu.cruisersOnlineAfter(clockText(from - minutes * 60_000, from));
 
 export const onlineRule = (getFilter: () => OnlineFilter): ProfileFilterRule => {
   const loadedAt = Date.now();
@@ -374,7 +377,7 @@ export const rangeLabel = (filter: RangeFilter, options: RangeOptions): string |
   if (filter.min !== null) {
     return `${label(filter.min)} +`;
   }
-  return filter.max !== null ? `Up to ${label(filter.max)}` : null;
+  return filter.max !== null ? STRINGS.range.upTo(label(filter.max)) : null;
 };
 
 // ── All the filters the user sets from Sniffies filter menu ─────────────────

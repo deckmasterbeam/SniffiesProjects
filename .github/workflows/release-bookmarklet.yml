@@ -24,6 +24,9 @@ jobs:
       - name: Build bookmarklet
         run: yarn build
         working-directory: bookmarklet
+        env:
+          SERVER_BASE: ${{ secrets.SERVER_BASE }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
 
       - name: Publish release
         run: |

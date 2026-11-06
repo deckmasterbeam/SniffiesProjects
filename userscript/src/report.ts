@@ -8,7 +8,7 @@ import {
   profileFilterRules,
   type ProfileFilters,
 } from "@sniffies-projects/core";
-import { CLIENT_SECRET, REPORTING_ENABLED, SERVER_BASE } from "./shared/env.js";
+import { CLIENT_SECRET, SERVER_BASE } from "./shared/env.js";
 import {
   getBlockedBots,
   getBlockedBotsFetchedAt,
@@ -51,22 +51,16 @@ export const installReportFeature = (raiseRadius?: () => boolean): ReportFeature
     raiseRadius,
   );
 
-  if (REPORTING_ENABLED) {
-    installReportButtonInjection({
-      serverBase: SERVER_BASE,
-      getAuthHeaders: clientHeaders,
-      reportingEnabled: true,
-      getReporterUserId: () => state.currentSniffiesUserId,
-    });
-  }
+  installReportButtonInjection({
+    serverBase: SERVER_BASE,
+    getAuthHeaders: clientHeaders,
+    getReporterUserId: () => state.currentSniffiesUserId,
+  });
 
   return state;
 };
 
 export const refreshBlockedBotsIfStale = (state: ReportFeatureState): void => {
-  if (!REPORTING_ENABLED) {
-    return;
-  }
   refreshBlockedBotsIfStaleShared(
     getBlockedBotsFetchedAt(),
     SERVER_BASE,

@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { installCitySearchStatusUI } from "./city-search-status-hook.js";
+import { STRINGS } from "./strings.js";
 
 const buildCitiesInput = (): HTMLElement => {
   const root = document.createElement("cities-input");
@@ -15,9 +16,6 @@ const buildCitiesInput = (): HTMLElement => {
   `;
   return root;
 };
-
-const DEFAULT_NOTE =
-  'Location spoofing only picks up cities you search for here — moving the map before tapping "Travel here" won\'t be captured.';
 
 describe("installCitySearchStatusUI", () => {
   let root: HTMLElement;
@@ -35,7 +33,7 @@ describe("installCitySearchStatusUI", () => {
     installCitySearchStatusUI();
     const el = document.getElementById("snp-city-search-status");
     expect(el).not.toBeNull();
-    expect(el!.textContent).toBe(DEFAULT_NOTE);
+    expect(el!.textContent).toBe(STRINGS.citySearch.note);
     expect(root.contains(el)).toBe(true);
   });
 
@@ -43,9 +41,7 @@ describe("installCitySearchStatusUI", () => {
     const handle = installCitySearchStatusUI();
     handle.showPending("London, England");
     const el = document.getElementById("snp-city-search-status");
-    expect(el!.textContent).toBe(
-      'Captured "London, England" — pending until you click "Travel here".',
-    );
+    expect(el!.textContent).toBe(STRINGS.citySearch.pending("London, England"));
   });
 
   it("updates the existing element instead of creating a second one on repeated calls", () => {
@@ -62,7 +58,9 @@ describe("installCitySearchStatusUI", () => {
     const handle = installCitySearchStatusUI();
     handle.showPending("London, England");
     handle.clear();
-    expect(document.getElementById("snp-city-search-status")!.textContent).toBe(DEFAULT_NOTE);
+    expect(document.getElementById("snp-city-search-status")!.textContent).toBe(
+      STRINGS.citySearch.note,
+    );
   });
 
   it("does nothing when the search box isn't present", () => {

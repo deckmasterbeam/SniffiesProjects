@@ -1,9 +1,7 @@
 import { CITIES_INPUT_SELECTOR } from "./sniffies-selectors.js";
+import { STRINGS } from "./strings.js";
 
 const STATUS_ELEMENT_ID = "snp-city-search-status";
-
-const DEFAULT_NOTE_TEXT =
-  'Location spoofing only picks up cities you search for here — moving the map before tapping "Travel here" won\'t be captured.';
 
 const NOTE_STYLE = ["margin:6px 0 0", "padding:0", "font-size:11px", "color:#7a90a4"].join(";");
 
@@ -44,7 +42,7 @@ export const installCitySearchStatusUI = (): CitySearchStatusHandle => {
       el.textContent = pendingText;
       el.setAttribute("style", PENDING_STYLE);
     } else {
-      el.textContent = DEFAULT_NOTE_TEXT;
+      el.textContent = STRINGS.citySearch.note;
       el.setAttribute("style", NOTE_STYLE);
     }
   };
@@ -73,7 +71,7 @@ export const installCitySearchStatusUI = (): CitySearchStatusHandle => {
 
   return {
     showPending: (description) => {
-      pendingText = `Captured "${description}" — pending until you click "Travel here".`;
+      pendingText = STRINGS.citySearch.pending(description);
       render();
     },
     clear: () => {

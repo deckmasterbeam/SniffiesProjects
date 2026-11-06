@@ -24,6 +24,7 @@ test("full pass produces no console or page errors", async ({ page, context }) =
 
   await page.locator("#snp-fab").click();
   await page.locator("#premium-details > summary").click();
+  await page.locator("#premium-border .premium-feature-toggle").click();
   await page.locator("#profile-border-tab").selectOption("current-tab");
   await page.locator("#profile-border-save").click();
   await page.locator("#premium-enabled").uncheck();

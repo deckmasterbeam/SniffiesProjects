@@ -1,5 +1,6 @@
 import { test, expect, SNIFFIES_ORIGIN } from "../../fixtures/extension.js";
 import { setExtensionStorage } from "../../fixtures/storage.js";
+import { STRINGS } from "../../../core/src/strings.js";
 
 test("extension loads and injects on the fixture page", async ({ context, extensionId }) => {
   expect(extensionId).toMatch(/^[a-p]{32}$/);
@@ -24,10 +25,10 @@ test("extension loads and injects on the fixture page", async ({ context, extens
   const reportButton = page.locator(
     '[data-testid="profileOptionsContainer"] [data-sniffies-report-injection]',
   );
-  await expect(reportButton).toHaveText("Sniffies Project: Report", { timeout: 5_000 });
+  await expect(reportButton).toHaveText(STRINGS.report.menuButton, { timeout: 5_000 });
 
   await reportButton.click();
   const modalStatus = page.locator("#snp-report-status");
   await page.locator("#snp-report-submit").click();
-  await expect(modalStatus).toHaveText("Reported. Thanks.", { timeout: 5_000 });
+  await expect(modalStatus).toHaveText(STRINGS.report.submitted, { timeout: 5_000 });
 });

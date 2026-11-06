@@ -1,8 +1,10 @@
 import type { ProfileFiltersFormContract } from "./contracts.js";
 import RAW_CSS from "./profile-filters.css";
 import SWITCH_CSS from "./switch.css";
-import PROFILE_FILTERS_HTML from "./profile-filters.html";
+import RAW_PROFILE_FILTERS_HTML from "./profile-filters.html";
+import { STRINGS, render } from "./strings.js";
 
+const PROFILE_FILTERS_HTML = render(RAW_PROFILE_FILTERS_HTML);
 const PROFILE_FILTERS_CSS = SWITCH_CSS + RAW_CSS;
 
 export { PROFILE_FILTERS_CSS, PROFILE_FILTERS_HTML };

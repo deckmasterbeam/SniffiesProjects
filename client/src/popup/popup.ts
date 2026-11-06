@@ -18,7 +18,7 @@ import {
   PROFILE_FILTERS_CSS,
   wireProfileFiltersForm,
 } from "@sniffies-projects/core";
-import { DEBUG, FAVORITES_NOTIFICATIONS_ENABLED, REPORTING_ENABLED } from "../shared/env.js";
+import { DEBUG, FAVORITES_NOTIFICATIONS_ENABLED } from "../shared/env.js";
 import {
   getLocalSettings,
   setBotBlockingEnabled,
@@ -120,7 +120,6 @@ const init = async (): Promise<void> => {
   const botBlockRoot = document.getElementById("snp-bot-block-root")!;
   botBlockRoot.innerHTML = BOT_BLOCK_HTML;
   wireBotBlockForm(botBlockRoot, {
-    reportingEnabled: REPORTING_ENABLED,
     userEnabledReporting: settings.botBlockingEnabled,
     initialCount: countDistinctBlockedBotsLast24h(settings.blockedBotEventsByDay),
     initialOpen: settings.botBlockingSectionOpen,

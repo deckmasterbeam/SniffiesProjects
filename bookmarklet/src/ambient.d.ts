@@ -14,3 +14,5 @@ declare module "*.png" {
 }
 
 declare const __VERSION__: string;
+declare const __SERVER_BASE__: string;
+declare const __CLIENT_SECRET__: string;

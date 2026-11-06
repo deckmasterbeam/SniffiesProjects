@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import BOT_BLOCK_HTML from "./bot-block.html";
-import { wireBotBlockForm } from "./bot-block-ui.js";
+import { BOT_BLOCK_HTML, wireBotBlockForm } from "./bot-block-ui.js";
+import { STRINGS } from "./strings.js";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -22,38 +22,9 @@ beforeEach(() => {
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe("wireBotBlockForm", () => {
-  describe("reportingEnabled: false", () => {
-    it("disables the toggle and shows 'Coming soon!'", () => {
-      wireBotBlockForm(container, {
-        reportingEnabled: false,
-        userEnabledReporting: true,
-        initialCount: 0,
-        initialOpen: false,
-        onToggle: () => {},
-        onToggleEnabled: vi.fn(),
-      });
-      expect(el<HTMLInputElement>(container, "bot-block-enabled").checked).toBe(false);
-      expect(el<HTMLInputElement>(container, "bot-block-enabled").disabled).toBe(true);
-      expect(el(container, "bot-block-hint").textContent).toBe("Coming soon!");
-    });
-
-    it("strikes through the enable label", () => {
-      wireBotBlockForm(container, {
-        reportingEnabled: false,
-        userEnabledReporting: true,
-        initialCount: 0,
-        initialOpen: false,
-        onToggle: () => {},
-        onToggleEnabled: vi.fn(),
-      });
-      expect(el(container, "bot-block-enable-label").style.textDecoration).toBe("line-through");
-    });
-  });
-
   describe("initial values", () => {
     it("reflects the enabled flag", () => {
       wireBotBlockForm(container, {
-        reportingEnabled: true,
         userEnabledReporting: true,
         initialCount: 0,
         initialOpen: false,
@@ -65,35 +36,28 @@ describe("wireBotBlockForm", () => {
 
     it("shows the blocked count when positive", () => {
       wireBotBlockForm(container, {
-        reportingEnabled: true,
         userEnabledReporting: true,
         initialCount: 3,
         initialOpen: false,
         onToggle: () => {},
         onToggleEnabled: vi.fn(),
       });
-      expect(el(container, "bot-block-count").textContent).toBe(
-        "3 bots blocked in the last 24 hours",
-      );
+      expect(el(container, "bot-block-count").textContent).toBe(STRINGS.botBlock.count(3));
     });
 
     it("uses singular phrasing for a count of 1", () => {
       wireBotBlockForm(container, {
-        reportingEnabled: true,
         userEnabledReporting: true,
         initialCount: 1,
         initialOpen: false,
         onToggle: () => {},
         onToggleEnabled: vi.fn(),
       });
-      expect(el(container, "bot-block-count").textContent).toBe(
-        "1 bot blocked in the last 24 hours",
-      );
+      expect(el(container, "bot-block-count").textContent).toBe(STRINGS.botBlock.count(1));
     });
 
     it("leaves the count empty when zero", () => {
       wireBotBlockForm(container, {
-        reportingEnabled: true,
         userEnabledReporting: true,
         initialCount: 0,
         initialOpen: false,
@@ -108,7 +72,6 @@ describe("wireBotBlockForm", () => {
     it("fires onToggleEnabled with the new checked state", () => {
       const onToggleEnabled = vi.fn();
       wireBotBlockForm(container, {
-        reportingEnabled: true,
         userEnabledReporting: true,
         initialCount: 0,
         initialOpen: false,
@@ -125,7 +88,6 @@ describe("wireBotBlockForm", () => {
   describe("collapsible", () => {
     it("sets details.open from initialOpen", () => {
       wireBotBlockForm(container, {
-        reportingEnabled: true,
         userEnabledReporting: true,
         initialCount: 0,
         initialOpen: true,
@@ -138,7 +100,6 @@ describe("wireBotBlockForm", () => {
     it("fires onToggle when the section is toggled", () => {
       const onToggle = vi.fn();
       wireBotBlockForm(container, {
-        reportingEnabled: true,
         userEnabledReporting: true,
         initialCount: 0,
         initialOpen: false,

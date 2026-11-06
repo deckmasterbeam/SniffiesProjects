@@ -93,7 +93,6 @@ export interface ExtensionLocalSettings {
   profileFilters: ProfileFilters;
   profileFiltersEnabled: boolean;
   profileFiltersSectionOpen: boolean;
-  /** Whether the account has Sniffies Plus; null until observed. */
   hasPlus: boolean | null;
   premiumFeaturesEnabled: boolean;
   premiumFeatureFlags: PremiumFeatureFlags;
@@ -119,18 +118,4 @@ export const DEFAULT_LOCAL_SETTINGS: ExtensionLocalSettings = {
   hasPlus: null,
   premiumFeaturesEnabled: true,
   premiumFeatureFlags: DEFAULT_PREMIUM_FEATURE_FLAGS,
-};
-
-export const resolvePremiumFeaturesEnabled = (
-  stored: boolean | undefined,
-  legacyGeoEnabled: boolean | undefined,
-  legacyBorderEnabled: boolean | undefined,
-): boolean => {
-  if (stored !== undefined) {
-    return stored;
-  }
-  if (legacyGeoEnabled === undefined && legacyBorderEnabled === undefined) {
-    return DEFAULT_LOCAL_SETTINGS.premiumFeaturesEnabled;
-  }
-  return legacyGeoEnabled === true || legacyBorderEnabled === true;
 };

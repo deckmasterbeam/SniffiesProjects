@@ -1,15 +1,5 @@
 import { test, expect } from "@playwright/test";
-import {
-  SNIFFIES_ORIGIN,
-  injectUserscript,
-  mockSniffiesPage,
-} from "../../fixtures/userscript.js";
-
-// First real test proving the "direct injection" loading strategy
-// (PLAYWRIGHT_TESTING_TODO.md §0) actually works: the built userscript dist
-// file, run via addInitScript against the shared fixture page — same
-// fixture the Chrome extension tests use, since both packages target the
-// same real-site DOM shapes.
+import { SNIFFIES_ORIGIN, injectUserscript, mockSniffiesPage } from "../../fixtures/userscript.js";
 
 test("userscript direct-injects and mounts the FAB panel", async ({ page, context }) => {
   await mockSniffiesPage(context);

@@ -1,8 +1,10 @@
 import type { BotBlockFormContract } from "./contracts.js";
 import RAW_CSS from "./bot-block.css";
 import SWITCH_CSS from "./switch.css";
-import BOT_BLOCK_HTML from "./bot-block.html";
+import RAW_BOT_BLOCK_HTML from "./bot-block.html";
+import { STRINGS, render } from "./strings.js";
 
+const BOT_BLOCK_HTML = render(RAW_BOT_BLOCK_HTML);
 const BOT_BLOCK_CSS = SWITCH_CSS + RAW_CSS;
 
 export { BOT_BLOCK_CSS, BOT_BLOCK_HTML };
@@ -15,28 +17,16 @@ export const wireBotBlockForm = (container: Element, options: BotBlockFormContra
   const countEl = el<HTMLElement>("bot-block-count");
   const hintEl = el<HTMLElement>("bot-block-hint");
   const enabledCheckbox = el<HTMLInputElement>("bot-block-enabled");
-  const enableLabel = el<HTMLElement>("bot-block-enable-label");
 
   if (details) {
     details.open = options.initialOpen;
     details.addEventListener("toggle", () => options.onToggle(details.open));
   }
 
-  if (!options.reportingEnabled) {
-    enabledCheckbox.checked = false;
-    enabledCheckbox.disabled = true;
-    hintEl.textContent = "Coming soon!";
-    enableLabel.style.textDecoration = "line-through";
-    return;
-  }
-
   enabledCheckbox.checked = options.userEnabledReporting;
-  hintEl.textContent =
-    "Hide profiles that have been confirmed as bots from the map and live updates.";
+  hintEl.textContent = STRINGS.botBlock.hint;
   countEl.textContent =
-    options.initialCount > 0
-      ? `${options.initialCount} bot${options.initialCount === 1 ? "" : "s"} blocked in the last 24 hours`
-      : "";
+    options.initialCount > 0 ? STRINGS.botBlock.count(options.initialCount) : "";
 
   enabledCheckbox.addEventListener("change", () => {
     void options.onToggleEnabled(enabledCheckbox.checked);

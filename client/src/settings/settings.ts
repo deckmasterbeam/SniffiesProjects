@@ -1,9 +1,4 @@
-import {
-  CLIENT_SECRET,
-  FAVORITES_NOTIFICATIONS_ENABLED,
-  REPORTING_ENABLED,
-  SERVER_BASE,
-} from "../shared/env.js";
+import { CLIENT_SECRET, FAVORITES_NOTIFICATIONS_ENABLED, SERVER_BASE } from "../shared/env.js";
 import {
   PHONE_E164_REGEX,
   SNIFFIES_USER_ID_REGEX,
@@ -20,13 +15,6 @@ if (!FAVORITES_NOTIFICATIONS_ENABLED) {
     if (el) {
       el.style.display = "none";
     }
-  }
-}
-
-if (!REPORTING_ENABLED) {
-  const el = document.querySelector<HTMLElement>(".blocked-bots-section");
-  if (el) {
-    el.style.display = "none";
   }
 }
 

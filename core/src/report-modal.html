@@ -1,20 +1,20 @@
 <div id="snp-report-backdrop">
   <div class="snp-report-modal" role="dialog" aria-modal="true" aria-labelledby="snp-report-title">
-    <h3 id="snp-report-title">Report profile</h3>
-    <p class="hint">Flag this profile as a suspected bot for manual review.</p>
+    <h3 id="snp-report-title">{{report.title}}</h3>
+    <p class="hint">{{report.hint}}</p>
     <label class="field">
-      <span>Message (optional)</span>
+      <span>{{report.messageLabel}}</span>
       <textarea
         id="snp-report-message"
         rows="3"
         maxlength="500"
-        placeholder="Anything that would help review this report"
+        placeholder="{{report.messagePlaceholder}}"
       ></textarea>
     </label>
     <p id="snp-report-status" class="hint" aria-live="polite"></p>
     <div class="actions">
-      <button id="snp-report-cancel" class="secondary" type="button">Cancel</button>
-      <button id="snp-report-submit" class="primary" type="button">Report bot</button>
+      <button id="snp-report-cancel" class="secondary" type="button">{{report.cancel}}</button>
+      <button id="snp-report-submit" class="primary" type="button">{{report.submit}}</button>
     </div>
   </div>
 </div>

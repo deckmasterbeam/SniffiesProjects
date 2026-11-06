@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PREMIUM_FEATURES_HTML, wirePremiumFeaturesForm } from "./premium-features-ui.js";
 import type { PremiumFeaturesFormContract } from "./contracts.js";
+import { STRINGS } from "./strings.js";
 import {
   DEFAULT_PREMIUM_FEATURE_FLAGS,
   DEFAULT_PROFILE_BORDER_OPEN,
@@ -121,9 +122,13 @@ describe("location", () => {
   it("shows coords or the place name, and clears on click", () => {
     const onClear = vi.fn();
     const handle = wire({ geo: { initial: CAPTURED, onClear } });
-    expect(el(container, "geo-saved").textContent).toBe("Saved: 47.60000, -122.30000");
+    expect(el(container, "geo-saved").textContent).toBe(
+      STRINGS.premium.location.saved("47.60000, -122.30000"),
+    );
     handle.setOverride(CAPTURED_LABEL);
-    expect(el(container, "geo-saved").textContent).toBe("Saved: London, England");
+    expect(el(container, "geo-saved").textContent).toBe(
+      STRINGS.premium.location.saved("London, England"),
+    );
     fire(el(container, "geo-clear"), "click");
     expect(el(container, "geo-saved").textContent).toBe("");
     expect(onClear).toHaveBeenCalledWith(expect.objectContaining({ latitude: 0, longitude: 0 }));

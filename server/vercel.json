@@ -1,6 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "outputDirectory": "public",
+  "rewrites": [{ "source": "/dashboard", "destination": "/api/dashboard" }],
   "functions": {
     "api/notify.ts": {
       "maxDuration": 10

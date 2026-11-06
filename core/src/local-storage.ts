@@ -1,7 +1,7 @@
 import {
+  DEFAULT_LOCAL_SETTINGS,
   DEFAULT_PROFILE_BORDER_OPEN,
   parsePremiumFeatureFlags,
-  resolvePremiumFeaturesEnabled,
   type PremiumFeatureFlags,
   type ProfileBorderOpen,
 } from "./settings.js";
@@ -44,24 +44,10 @@ export const setProfileFiltersSectionOpen = (open: boolean): void => {
 };
 
 const PREMIUM_FEATURES_ENABLED_STORAGE_KEY = "sniffies-premium-features-enabled";
-const GEO_STORAGE_KEY = "sniffies-geo";
-
-const readLegacyEnabled = (key: string): boolean | undefined => {
-  try {
-    const raw = localStorage.getItem(key);
-    return raw ? Boolean(JSON.parse(raw)?.enabled) : undefined;
-  } catch {
-    return undefined;
-  }
-};
 
 export const getPremiumFeaturesEnabled = (): boolean => {
   const raw = localStorage.getItem(PREMIUM_FEATURES_ENABLED_STORAGE_KEY);
-  return resolvePremiumFeaturesEnabled(
-    raw === null ? undefined : raw === "true",
-    readLegacyEnabled(GEO_STORAGE_KEY),
-    readLegacyEnabled(PROFILE_BORDER_STORAGE_KEY),
-  );
+  return raw === null ? DEFAULT_LOCAL_SETTINGS.premiumFeaturesEnabled : raw === "true";
 };
 
 export const setPremiumFeaturesEnabled = (enabled: boolean): void => {

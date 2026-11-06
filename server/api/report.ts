@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { json, applyCors, requireClientAuth, requireDb, requireFeatureFlag } from "./_shared.js";
+import { json, applyCors, requireClientAuth, requireDb } from "./_shared.js";
 
 const REPORT_TYPES = ["bot_suspected"] as const;
 type ReportType = (typeof REPORT_TYPES)[number];
@@ -27,10 +27,6 @@ const handler = async (req: VercelRequest, res: VercelResponse): Promise<void> =
 
   if (req.method === "OPTIONS") {
     res.status(204).end();
-    return;
-  }
-
-  if (!requireFeatureFlag(res, "REPORTING_ENABLED")) {
     return;
   }
 

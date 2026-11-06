@@ -16,10 +16,20 @@ const panelDisplay = (): string | undefined =>
 // can't be removed, so re-injecting per test would stack stale listeners.
 describe("bookmarklet", () => {
   const open = vi.fn();
+  const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => [] });
 
   beforeAll(async () => {
     window.alert = vi.fn();
     window.open = open;
+    vi.stubGlobal("fetch", fetchMock);
+    // jsdom's WebSocket would try to connect; the hook only needs a constructor to wrap.
+    class FakeWebSocket {
+      static CONNECTING = 0;
+      static OPEN = 1;
+      static CLOSING = 2;
+      static CLOSED = 3;
+    }
+    vi.stubGlobal("WebSocket", FakeWebSocket);
     document.body.innerHTML = `
       <div data-testid="iconHolderRightBottom"></div>
       <div data-testid="markerUserContainer" id="abc123" data-within-radius="false"><img /></div>
@@ -34,6 +44,23 @@ describe("bookmarklet", () => {
     delete (Object.prototype as Record<string, unknown>)["sexuality.attitude"];
     document.body.innerHTML = "";
     await new Promise((resolve) => setTimeout(resolve, 0));
+  });
+
+  const initPings = (): unknown[] =>
+    fetchMock.mock.calls
+      .filter(([url]) => url === "https://server.example/api/logInit")
+      .map(([, init]) => JSON.parse(init.body));
+
+  it("sends no init ping on load, before any user id is known", () => {
+    expect(initPings()).toEqual([]);
+  });
+
+  it("sends one init ping with the user id once the socket reveals it", () => {
+    new WebSocket("wss://prod.ws.sniffies.com/?userId=abc&lat=1&lng=2");
+    new WebSocket("wss://prod.ws.sniffies.com/?userId=abc&lat=1&lng=2");
+    expect(initPings()).toEqual([
+      { userId: "abc", clientType: "bookmarklet", version: "0.0.0-test" },
+    ]);
   });
 
   it("docks the button in the map's icon row", () => {
