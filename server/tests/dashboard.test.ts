@@ -32,8 +32,9 @@ const savedEnv: Record<string, string | undefined> = {};
 
 beforeEach(() => {
   vi.clearAllMocks();
-  for (const k of ["DASHBOARD_ENABLED", "POSTGRES_URL"]) savedEnv[k] = process.env[k];
+  for (const k of ["DASHBOARD_ENABLED", "DASHBOARD_SECRET", "POSTGRES_URL"]) savedEnv[k] = process.env[k];
   process.env.DASHBOARD_ENABLED = "true";
+  process.env.DASHBOARD_SECRET = "s3cret";
   process.env.POSTGRES_URL = "postgres://localhost/test";
   const sqlFn = vi
     .fn()
@@ -57,7 +58,10 @@ afterEach(() => {
 
 async function call(reqOpts: Parameters<typeof makeReq>[0] = {}) {
   const res = makeRes();
-  await handler(makeReq({ method: "GET", ...reqOpts }), res as unknown as VercelResponse);
+  await handler(
+    makeReq({ method: "GET", query: { key: "s3cret" }, ...reqOpts }),
+    res as unknown as VercelResponse,
+  );
   return res;
 }
 
@@ -71,6 +75,13 @@ describe("dashboard", () => {
     expect((await call())._status).toBe(404);
     process.env.DASHBOARD_ENABLED = "1";
     expect((await call())._status).toBe(404);
+  });
+
+  it("returns 404 without the right key, or when DASHBOARD_SECRET is unset", async () => {
+    expect((await call({ query: {} }))._status).toBe(404);
+    expect((await call({ query: { key: "wrong" } }))._status).toBe(404);
+    delete process.env.DASHBOARD_SECRET;
+    expect((await call({ query: { key: "" } }))._status).toBe(404);
   });
 
   it("renders metrics and escapes user-supplied labels", async () => {
