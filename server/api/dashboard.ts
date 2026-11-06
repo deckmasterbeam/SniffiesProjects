@@ -27,8 +27,12 @@ const handler = async (req: VercelRequest, res: VercelResponse): Promise<void> =
   // Browsers can't send an Authorization header, so the secret rides in ?key=.
   // Fails closed if DASHBOARD_SECRET is unset.
   const secret = process.env.DASHBOARD_SECRET;
-  if (!secret || req.query.key !== secret) {
-    json(res, 404, { error: "not_found" });
+  if (!secret) {
+    json(res, 500, { error: "server_misconfigured", detail: "DASHBOARD_SECRET not set" });
+    return;
+  }
+  if (req.query.key !== secret) {
+    json(res, 401, { error: "unauthorized" });
     return;
   }
 

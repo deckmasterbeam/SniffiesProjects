@@ -77,11 +77,11 @@ describe("dashboard", () => {
     expect((await call())._status).toBe(404);
   });
 
-  it("returns 404 without the right key, or when DASHBOARD_SECRET is unset", async () => {
-    expect((await call({ query: {} }))._status).toBe(404);
-    expect((await call({ query: { key: "wrong" } }))._status).toBe(404);
+  it("returns 401 without the right key, 500 when DASHBOARD_SECRET is unset", async () => {
+    expect((await call({ query: {} }))._status).toBe(401);
+    expect((await call({ query: { key: "wrong" } }))._status).toBe(401);
     delete process.env.DASHBOARD_SECRET;
-    expect((await call({ query: { key: "" } }))._status).toBe(404);
+    expect((await call({ query: { key: "" } }))._status).toBe(500);
   });
 
   it("renders metrics and escapes user-supplied labels", async () => {
