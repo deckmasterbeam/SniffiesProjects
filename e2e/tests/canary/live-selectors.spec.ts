@@ -55,11 +55,22 @@ test.describe("live sniffies.com selector drift canary", () => {
 
     await page.goto("https://sniffies.com/");
 
-    const avatar = page.locator(avatarEntry.selector).first();
-    await expect(avatar, `${avatarEntry.description} (${avatarEntry.source})`).toBeVisible({
-      timeout: 30_000,
-    });
-    await avatar.click();
+    const avatars = page.locator(avatarEntry.selector);
+    const firstClickableIndex = () =>
+      avatars.evaluateAll((els) =>
+        els.findIndex((el) => {
+          const r = el.getBoundingClientRect();
+          const hit = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+          return !!hit && el.contains(hit);
+        }),
+      );
+    await expect
+      .poll(firstClickableIndex, {
+        message: `${avatarEntry.description} (${avatarEntry.source}) — no marker avatar is on-screen and unobstructed`,
+        timeout: 30_000,
+      })
+      .toBeGreaterThanOrEqual(0);
+    await avatars.nth(await firstClickableIndex()).click();
 
     const screen = page.locator(screenEntry.selector);
     await expect(screen, `${screenEntry.description} (${screenEntry.source})`).toBeVisible({
