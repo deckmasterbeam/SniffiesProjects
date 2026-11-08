@@ -12,6 +12,7 @@ import {
   hasCapturedCoords,
   installHidePhotoClick,
   installHidePhotoMenuButtons,
+  installReadReceipt,
   installSentPhotoHider,
   installProfileFiltersMenu,
   installSelectionLimitOverride,
@@ -107,6 +108,7 @@ function installHooks(): HookState {
     isPhotosEnabled,
   );
   installHidePhotoMenuButtons(isPhotosEnabled);
+  installReadReceipt(() => premium.enabled && premium.flags.readReceipts);
 
   const geoController = installLocationOverrideController({
     initialOverride: getGeoOverride(),

@@ -22,6 +22,7 @@ const postState = (
   profileFiltersEnabled: boolean,
   premiumFeaturesEnabled: boolean,
   boundaryEnabled: boolean,
+  readReceiptsEnabled: boolean,
 ): void => {
   window.postMessage(
     {
@@ -32,6 +33,7 @@ const postState = (
       profileFiltersEnabled,
       premiumFeaturesEnabled,
       boundaryEnabled,
+      readReceiptsEnabled,
     },
     "*",
   );
@@ -56,6 +58,7 @@ const relay = (settings: ExtensionLocalSettings): void => {
     profileFiltersEnabled,
     premiumFeaturesEnabled,
     settings.premiumFeaturesEnabled && settings.premiumFeatureFlags.boundary,
+    settings.premiumFeaturesEnabled && settings.premiumFeatureFlags.readReceipts,
   );
 
   if (profileFiltersEnabled && !removeFiltersMenu) {

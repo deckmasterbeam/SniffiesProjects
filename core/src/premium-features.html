@@ -78,6 +78,24 @@
           <p class="hint">{{premium.photos.hint}}</p>
         </div>
       </div>
+      <div id="premium-read-receipts" class="premium-feature">
+        <div class="premium-feature-head snp-row">
+          <label class="snp-switch">
+            <input
+              id="premium-flag-read-receipts"
+              type="checkbox"
+              aria-label="{{premium.readReceipts.label}}"
+            />
+            <span class="snp-switch-slider"></span>
+          </label>
+          <button class="premium-feature-toggle" type="button" aria-expanded="false">
+            <span class="snp-label">{{premium.readReceipts.label}}</span>
+          </button>
+        </div>
+        <div class="premium-feature-body premium-section" hidden>
+          <p class="hint">{{premium.readReceipts.hint}}</p>
+        </div>
+      </div>
     </div>
   </div>
 </details>
