@@ -88,6 +88,19 @@ const SELECTOR_METADATA: Record<SniffiesSelectorName, SelectorMeta> = {
       "Unhide All My Photos in the profile options menu (only in the DOM while the menu is open) â€” the hide-photo hook takes over its click",
     source: "core/src/hide-photo-click-hook.ts",
   },
+  CHAT_MESSAGE_CONTAINER_SELECTOR: {
+    description: "One chat message row — the read-receipt hook appends the Seen marker to it",
+    source: "core/src/read-receipt-hook.ts",
+  },
+  READ_MARKER_SELECTOR: {
+    description:
+      "Sniffies' own Seen marker in a message row (paid accounts) — the read-receipt hook skips drawing its own when present",
+    source: "core/src/read-receipt-hook.ts",
+  },
+  OWN_MARKER_SELECTOR: {
+    description: "The account's own map marker — its element id is the user id the bookmarklet logs",
+    source: "core/src/own-id-dom.ts",
+  },
 };
 
 export interface SelectorContractEntry {

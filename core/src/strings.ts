@@ -61,6 +61,9 @@ export const STRINGS = {
     hideAll: "Hide All My Photos",
     unhideAll: "Unhide All My Photos",
   },
+  readReceipt: {
+    seen: "Seen",
+  },
   filterMenu: {
     gender: "Gender",
     male: "Male",

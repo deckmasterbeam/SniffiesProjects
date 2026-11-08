@@ -41,13 +41,28 @@ describe("premium features enabled", () => {
 
 describe("premium feature flags", () => {
   it("defaults every feature to on", () => {
-    expect(getPremiumFeatureFlags()).toEqual({ location: true, boundary: true, photos: true });
+    expect(getPremiumFeatureFlags()).toEqual({
+      location: true,
+      boundary: true,
+      photos: true,
+      readReceipts: true,
+    });
   });
 
   it("round-trips and fills in missing keys", () => {
-    setPremiumFeatureFlags({ location: false, boundary: true, photos: false });
-    expect(getPremiumFeatureFlags()).toEqual({ location: false, boundary: true, photos: false });
+    setPremiumFeatureFlags({ location: false, boundary: true, photos: false, readReceipts: true });
+    expect(getPremiumFeatureFlags()).toEqual({
+      location: false,
+      boundary: true,
+      photos: false,
+      readReceipts: true,
+    });
     localStorage.setItem("sniffies-premium-feature-flags", '{"photos":false}');
-    expect(getPremiumFeatureFlags()).toEqual({ location: true, boundary: true, photos: false });
+    expect(getPremiumFeatureFlags()).toEqual({
+      location: true,
+      boundary: true,
+      photos: false,
+      readReceipts: true,
+    });
   });
 });

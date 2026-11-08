@@ -12,10 +12,9 @@ import {
   installHidePhotoClick,
   installHidePhotoMenuButtons,
   installProfileBorderRedirect,
+  installReadReceipt,
   installSentPhotoHider,
   installSelectionLimitOverride,
-  installOwnIdHook,
-  installUserIdHook,
   logInit,
   mountFab,
   PANEL_CSS,
@@ -23,6 +22,7 @@ import {
   UPDATE_BANNER_HTML,
   VERSION_BADGE_CSS,
   VERSION_BADGE_HTML,
+  watchOwnIdInDom,
   wireVersionBadge,
   wireUpdateBanner,
   PREMIUM_FEATURES_CSS,
@@ -57,14 +57,7 @@ function main(): void {
   }
   alert("Sniffies Tools loaded! Tap the Sniffies Tools button on the map to open the panel.");
 
-  // A bookmarklet loads too late to see the id Sniffies sends at startup, so log the install the
-  // first time Sniffies' traffic reveals it: a socket (re)connect, or an API request or response that carries it.
-  let initLogged = false;
-  const logInstall = (userId: string): void => {
-    if (initLogged) {
-      return;
-    }
-    initLogged = true;
+  watchOwnIdInDom((userId) => {
     void logInit({
       serverBase: __SERVER_BASE__,
       clientSecret: __CLIENT_SECRET__,
@@ -72,9 +65,7 @@ function main(): void {
       clientType: "bookmarklet",
       version: __VERSION__,
     });
-  };
-  installUserIdHook(logInstall);
-  installOwnIdHook(logInstall);
+  });
 
   let currentProfileBorderOpen = getProfileBorderOpen();
   let premiumEnabled = getPremiumFeaturesEnabled();
@@ -90,6 +81,7 @@ function main(): void {
     isPhotosEnabled,
   );
   installHidePhotoMenuButtons(isPhotosEnabled);
+  installReadReceipt(() => premiumEnabled && premiumFlags.readReceipts);
 
   // Takes effect the next time the filter menu is opened. The other profile filters need to hook
   // the page's network requests from the start, which a bookmarklet can't.

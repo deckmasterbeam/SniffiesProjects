@@ -12,8 +12,6 @@ const panelDisplay = (): string | undefined =>
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
-// One injection shared by every test: the bookmarklet's document click listener
-// can't be removed, so re-injecting per test would stack stale listeners.
 describe("bookmarklet", () => {
   const open = vi.fn();
   const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => [] });
@@ -37,8 +35,6 @@ describe("bookmarklet", () => {
     await loadModule();
   });
 
-  // Empty the page while `document` still exists, so mountFab's observer
-  // doesn't fire during environment teardown.
   afterAll(async () => {
     delete (Object.prototype as Record<string, unknown>).maxSelections;
     delete (Object.prototype as Record<string, unknown>)["sexuality.attitude"];
@@ -55,12 +51,16 @@ describe("bookmarklet", () => {
     expect(initPings()).toEqual([]);
   });
 
-  it("sends one init ping with the user id once the socket reveals it", () => {
-    new WebSocket("wss://prod.ws.sniffies.com/?userId=abc&lat=1&lng=2");
-    new WebSocket("wss://prod.ws.sniffies.com/?userId=abc&lat=1&lng=2");
-    expect(initPings()).toEqual([
-      { userId: "abc", clientType: "bookmarklet", version: "0.0.0-test" },
-    ]);
+  it("sends one init ping with the user id once the map draws the account's marker", async () => {
+    document.body.insertAdjacentHTML(
+      "beforeend",
+      '<div data-testid="cv-marker-container" id="me123"></div>',
+    );
+    await vi.waitFor(() =>
+      expect(initPings()).toEqual([
+        { userId: "me123", clientType: "bookmarklet", version: "0.0.0-test" },
+      ]),
+    );
   });
 
   it("docks the button in the map's icon row", () => {
