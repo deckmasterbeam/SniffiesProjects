@@ -74,7 +74,7 @@
     },
     {
       "matches": ["*://sniffies.com/*", "*://*.sniffies.com/*"],
-      "js": ["src/content/sniffies-photos-hook.js"],
+      "js": ["src/content/sniffies-chat-view-hook.js"],
       "run_at": "document_start",
       "world": "MAIN",
       "all_frames": true

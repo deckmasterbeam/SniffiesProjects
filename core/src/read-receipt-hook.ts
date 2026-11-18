@@ -50,7 +50,7 @@ const render = (seenId: string | null, enabled: boolean): void => {
       own.remove();
     }
   }
-  // Paid accounts already get Sniffies' own marker; don't double up.
+  // Paid accounts already get a read receipt
   if (target && !target.querySelector(READ_MARKER_SELECTOR)) {
     target.classList.add("read");
     target.append(buildMarker(target));
