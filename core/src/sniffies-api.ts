@@ -109,6 +109,7 @@ export interface Message {
 export interface MessagesPayload {
   messages?: Message[];
   partialUsers?: FilterableProfile[];
+  lastReadMessageIds?: Record<string, string>;
   [key: string]: unknown;
 }
 

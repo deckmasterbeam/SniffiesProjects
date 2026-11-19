@@ -32,6 +32,12 @@ export const SNIFFIES_SELECTORS = {
   HIDE_ALL_PHOTOS_BUTTON_SELECTOR: '[data-testid="hideAllPhotosButton"]',
   /** "Unhide All My Photos" in the same menu. */
   UNHIDE_ALL_PHOTOS_BUTTON_SELECTOR: '[data-testid="unhideAllPhotosButton"]',
+  /** One chat message row; Sniffies adds `.read` and a `.read-marker` child to the last seen one. */
+  CHAT_MESSAGE_CONTAINER_SELECTOR: ".chat-message-container",
+  /** Sniffies' own "Seen" marker inside a chat message row (paid accounts only). */
+  READ_MARKER_SELECTOR: ".read-marker",
+  /** The account's own marker on the map; its element id is the user id. */
+  OWN_MARKER_SELECTOR: '[data-testid="cv-marker-container"][id]',
 } as const;
 
 export type SniffiesSelectorName = keyof typeof SNIFFIES_SELECTORS;
@@ -53,4 +59,7 @@ export const {
   PHOTO_MESSAGE_SELECTOR,
   HIDE_ALL_PHOTOS_BUTTON_SELECTOR,
   UNHIDE_ALL_PHOTOS_BUTTON_SELECTOR,
+  CHAT_MESSAGE_CONTAINER_SELECTOR,
+  READ_MARKER_SELECTOR,
+  OWN_MARKER_SELECTOR,
 } = SNIFFIES_SELECTORS;

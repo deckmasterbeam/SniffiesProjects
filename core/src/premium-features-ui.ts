@@ -51,6 +51,7 @@ export const wirePremiumFeaturesForm = (
     location: "premium-flag-location",
     boundary: "premium-flag-boundary",
     photos: "premium-flag-photos",
+    readReceipts: "premium-flag-read-receipts",
   } as const;
   for (const [key, id] of Object.entries(FLAG_INPUTS) as [keyof typeof FLAG_INPUTS, string][]) {
     const input = el<HTMLInputElement>(id);

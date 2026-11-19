@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Sniffies Tools - Chrome",
-  "version": "0.4.2",
+  "version": "0.5.0",
   "description": "A Chrome extension that enhances the Sniffies experience with additional features and SMS notifications.",
   "permissions": ["storage", "activeTab", "scripting", "geolocation"],
   "host_permissions": ["<all_urls>"],
@@ -74,7 +74,7 @@
     },
     {
       "matches": ["*://sniffies.com/*", "*://*.sniffies.com/*"],
-      "js": ["src/content/sniffies-photos-hook.js"],
+      "js": ["src/content/sniffies-chat-view-hook.js"],
       "run_at": "document_start",
       "world": "MAIN",
       "all_frames": true

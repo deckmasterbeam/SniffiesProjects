@@ -77,7 +77,7 @@ describe("master toggle", () => {
 describe("feature switches", () => {
   it("shows each saved flag and reports changes", () => {
     const onFlagChange = vi.fn();
-    wire({ flags: { location: true, boundary: false, photos: true }, onFlagChange });
+    wire({ flags: { location: true, boundary: false, photos: true, readReceipts: true }, onFlagChange });
     expect(el<HTMLInputElement>(container, "premium-flag-location").checked).toBe(true);
     const boundary = el<HTMLInputElement>(container, "premium-flag-boundary");
     expect(boundary.checked).toBe(false);

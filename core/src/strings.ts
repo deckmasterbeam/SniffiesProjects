@@ -29,7 +29,7 @@ export const STRINGS = {
   premium: {
     label: "Premium Features",
     plusNotice: "You have Sniffies Plus, so you don't need these features.",
-    hint: "Unlocks features that Sniffies normally paywalls: location spoofing, no boundary restrictions, and hiding/unhiding sent photos.",
+    hint: "Unlocks features that Sniffies normally paywalls: location spoofing, no boundary restrictions, hiding/unhiding sent photos, and read receipts.",
     location: {
       label: "Location Spoofing",
       hint: 'Use the Sniffies "Travel Mode" to select a location to travel to. In that mode, search for any location, then click "Travel here". Only searching by name is supported for the override, manually dragging the map is not supported.',
@@ -51,6 +51,10 @@ export const STRINGS = {
       label: "Hide Sent Photos",
       hint: "Enables Sniffies 'Hide Photo' action on photos you've sent.",
     },
+    readReceipts: {
+      label: "Read Receipts",
+      hint: 'Shows "Seen" under the last message you sent that the other person has read. Updates when you open or reload a chat.',
+    },
   },
   citySearch: {
     note: 'Location spoofing only picks up on locations you search for. Moving the map before tapping "Travel here" won\'t be captured.',
@@ -60,6 +64,9 @@ export const STRINGS = {
   hidePhotoMenu: {
     hideAll: "Hide All My Photos",
     unhideAll: "Unhide All My Photos",
+  },
+  readReceipt: {
+    seen: "Seen",
   },
   filterMenu: {
     gender: "Gender",
