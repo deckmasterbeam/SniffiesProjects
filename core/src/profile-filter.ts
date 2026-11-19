@@ -383,6 +383,8 @@ export const rangeLabel = (filter: RangeFilter, options: RangeOptions): string |
 // ── All the filters the user sets from Sniffies filter menu ─────────────────
 
 export interface ProfileFilters {
+  /** Per native stat: also show profiles that don't list it (see `statTakeover`). */
+  unlisted: Record<StatId, boolean>;
   gender: GenderFilter;
   height: RangeFilter;
   weight: RangeFilter;
@@ -390,6 +392,7 @@ export interface ProfileFilters {
 }
 
 export const DEFAULT_PROFILE_FILTERS: ProfileFilters = {
+  unlisted: { position: false, bodyType: false, sexuality: false, endowment: false },
   gender: DEFAULT_GENDER_FILTER,
   height: defaultRangeFilter(),
   weight: defaultRangeFilter(),
@@ -398,7 +401,12 @@ export const DEFAULT_PROFILE_FILTERS: ProfileFilters = {
 
 export const parseProfileFilters = (value: unknown): ProfileFilters => {
   const raw = (value ?? {}) as Partial<Record<keyof ProfileFilters, unknown>>;
+  const unlisted = (raw.unlisted ?? {}) as Partial<Record<StatId, unknown>>;
   return {
+    unlisted: Object.fromEntries(STAT_IDS.map((id) => [id, unlisted[id] === true])) as Record<
+      StatId,
+      boolean
+    >,
     gender: parseGenderFilter(raw.gender),
     height: parseRangeFilter(raw.height),
     weight: parseRangeFilter(raw.weight),
@@ -410,6 +418,7 @@ export const gateProfileFilters = (filters: ProfileFilters, enabled: boolean): P
   enabled
     ? filters
     : {
+        unlisted: DEFAULT_PROFILE_FILTERS.unlisted,
         gender: { ...filters.gender, enabled: false },
         height: { ...filters.height, enabled: false },
         weight: { ...filters.weight, enabled: false },
@@ -430,3 +439,127 @@ export const profileFilterRules = (getFilters: () => ProfileFilters): ProfileFil
   ),
   onlineRule(() => getFilters().online),
 ];
+
+// ── Native stat filters: Position, Body Type, Sexuality, Endowment ───────────
+// Sniffies' server applies these, so it never sends profiles that don't list the stat. While a
+// stat's "include unlisted" switch is on, we strip it from the outgoing request and match it here.
+
+export const STAT_IDS = ["position", "bodyType", "sexuality", "endowment"] as const;
+export type StatId = (typeof STAT_IDS)[number];
+
+/** The key in `filters.CRUISER_STATS.value` (also the `for` of the native row's label). */
+export const STAT_KEYS: Record<StatId, string> = {
+  position: "sexuality.attitude",
+  bodyType: "stats.body",
+  sexuality: "sexuality.spectrum",
+  endowment: "stats.endowment",
+};
+
+/** Endowment pick: inches; `cut` is "cut" or "uncut". The wheel's top stop is 12 inches and up. */
+interface EndowmentPick {
+  min?: number;
+  max?: number;
+  cut?: string;
+}
+const ENDOWMENT_TOP_INCHES = 12;
+
+type StatPick = string[] | EndowmentPick;
+type Picks = Partial<Record<StatId, StatPick>>;
+
+const listRule = (
+  id: Exclude<StatId, "endowment">,
+  picks: Picks,
+  getFilters: () => ProfileFilters,
+  read: (profile: FilterableProfile) => string | null | undefined,
+): ProfileFilterRule => ({
+  name: id,
+  mapOnly: true,
+  isActive: () =>
+    getFilters().unlisted[id] && ((picks[id] as string[] | undefined)?.length ?? 0) > 0,
+  hides: (profile) => {
+    if (!profile.data) {
+      return false;
+    }
+    const value = read(profile);
+    // Only active while its switch is on, so an unlisted value stays.
+    return value ? !(picks[id] as string[]).includes(value) : false;
+  },
+});
+
+const endowmentRule = (picks: Picks, getFilters: () => ProfileFilters): ProfileFilterRule => ({
+  name: "endowment",
+  mapOnly: true,
+  isActive: () => getFilters().unlisted.endowment && picks.endowment !== undefined,
+  hides: (profile) => {
+    if (!profile.data) {
+      return false;
+    }
+    const { min, max, cut } = picks.endowment as EndowmentPick;
+    const own = profile.data.profile?.extended?.stats?.endowment;
+    if (typeof min === "number" || typeof max === "number") {
+      const length = own?.lengthInCm;
+      if (
+        typeof length === "number" &&
+        ((typeof min === "number" && length < Math.round(min * CM_PER_INCH)) ||
+          (typeof max === "number" &&
+            max < ENDOWMENT_TOP_INCHES &&
+            length > Math.round(max * CM_PER_INCH)))
+      ) {
+        return true;
+      }
+    }
+    return (
+      (cut === "cut" || cut === "uncut") &&
+      typeof own?.isCut === "boolean" &&
+      own.isCut !== (cut === "cut")
+    );
+  },
+});
+
+/**
+ * `rules` hide profiles the picks don't match; `rewriteBody` strips the stats we own from a map
+ * request body (remembering the picks first). Stats whose switch is off pass through untouched.
+ */
+export const statTakeover = (getFilters: () => ProfileFilters) => {
+  const picks: Picks = {};
+  const rules = [
+    listRule("position", picks, getFilters, (p) => p.data?.profile?.extended?.sexuality?.attitude),
+    listRule("bodyType", picks, getFilters, (p) => p.data?.profile?.extended?.stats?.body),
+    listRule("sexuality", picks, getFilters, (p) => p.data?.profile?.extended?.sexuality?.spectrum),
+    endowmentRule(picks, getFilters),
+  ];
+  const rewriteBody = (body: string): string => {
+    let json: { filters?: { CRUISER_STATS?: { value?: Record<string, unknown> } } };
+    try {
+      json = JSON.parse(body);
+    } catch {
+      return body;
+    }
+    const stats = json?.filters?.CRUISER_STATS;
+    if (!stats?.value || typeof stats.value !== "object") {
+      STAT_IDS.forEach((id) => delete picks[id]);
+      return body;
+    }
+    let stripped = false;
+    for (const id of STAT_IDS) {
+      const value = stats.value[STAT_KEYS[id]] as StatPick | undefined;
+      if (value === undefined) {
+        delete picks[id];
+        continue;
+      }
+      picks[id] = value;
+      if (getFilters().unlisted[id]) {
+        delete stats.value[STAT_KEYS[id]];
+        stripped = true;
+      }
+    }
+    if (!stripped) {
+      return body;
+    }
+    if (Object.keys(stats.value).length === 0) {
+      delete json.filters!.CRUISER_STATS;
+    }
+    return JSON.stringify(json);
+  };
+  return { rules, rewriteBody };
+};

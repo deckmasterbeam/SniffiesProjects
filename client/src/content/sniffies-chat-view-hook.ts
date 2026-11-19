@@ -1,6 +1,7 @@
 import {
   installHidePhotoClick,
   installHidePhotoMenuButtons,
+  installReadReceipt,
   installSentPhotoHider,
 } from "@sniffies-projects/core";
 
@@ -8,6 +9,7 @@ import {
   let ownUserId = "";
   // Off until the relay reports the stored setting.
   let enabled = false;
+  let readReceiptsEnabled = false;
   const isEnabled = (): boolean => enabled;
 
   installHidePhotoClick(
@@ -15,6 +17,7 @@ import {
     isEnabled,
   );
   installHidePhotoMenuButtons(isEnabled);
+  installReadReceipt(() => readReceiptsEnabled);
 
   window.addEventListener("message", (event) => {
     if (event.source !== window) {
@@ -25,6 +28,7 @@ import {
       ownUserId = msg.userId;
     } else if (msg?.source === "sniffies-bot-block-relay") {
       enabled = msg.premiumFeaturesEnabled === true;
+      readReceiptsEnabled = msg.readReceiptsEnabled === true;
     }
   });
 })();

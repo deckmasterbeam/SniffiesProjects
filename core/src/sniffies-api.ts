@@ -21,9 +21,19 @@ export interface FilterableProfile {
     connectUpdateTime?: string;
     profile?: {
       extended?: {
-        sexuality?: { gender?: SniffiesGender };
+        sexuality?: {
+          gender?: SniffiesGender;
+          // TODO: why?
+          attitude?: string | null;
+          spectrum?: string | null;
+        };
         /** Whole numbers, whatever units the profile was entered in. */
-        stats?: { heightInCm?: number | null; weightInKg?: number | null };
+        stats?: {
+          heightInCm?: number | null;
+          weightInKg?: number | null;
+          body?: string | null;
+          endowment?: { lengthInCm?: number | null; isCut?: boolean | null } | null;
+        };
       };
     };
   };
@@ -62,6 +72,14 @@ export interface AuthenticateCurrentPayload {
 export const POST_AUTH_PATH = "/api/post-authentication";
 /** POST — "Cruise this area": reloads the map for a new spot. Same visitor lists as the map init. */
 export const SOFT_RELOAD_PATH = "/api/softReload";
+
+/** POST - the filter menu's Apply. Same profiles as the map init, under `result.nearbyUsers`. */
+export const ADVANCED_SEARCH_PATH = "/api/advanced-filter/search";
+
+export interface AdvancedSearchPayload {
+  result?: { nearbyUsers?: FilterableProfile[] };
+  [key: string]: unknown;
+}
 
 export interface NearbyVisitorsPayload {
   nearbyVisitors?: {
@@ -109,6 +127,7 @@ export interface Message {
 export interface MessagesPayload {
   messages?: Message[];
   partialUsers?: FilterableProfile[];
+  lastReadMessageIds?: Record<string, string>;
   [key: string]: unknown;
 }
 

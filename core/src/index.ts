@@ -36,6 +36,7 @@ export {
   profileFilterRules,
   rangeRule,
   profileGender,
+  statTakeover,
 } from "./profile-filter.js";
 export { installProfileFiltersMenu } from "./filter-menu-ui.js";
 export { installSelectionLimitOverride } from "./selection-limit-hook.js";
@@ -51,6 +52,7 @@ export { installProfileBorderRedirect } from "./profile-border-hook.js";
 export { logInit } from "./log-init.js";
 export { STRINGS } from "./strings.js";
 export { installOwnIdHook } from "./own-id-hook.js";
+export { watchOwnIdInDom } from "./own-id-dom.js";
 export {
   PREMIUM_FEATURES_HTML,
   PREMIUM_FEATURES_CSS,
@@ -132,9 +134,11 @@ export {
   PHOTO_MESSAGE_SELECTOR,
   HIDE_ALL_PHOTOS_BUTTON_SELECTOR,
   UNHIDE_ALL_PHOTOS_BUTTON_SELECTOR,
+  CHAT_MESSAGE_CONTAINER_SELECTOR,
 } from "./sniffies-selectors.js";
 export type { SniffiesSelectorName } from "./sniffies-selectors.js";
 export type { SentPhotoHider, ThreadSnapshot } from "./sent-photos.js";
 export { installSentPhotoHider } from "./sent-photos.js";
 export { installHidePhotoClick } from "./hide-photo-click-hook.js";
 export { installHidePhotoMenuButtons } from "./hide-photo-menu-hook.js";
+export { installReadReceipt, findSeenMessageId } from "./read-receipt-hook.js";

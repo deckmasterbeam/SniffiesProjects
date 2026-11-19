@@ -5,6 +5,7 @@ import {
   installSelectionLimitOverride,
   parseProfileFilters,
   profileFilterRules,
+  statTakeover,
   type BotBlockState,
 } from "@sniffies-projects/core";
 
@@ -37,6 +38,7 @@ import {
     });
   });
 
+  const takeover = statTakeover(() => profileFilters);
   const result = installProfileFilterHook(
     [
       botBlockRule(
@@ -46,8 +48,10 @@ import {
         },
       ),
       ...profileFilterRules(() => profileFilters),
+      ...takeover.rules,
     ],
     () => boundaryEnabled,
+    takeover.rewriteBody,
   );
   log("profile-filter hook installed", result);
 

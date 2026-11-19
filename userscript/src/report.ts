@@ -6,6 +6,7 @@ import {
   refreshBlockedBotsIfStale as refreshBlockedBotsIfStaleShared,
   type BotBlockState,
   profileFilterRules,
+  statTakeover,
   type ProfileFilters,
 } from "@sniffies-projects/core";
 import { CLIENT_SECRET, SERVER_BASE } from "./shared/env.js";
@@ -40,15 +41,19 @@ export const installReportFeature = (raiseRadius?: () => boolean): ReportFeature
     appliedProfileFilters: gateProfileFilters(getProfileFilters(), getProfileFiltersEnabled()),
   };
 
+  const takeover = statTakeover(() => state.appliedProfileFilters);
   installProfileFilterHook(
     [
+
       botBlockRule(
         () => state.botBlockState,
         (ids) => recordBlockedBotEvent(ids),
       ),
       ...profileFilterRules(() => state.appliedProfileFilters),
+      ...takeover.rules,
     ],
     raiseRadius,
+    takeover.rewriteBody,
   );
 
   installReportButtonInjection({

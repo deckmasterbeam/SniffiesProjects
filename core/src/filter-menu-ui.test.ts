@@ -183,14 +183,24 @@ describe("installProfileFiltersMenu", () => {
       expect(lines.map((l) => l.querySelector("label span")?.textContent)).toEqual([
         "Age",
         "Endowment",
+        undefined, // its "include none listed" switch
         STRINGS.filterMenu.height,
         STRINGS.filterMenu.weight,
         "Sexuality",
+        undefined,
       ]);
       expect(row("height").tagName).toBe("UI-MENU-ITEM-GROUP");
       expect(row("height").querySelector("label")?.hasAttribute("for")).toBe(false);
       expect(row("height").querySelector("[data-testid]")).toBeNull();
       expect(document.querySelectorAll('label[for="stats.endowment"]')).toHaveLength(1);
+    });
+
+    it("saves a stat's include-none-listed switch", () => {
+      install(filters());
+      const toggle = document.querySelector<HTMLInputElement>("#snp-unlisted-sexuality input")!;
+      toggle.checked = true;
+      toggle.dispatchEvent(new Event("change"));
+      expect(lastChange().unlisted).toMatchObject({ sexuality: true, endowment: false });
     });
 
     it("still mounts Gender when the Cruiser Stats lines aren't there", () => {
