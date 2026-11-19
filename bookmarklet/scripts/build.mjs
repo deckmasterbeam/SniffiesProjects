@@ -1,11 +1,16 @@
 import { context, build } from "esbuild";
-import { spawn } from "node:child_process";
+import { spawnSync } from "node:child_process";
 import { mkdir, readFile, rm } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = resolve(__dirname, "..");
+
+// Load bookmarklet/.env if present (absent on Vercel, which injects real env vars).
+try {
+  process.loadEnvFile(join(root, ".env"));
+} catch {}
 const distDir = join(root, "dist");
 const watch = process.argv.includes("--watch");
 
@@ -36,29 +41,11 @@ const buildOptions = {
   },
 };
 
-// Local dev convenience: copy the built script straight to the clipboard so
-// it can be pasted into Tampermonkey without hunting for dist/inject.js.
-// Skipped on Vercel (no clipboard there) and never allowed to fail the build.
-const copyToClipboard = async (text) => {
-  if (process.env.VERCEL) {
-    return;
-  }
-  const [cmd, args] =
-    process.platform === "win32"
-      ? ["clip", []]
-      : process.platform === "darwin"
-        ? ["pbcopy", []]
-        : ["xclip", ["-selection", "clipboard"]];
-  try {
-    await new Promise((res, reject) => {
-      const child = spawn(cmd, args, { stdio: ["pipe", "ignore", "ignore"] });
-      child.on("error", reject);
-      child.on("exit", (code) => (code === 0 ? res() : reject(new Error(`${cmd} exited ${code}`))));
-      child.stdin.end(text);
-    });
-    console.log("[build] copied dist/inject.js to clipboard");
-  } catch (err) {
-    console.warn("[build] could not copy to clipboard:", err.message);
+// Copies a loader snippet for the dev server (`npx serve dist -p 5000 --cors`).
+const copyLoaderToClipboard = () => {
+  if (!process.env.VERCEL) {
+    const loader = `var s=document.createElement('script');s.src='http://localhost:5000/inject.js?t='+Date.now();document.head.appendChild(s);`;
+    spawnSync("clip", { input: loader });
   }
 };
 
@@ -70,9 +57,9 @@ const run = async () => {
     const plugin = {
       name: "copy-to-clipboard",
       setup(build) {
-        build.onEnd(async (result) => {
+        build.onEnd((result) => {
           if (result.errors.length === 0) {
-            await copyToClipboard(await readFile(buildOptions.outfile, "utf8"));
+            copyLoaderToClipboard();
           }
         });
       },
@@ -83,7 +70,7 @@ const run = async () => {
   } else {
     await build(buildOptions);
     console.log("[build] dist/inject.js ready");
-    await copyToClipboard(await readFile(buildOptions.outfile, "utf8"));
+    copyLoaderToClipboard();
   }
 };
 
