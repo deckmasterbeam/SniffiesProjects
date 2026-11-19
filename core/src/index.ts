@@ -36,6 +36,7 @@ export {
   profileFilterRules,
   rangeRule,
   profileGender,
+  statTakeover,
 } from "./profile-filter.js";
 export { installProfileFiltersMenu } from "./filter-menu-ui.js";
 export { installSelectionLimitOverride } from "./selection-limit-hook.js";

@@ -13,10 +13,13 @@ import {
   onlineSinceLabel,
   rangeKey,
   rangeLabel,
+  STAT_IDS,
+  STAT_KEYS,
   type Gender,
   type ProfileFilters,
   type RangeFilter,
   type RangeOptions,
+  type StatId,
 } from "./profile-filter.js";
 import { openChoiceFlyout, openRangeFlyout } from "./range-flyout-ui.js";
 import {
@@ -240,6 +243,34 @@ const buildOnlineRow = (
   };
 };
 
+// ── "Include profiles with none listed": a switch under each native stat we take over ──
+
+const nativeStatLine = (id: StatId) => (): Element | null =>
+  document.querySelector(`label[for="${STAT_KEYS[id]}"]`)?.closest("ui-menu-item-group") ?? null;
+
+const buildUnlistedRow =
+  (id: StatId) =>
+  (_anchor: Element, filters: ProfileFilters, changed: () => void): MountedRow => {
+    const root = document.createElement("div");
+    const label = document.createElement("label");
+    label.className = "snp-filter-body";
+    const toggle = document.createElement("input");
+    toggle.type = "checkbox";
+    toggle.addEventListener("change", () => {
+      filters.unlisted[id] = toggle.checked;
+      changed();
+    });
+    label.append(toggle, STRINGS.filterMenu.includeUnlisted);
+    root.appendChild(label);
+    return {
+      root,
+      placeApply: (apply) => label.appendChild(apply),
+      sync: () => {
+        toggle.checked = filters.unlisted[id];
+      },
+    };
+  };
+
 // ── Height / weight ──
 
 const buildStatRow =
@@ -359,6 +390,12 @@ const ROWS: Row[] = [
     key: (f) => (onlineKey(f.online) ? `${onlineKey(f.online)}@${f.online.pickedAt ?? ""}` : ""),
     build: buildOnlineRow,
   },
+  ...STAT_IDS.map((id) => ({
+    id: `snp-unlisted-${id}`,
+    anchor: nativeStatLine(id),
+    key: (f: ProfileFilters) => (f.unlisted[id] ? "on" : ""),
+    build: buildUnlistedRow(id),
+  })),
   {
     id: "snp-height-filter",
     anchor: endowmentLine,

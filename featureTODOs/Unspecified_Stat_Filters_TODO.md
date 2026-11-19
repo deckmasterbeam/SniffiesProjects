@@ -107,24 +107,24 @@ In DevTools → Network on sniffies.com, signed in:
 ## Test plan
 
 ### 1. Capture
-- [ ] Items above.
+- [x] Captured (HAR). Apply sends `POST /api/advanced-filter/search` (`result.nearbyUsers`); `softReload` / `post-authentication` only on load. The `options` PUT is left alone, so the native picks survive reload.
 
 ### 2. Implement
-- [ ] Add the request keys and profile fields to `core/src/sniffies-api.ts`.
-- [ ] `listRule` + four stat filters in `core/src/profile-filter.ts` (`ProfileFilters`, parse, gate, rules).
-- [ ] Request rewrite in `core/src/profile-filter-hook.ts`, with a getter for "which stats we own",
+- [x] Add the request keys and profile fields to `core/src/sniffies-api.ts`.
+- [x] `statTakeover` (list rules + endowment rule) in `profile-filter.ts` + four stat filters in `core/src/profile-filter.ts` (`ProfileFilters`, parse, gate, rules).
+- [x] Request rewrite in `core/src/profile-filter-hook.ts`, with a getter for "which stats we own",
       wired like `raiseRadius` in the extension relay and userscript.
-- [ ] Toggle rows in `core/src/filter-menu-ui.ts`.
-- [ ] Reload-persistence workaround, if the capture shows it's needed.
+- [x] Toggle rows (not disabled without a pick: no-op then) in `core/src/filter-menu-ui.ts`.
+- [x] Reload-persistence workaround: not needed.
 - [ ] `expectShape` warning when `filters.CRUISER_STATS` is missing from a request that should have it.
 
 ### 3. Automated tests
-- [ ] Unit: picked + include off → unspecified profile hidden; on → shown.
-- [ ] Unit: profile with a non-matching value is hidden either way.
-- [ ] Unit: nothing picked → rule inactive.
-- [ ] Unit: request body has a stat stripped only when its toggle is on; other stats and malformed
+- [x] Unit: picked + include off → unspecified profile hidden; on → shown.
+- [x] Unit: profile with a non-matching value is hidden either way.
+- [x] Unit: nothing picked → rule inactive.
+- [x] Unit: request body has a stat stripped only when its toggle is on; other stats and malformed
       bodies pass through untouched.
-- [ ] Unit: toggle off → request body unchanged (native server filter still applies).
+- [x] Unit: toggle off → request body unchanged (native server filter still applies).
 - [ ] Unit: chat lists are not filtered (`mapOnly`).
 
 ### 4. Manual check
