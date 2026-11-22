@@ -183,11 +183,9 @@ describe("installProfileFiltersMenu", () => {
       expect(lines.map((l) => l.querySelector("label span")?.textContent)).toEqual([
         "Age",
         "Endowment",
-        undefined, // its "include none listed" switch
         STRINGS.filterMenu.height,
         STRINGS.filterMenu.weight,
         "Sexuality",
-        undefined,
       ]);
       expect(row("height").tagName).toBe("UI-MENU-ITEM-GROUP");
       expect(row("height").querySelector("label")?.hasAttribute("for")).toBe(false);
@@ -195,9 +193,16 @@ describe("installProfileFiltersMenu", () => {
       expect(document.querySelectorAll('label[for="stats.endowment"]')).toHaveLength(1);
     });
 
-    it("saves a stat's include-none-listed switch", () => {
+    it("adds an include-none-listed switch to a stat's pick menu and saves it", async () => {
       install(filters());
-      const toggle = document.querySelector<HTMLInputElement>("#snp-unlisted-sexuality input")!;
+      document.body.insertAdjacentHTML(
+        "beforeend",
+        `<div class="wheel-container select"><span><p>Choose up to 99:</p>
+          <div role="listbox" aria-label="Sexuality"></div></span></div>`,
+      );
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      const toggle = document.querySelector<HTMLInputElement>(".snp-unlisted-option input")!;
+      expect(document.querySelectorAll(".snp-unlisted-option")).toHaveLength(1);
       toggle.checked = true;
       toggle.dispatchEvent(new Event("change"));
       expect(lastChange().unlisted).toMatchObject({ sexuality: true, endowment: false });

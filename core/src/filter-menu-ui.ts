@@ -19,7 +19,6 @@ import {
   type ProfileFilters,
   type RangeFilter,
   type RangeOptions,
-  type StatId,
 } from "./profile-filter.js";
 import { openChoiceFlyout, openRangeFlyout } from "./range-flyout-ui.js";
 import {
@@ -243,34 +242,6 @@ const buildOnlineRow = (
   };
 };
 
-// ── "Include profiles with none listed": a switch under each native stat we take over ──
-
-const nativeStatLine = (id: StatId) => (): Element | null =>
-  document.querySelector(`label[for="${STAT_KEYS[id]}"]`)?.closest("ui-menu-item-group") ?? null;
-
-const buildUnlistedRow =
-  (id: StatId) =>
-  (_anchor: Element, filters: ProfileFilters, changed: () => void): MountedRow => {
-    const root = document.createElement("div");
-    const label = document.createElement("label");
-    label.className = "snp-filter-body";
-    const toggle = document.createElement("input");
-    toggle.type = "checkbox";
-    toggle.addEventListener("change", () => {
-      filters.unlisted[id] = toggle.checked;
-      changed();
-    });
-    label.append(toggle, STRINGS.filterMenu.includeUnlisted);
-    root.appendChild(label);
-    return {
-      root,
-      placeApply: (apply) => label.appendChild(apply),
-      sync: () => {
-        toggle.checked = filters.unlisted[id];
-      },
-    };
-  };
-
 // ── Height / weight ──
 
 const buildStatRow =
@@ -390,12 +361,6 @@ const ROWS: Row[] = [
     key: (f) => (onlineKey(f.online) ? `${onlineKey(f.online)}@${f.online.pickedAt ?? ""}` : ""),
     build: buildOnlineRow,
   },
-  ...STAT_IDS.map((id) => ({
-    id: `snp-unlisted-${id}`,
-    anchor: nativeStatLine(id),
-    key: (f: ProfileFilters) => (f.unlisted[id] ? "on" : ""),
-    build: buildUnlistedRow(id),
-  })),
   {
     id: "snp-height-filter",
     anchor: endowmentLine,
@@ -434,14 +399,7 @@ export const installProfileFiltersMenu = (options: ProfileFiltersMenuContract): 
     });
   };
 
-  const build = (anchor: Element, row: Row): HTMLElement | null => {
-    const mounted = row.build(anchor, filters, changed);
-    if (!mounted) {
-      return null;
-    }
-    mounted.root.id = row.id;
-    mounted.root.classList.add("snp-filter-row");
-
+  const makeApply = (): HTMLButtonElement => {
     const apply = document.createElement("button");
     apply.type = "button";
     apply.className = "snp-filter-apply";
@@ -450,6 +408,70 @@ export const installProfileFiltersMenu = (options: ProfileFiltersMenuContract): 
       event.stopPropagation();
       (options.reloadPage ?? (() => location.reload()))();
     });
+    return apply;
+  };
+
+  // "Include profiles with none listed", inside Sniffies' own pick menu for each stat we take over.
+  const mountUnlisted = (): void => {
+    for (const wheel of document.querySelectorAll(
+      ".wheel-container.select, .wheel-container.range",
+    )) {
+      // Endowment's wheels are labelled "Endowment Min" / "Endowment Max" / "Cut".
+      const names = [...wheel.querySelectorAll('[role="listbox"]')].map((el) =>
+        el.getAttribute("aria-label"),
+      );
+      const id = STAT_IDS.find((stat) => {
+        const title = document
+          .querySelector(`label[for="${STAT_KEYS[stat]}"]`)
+          ?.textContent?.trim();
+        return title && names.some((name) => name === title || name?.startsWith(`${title} `));
+      });
+      // A range menu is a row of columns, so the option goes before it rather than inside it.
+      const beforeWheel = wheel.matches(".range");
+      const existing = beforeWheel
+        ? wheel.previousElementSibling
+        : wheel.querySelector(".snp-unlisted-option");
+      if (!id || existing?.matches(".snp-unlisted-option")) {
+        continue;
+      }
+      const label = document.createElement("label");
+      label.className = "snp-flyout-option snp-filter-row snp-unlisted-option";
+      const toggle = document.createElement("input");
+      toggle.type = "checkbox";
+      const box = document.createElement("i");
+      const apply = makeApply();
+      toggle.addEventListener("change", () => {
+        filters.unlisted[id] = toggle.checked;
+        changed();
+      });
+      label.append(toggle, box, STRINGS.filterMenu.includeUnlisted, apply);
+      const sync = (): void => {
+        toggle.checked = filters.unlisted[id];
+        box.className = toggle.checked ? "fa fa-check-square checked" : "fa fa-square";
+        apply.hidden = filters.unlisted[id] === options.applied.unlisted[id];
+      };
+      syncs.set(`unlisted-${id}`, sync);
+      sync();
+      const prompt = wheel.querySelector("p");
+      if (beforeWheel) {
+        wheel.before(label);
+      } else if (prompt) {
+        prompt.after(label);
+      } else {
+        wheel.prepend(label);
+      }
+    }
+  };
+
+  const build = (anchor: Element, row: Row): HTMLElement | null => {
+    const mounted = row.build(anchor, filters, changed);
+    if (!mounted) {
+      return null;
+    }
+    mounted.root.id = row.id;
+    mounted.root.classList.add("snp-filter-row");
+
+    const apply = makeApply();
     mounted.placeApply(apply);
 
     const sync = (): void => {
@@ -462,6 +484,7 @@ export const installProfileFiltersMenu = (options: ProfileFiltersMenuContract): 
   };
 
   const render = (): void => {
+    mountUnlisted();
     if (ROWS.every((row) => document.getElementById(row.id))) {
       return;
     }
@@ -527,5 +550,6 @@ export const installProfileFiltersMenu = (options: ProfileFiltersMenuContract): 
     for (const row of ROWS) {
       document.getElementById(row.id)?.remove();
     }
+    document.querySelectorAll(".snp-unlisted-option").forEach((el) => el.remove());
   };
 };
