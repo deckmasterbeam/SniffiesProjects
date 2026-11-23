@@ -13,8 +13,10 @@ import {
   onlineSinceLabel,
   rangeKey,
   rangeLabel,
+  loadStatPicks,
   STAT_IDS,
   STAT_KEYS,
+  statPickLabel,
   type Gender,
   type ProfileFilters,
   type RangeFilter,
@@ -450,7 +452,10 @@ export const installProfileFiltersMenu = (options: ProfileFiltersMenuContract): 
         box.className = toggle.checked ? "fa fa-check-square checked" : "fa fa-square";
         apply.hidden = filters.unlisted[id] === options.applied.unlisted[id];
       };
-      syncs.set(`unlisted-${id}`, sync);
+      syncs.set(`unlisted-${id}`, () => {
+        sync();
+        syncUnlistedSummary();
+      });
       sync();
       const prompt = wheel.querySelector("p");
       if (beforeWheel) {
@@ -459,6 +464,38 @@ export const installProfileFiltersMenu = (options: ProfileFiltersMenuContract): 
         prompt.after(label);
       } else {
         wheel.prepend(label);
+      }
+    }
+  };
+
+  const syncUnlistedSummary = (): void => {
+    const suffix = `, ${STRINGS.filterMenu.noneListed}`;
+    const stored = loadStatPicks();
+    for (const id of STAT_IDS) {
+      const label = document.querySelector(`label[for="${STAT_KEYS[id]}"]`);
+      const item = label?.closest(".list-item");
+      const value = item?.querySelector(".stat-button .text-value");
+      if (!label || !item || !value) {
+        continue;
+      }
+      // We strip this stat from every request, so after a reload Sniffies has no pick to show.
+      // We still filter on our copy, so draw the row as the active one it is.
+      const pick = filters.unlisted[id] ? stored[id] : undefined;
+      if (pick !== undefined && !label.classList.contains("active")) {
+        label.classList.add("active");
+        label.querySelector("i")?.setAttribute("class", "fa fa-check-square");
+        item.querySelector(".stat-button")?.classList.add("active");
+        value.classList.remove("placeholder");
+        value.textContent = ` ${statPickLabel(pick)} `;
+      }
+      if (value.classList.contains("placeholder")) {
+        continue;
+      }
+      const shown = value.textContent?.trim() ?? "";
+      const base = shown.endsWith(suffix) ? shown.slice(0, -suffix.length) : shown;
+      const next = filters.unlisted[id] && base ? base + suffix : base;
+      if (next !== shown) {
+        value.textContent = ` ${next} `;
       }
     }
   };
@@ -485,6 +522,7 @@ export const installProfileFiltersMenu = (options: ProfileFiltersMenuContract): 
 
   const render = (): void => {
     mountUnlisted();
+    syncUnlistedSummary();
     if (ROWS.every((row) => document.getElementById(row.id))) {
       return;
     }

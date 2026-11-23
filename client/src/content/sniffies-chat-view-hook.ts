@@ -7,7 +7,6 @@ import {
 
 (() => {
   let ownUserId = "";
-  // Off until the relay reports the stored setting.
   let enabled = false;
   let readReceiptsEnabled = false;
   const isEnabled = (): boolean => enabled;

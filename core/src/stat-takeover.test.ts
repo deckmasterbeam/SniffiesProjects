@@ -1,7 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { filterSearchPayload } from "./profile-filter-hook.js";
 import {
   createProfileMatcher,
+  loadStatPicks,
   parseProfileFilters,
   statTakeover,
   type ProfileFilters,
@@ -32,6 +33,22 @@ const shown = (matcher: ReturnType<typeof createProfileMatcher>, ...p: Filterabl
   );
 
 describe("statTakeover", () => {
+  beforeEach(() => localStorage.clear());
+
+  it("keeps filtering on its own copy of the picks after a reload sends none", () => {
+    const first = setup({ position: true });
+    first.takeover.rewriteBody(body({ "sexuality.attitude": ["top"] }));
+    const reloaded = setup({ position: true });
+    reloaded.takeover.rewriteBody(JSON.stringify({ filters: { BASIC_FILTERS: {} } }));
+    expect(shown(reloaded.matcher, profile("top", "top"), profile("bottom", "bottom"))).toEqual([
+      "top",
+    ]);
+    // Turning the switch off drops the copy.
+    const off = setup({});
+    off.takeover.rewriteBody(JSON.stringify({ filters: { BASIC_FILTERS: {} } }));
+    expect(loadStatPicks()).toEqual({});
+  });
+
   it("strips a stat only while its switch is on, and drops the emptied CRUISER_STATS", () => {
     const on = setup({ position: true }).takeover.rewriteBody;
     const stripped = JSON.parse(on(body({ "sexuality.attitude": ["top"] })));
@@ -53,6 +70,11 @@ describe("statTakeover", () => {
     takeover.rewriteBody(body({ "sexuality.attitude": ["top"] }));
     expect(matcher.isActive()).toBe(true);
     expect(shown(matcher, ...people)).toEqual(["top", "none"]);
+    // A request with no pick keeps our saved copy while the switch is on...
+    takeover.rewriteBody(JSON.stringify({ filters: { BASIC_FILTERS: {} } }));
+    expect(matcher.isActive()).toBe(true);
+    // ...and with nothing saved there is nothing to filter on.
+    localStorage.clear();
     takeover.rewriteBody(JSON.stringify({ filters: { BASIC_FILTERS: {} } }));
     expect(matcher.isActive()).toBe(false);
   });

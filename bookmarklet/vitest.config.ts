@@ -29,7 +29,6 @@ export default defineConfig({
   },
   test: {
     environment: "jsdom",
-    // inject.ts only runs on sniffies.com
     environmentOptions: { jsdom: { url: "https://sniffies.com/" } },
   },
 });

@@ -1,7 +1,3 @@
-// Sniffies bookmarklet injection script
-// Bookmarklet loader:
-//   javascript:(function(){var s=document.createElement('script');s.src='https://YOUR_VERCEL_URL/inject.js?t='+Date.now();document.head.appendChild(s);})();
-
 import {
   getPremiumFeatureFlags,
   getPremiumFeaturesEnabled,
@@ -51,7 +47,7 @@ declare global {
 
 // ── Main ─────────────────────────────────────────────────────────────────────
 
-function main(): void {
+const main = () => {
   if (!location.hostname.endsWith("sniffies.com")) {
     return;
   }

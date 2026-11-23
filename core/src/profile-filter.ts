@@ -463,12 +463,48 @@ interface EndowmentPick {
 }
 const ENDOWMENT_TOP_INCHES = 12;
 
-type StatPick = string[] | EndowmentPick;
-type Picks = Partial<Record<StatId, StatPick>>;
+export type StatPick = string[] | EndowmentPick;
+export type StatPicks = Partial<Record<StatId, StatPick>>;
+
+const PICKS_STORAGE_KEY = "snp-stat-picks";
+
+export const loadStatPicks = (): StatPicks => {
+  try {
+    const raw = JSON.parse(localStorage.getItem(PICKS_STORAGE_KEY) ?? "{}") as unknown;
+    return raw && typeof raw === "object" ? (raw as StatPicks) : {};
+  } catch {
+    return {};
+  }
+};
+
+const saveStatPicks = (picks: StatPicks): void => {
+  try {
+    localStorage.setItem(PICKS_STORAGE_KEY, JSON.stringify(picks));
+  } catch {
+    // Storage can be blocked; the picks then last until the next reload.
+  }
+};
+
+/** What the native row would read, for a row Sniffies shows empty while we still filter on it. */
+export const statPickLabel = (pick: StatPick): string => {
+  if (Array.isArray(pick)) {
+    return pick.join(", ");
+  }
+  const { min, max, cut } = pick;
+  const length =
+    typeof min === "number" && typeof max === "number"
+      ? `${min}-${max} in`
+      : typeof min === "number"
+        ? `${min}+ in`
+        : typeof max === "number"
+          ? `up to ${max} in`
+          : "";
+  return [length, cut].filter(Boolean).join(", ");
+};
 
 const listRule = (
   id: Exclude<StatId, "endowment">,
-  picks: Picks,
+  picks: StatPicks,
   getFilters: () => ProfileFilters,
   read: (profile: FilterableProfile) => string | null | undefined,
 ): ProfileFilterRule => ({
@@ -486,7 +522,7 @@ const listRule = (
   },
 });
 
-const endowmentRule = (picks: Picks, getFilters: () => ProfileFilters): ProfileFilterRule => ({
+const endowmentRule = (picks: StatPicks, getFilters: () => ProfileFilters): ProfileFilterRule => ({
   name: "endowment",
   mapOnly: true,
   isActive: () => getFilters().unlisted.endowment && picks.endowment !== undefined,
@@ -521,7 +557,7 @@ const endowmentRule = (picks: Picks, getFilters: () => ProfileFilters): ProfileF
  * request body (remembering the picks first). Stats whose switch is off pass through untouched.
  */
 export const statTakeover = (getFilters: () => ProfileFilters) => {
-  const picks: Picks = {};
+  const picks: StatPicks = {};
   const rules = [
     listRule("position", picks, getFilters, (p) => p.data?.profile?.extended?.sexuality?.attitude),
     listRule("bodyType", picks, getFilters, (p) => p.data?.profile?.extended?.stats?.body),
@@ -536,27 +572,47 @@ export const statTakeover = (getFilters: () => ProfileFilters) => {
       return body;
     }
     const stats = json?.filters?.CRUISER_STATS;
-    if (!stats?.value || typeof stats.value !== "object") {
-      STAT_IDS.forEach((id) => delete picks[id]);
-      return body;
-    }
+    const sent = stats?.value && typeof stats.value === "object" ? stats.value : {};
+    const stored = loadStatPicks();
+    let storedChanged = false;
     let stripped = false;
     for (const id of STAT_IDS) {
-      const value = stats.value[STAT_KEYS[id]] as StatPick | undefined;
+      const value = sent[STAT_KEYS[id]] as StatPick | undefined;
+      const own = getFilters().unlisted[id];
       if (value === undefined) {
-        delete picks[id];
+        // After a reload Sniffies sends nothing for a stat we stripped, so keep using our copy.
+        const kept = own ? stored[id] : undefined;
+        if (kept === undefined) {
+          delete picks[id];
+        } else {
+          picks[id] = kept;
+        }
+        if (!own && stored[id] !== undefined) {
+          delete stored[id];
+          storedChanged = true;
+        }
         continue;
       }
       picks[id] = value;
-      if (getFilters().unlisted[id]) {
-        delete stats.value[STAT_KEYS[id]];
+      if (own) {
+        if (JSON.stringify(stored[id]) !== JSON.stringify(value)) {
+          stored[id] = value;
+          storedChanged = true;
+        }
+        delete sent[STAT_KEYS[id]];
         stripped = true;
+      } else if (stored[id] !== undefined) {
+        delete stored[id];
+        storedChanged = true;
       }
     }
-    if (!stripped) {
+    if (storedChanged) {
+      saveStatPicks(stored);
+    }
+    if (!stripped || !stats) {
       return body;
     }
-    if (Object.keys(stats.value).length === 0) {
+    if (Object.keys(sent).length === 0) {
       delete json.filters!.CRUISER_STATS;
     }
     return JSON.stringify(json);

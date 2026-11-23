@@ -80,6 +80,7 @@ export const STRINGS = {
     height: "Height",
     weight: "Weight",
     includeUnlisted: "Include profiles with none listed",
+    noneListed: "none listed",
     select: "Select",
     reloadToApply: "Reload to apply",
     cruisersOnlineAfter: (time: string): string => `Cruisers online after ${time}`,

@@ -7,7 +7,6 @@ import { fileURLToPath } from "node:url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = resolve(__dirname, "..");
 
-// Load bookmarklet/.env if present (absent on Vercel, which injects real env vars).
 try {
   process.loadEnvFile(join(root, ".env"));
 } catch {}
@@ -41,7 +40,6 @@ const buildOptions = {
   },
 };
 
-// Copies a loader snippet for the dev server (`npx serve dist -p 5000 --cors`).
 const copyLoaderToClipboard = () => {
   if (!process.env.VERCEL) {
     const loader = `var s=document.createElement('script');s.src='http://localhost:5000/inject.js?t='+Date.now();document.head.appendChild(s);`;
