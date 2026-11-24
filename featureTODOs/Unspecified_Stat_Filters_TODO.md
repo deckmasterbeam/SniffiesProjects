@@ -51,7 +51,7 @@ follow whatever the capture shows Sniffies sends for "no stats".
   Sniffies' multi-select; confirm OR vs AND per stat).
 - Profile lists nothing: hide unless `includeUnspecified`.
 - Reuse `ProfileFilterRule` with `mapOnly: true`, like `rangeRule`. One generic `listRule(name,
-  getFilter, read)` next to `rangeRule` covers all four stats.
+getFilter, read)` next to `rangeRule` covers all four stats.
 
 ### UI
 
@@ -107,32 +107,40 @@ In DevTools → Network on sniffies.com, signed in:
 ## Test plan
 
 ### 1. Capture
+
 - [x] Captured (HAR). Apply sends `POST /api/advanced-filter/search` (`result.nearbyUsers`); `softReload` / `post-authentication` only on load. The `options` PUT is left alone, so the native picks survive reload.
 
 ### 2. Implement
+
 - [x] Add the request keys and profile fields to `core/src/sniffies-api.ts`.
 - [x] `statTakeover` (list rules + endowment rule) in `profile-filter.ts` + four stat filters in `core/src/profile-filter.ts` (`ProfileFilters`, parse, gate, rules).
 - [x] Request rewrite in `core/src/profile-filter-hook.ts`, with a getter for "which stats we own",
       wired like `raiseRadius` in the extension relay and userscript.
 - [x] Toggle rows (not disabled without a pick: no-op then) in `core/src/filter-menu/stat-row.ts`.
 - [x] Reload-persistence workaround: not needed.
-- [ ] `expectShape` warning when `filters.CRUISER_STATS` is missing from a request that should have it.
+- [x] Warning (once) when a map request has no `filters` object at all, so there is nowhere to strip
+      our stats from. A request with no `CRUISER_STATS` is normal (it is only there while one of
+      Sniffies' own stats, like age, is on), so that isn't warned about.
 
 ### 3. Automated tests
+
 - [x] Unit: picked + include off → unspecified profile hidden; on → shown.
 - [x] Unit: profile with a non-matching value is hidden either way.
 - [x] Unit: nothing picked → rule inactive.
 - [x] Unit: request body has a stat stripped only when its toggle is on; other stats and malformed
       bodies pass through untouched.
 - [x] Unit: toggle off → request body unchanged (native server filter still applies).
-- [ ] Unit: chat lists are not filtered (`mapOnly`).
+- [x] Unit: chat lists are not filtered (`mapOnly`).
+- [x] Unit, through a real XHR send: every stat is stripped from `post-authentication`,
+      `softReload` and search bodies; the saved filters load with our stats off; the none-listed
+      profile is kept or hidden (`core/src/xhr-strip.test.ts`).
+- [x] e2e, extension and userscript: the same, plus filters-off passing through
+      (`e2e/tests/*/stat-takeover.spec.ts`).
 
 ### 4. Manual check
-- [ ] Pick Position = Top, toggle on: top profiles and no-position profiles show, bottoms don't.
-- [ ] Toggle off: only tops show, as native.
-- [ ] Same for Endowment, Body Type, Sexuality.
-- [ ] Reload keeps the native pick and our toggle.
-- [ ] Userscript (iOS Safari) behaves the same as the extension.
+
+Moved to §5, which describes the current design. (This list was written for the first design, where
+the native row stayed the way to pick and only the switch was ours.)
 
 ### 5. Own rows for the four stats (manual check)
 
@@ -154,7 +162,9 @@ Checks:
 - [ ] Open the menu: all four stats show our row, in Sniffies' style (white value text, check icon), and its own row for them is hidden.
 - [ ] Pick Body Type and Sexuality: the sheet is a wheel with "-" on top, check marks, "Choose up to 99: ..." and the none-listed switch.
 - [ ] Endowment sheet: range in inches (half-inch steps), cut / uncut, none-listed switch.
-- [ ] A profile with no endowment listed shows with "none listed" on, and is hidden with it off.
+- [ ] Pick Position = Top with none listed on: top profiles and ones with no position show, bottoms
+      don't; with it off, only tops. Same for Endowment, Body Type, Sexuality. (The data side of this
+      is covered by e2e; this is the same check through the real menu.)
 - [ ] Reload: rows come back with their picks; the request has no `CRUISER_STATS` stats of ours; the Cruiser Stats switch shows on while a pick is set.
 - [ ] A pick Sniffies had saved before shows up in our row the first time only; clearing it stays cleared after a reload.
 - [ ] Clicking a row's checkbox clears its pick; clicking an empty one opens its sheet.

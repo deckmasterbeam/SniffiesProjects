@@ -1,3 +1,4 @@
+import { createLogger } from "../log.js";
 import { CM_PER_INCH, type FilterableProfile } from "../sniffies-api.js";
 import {
   STAT_IDS,
@@ -14,6 +15,9 @@ import {
 } from "./stat-picks.js";
 import { type ProfileFilterRule } from "./matcher.js";
 import { type ProfileFilters } from "./filters.js";
+
+const log = createLogger("profile-filter");
+let reportedNoFilters = false;
 
 const listRule = (
   id: ListStatId,
@@ -125,6 +129,17 @@ export const statTakeover = (
       json = JSON.parse(body);
     } catch {
       return body;
+    }
+    // Without a `filters` object there is nowhere to strip our stats from: Sniffies has changed the
+    // request, and its server would filter on them. (No `CRUISER_STATS` in it is normal: that is only
+    // there while one of Sniffies' own stats, like age, is on.)
+    if (
+      owns() &&
+      (typeof json?.filters !== "object" || json.filters === null) &&
+      !reportedNoFilters
+    ) {
+      reportedNoFilters = true;
+      log.warn("map request has no filters object; Sniffies may have changed its request shape");
     }
     const stats = json?.filters?.CRUISER_STATS;
     const sent = stats?.value && typeof stats.value === "object" ? stats.value : {};

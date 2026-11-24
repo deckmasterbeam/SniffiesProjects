@@ -103,9 +103,12 @@ export const FRAMES_FROM_OK = FRAMES.filter((frame) => label(frame).endsWith(OK_
  * loads: the hooks keep the `WebSocket` they find when they inject, so a route added later is
  * never the one they connect through.
  */
-export const routeLiveSocket = async (page: Page): Promise<void> => {
+export const routeLiveSocket = async (
+  page: Page,
+  frames: readonly object[] = FRAMES,
+): Promise<void> => {
   await page.routeWebSocket(/prod.ws.sniffies.com/, (socket) => {
-    for (const frame of FRAMES) {
+    for (const frame of frames) {
       socket.send(JSON.stringify(frame));
     }
   });

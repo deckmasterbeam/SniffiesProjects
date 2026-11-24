@@ -320,13 +320,16 @@ Position / Body Type / Sexuality / Endowment are ours while the profile filters 
 
 The other filters:
 
-- [ ] Gender, Height, Weight and Last Online hide the right profiles in the map init, a live
+- [x] Gender, Height, Weight and Last Online hide the right profiles in the map init, a live
       `userJoined` frame and an Apply (`advanced-filter/search`) result; "include unspecified"
-      keeps the ones with no value. Unit-tested only.
+      keeps the ones with no value; the filters combine; the master switch off filters nothing —
+      `e2e/tests/{extension,userscript}/profile-filters.spec.ts` (a table of cases in
+      `e2e/fixtures/profile-filters.ts`).
 - [ ] "Reload to apply" appears when the filters differ from what the page loaded with, and a reload
       clears it.
 - [ ] The master Profile filters switch (popup / userscript panel) turns every filter, and the
-      stat takeover, off and on.
+      stat takeover, off and on. Off is checked through storage (`profile-filters.spec.ts`,
+      `stat-takeover.spec.ts`); clicking the real switch in the popup / panel is not.
 
 Drift (not part of the automated run): `site-contract.ts` doesn't list the markup these depend on yet
 (`label[for="stats.*"]`, `input#CRUISER_STATS`, `.smart-options-container`, `ui-menu-item-group`), and

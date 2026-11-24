@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { filterSearchPayload } from "./profile-filter-hook.js";
 import {
   createProfileMatcher,
@@ -73,6 +73,53 @@ describe("statTakeover", () => {
       "top",
       "none",
     ]);
+  });
+
+  it("applies to the map only, not to chat lists", () => {
+    const { matcher } = setup({ position: ["top"] });
+    const bottom = profile("bottom", "bottom");
+    expect(matcher.hidesProfile(bottom)).toBe(true);
+    expect(matcher.chat.hidesProfile(bottom)).toBe(false);
+  });
+
+  describe("a request with no filters object", () => {
+    // The warning is once per page, so each test loads the module afresh.
+    const freshRewrite = async (owns: boolean) => {
+      vi.resetModules();
+      const mod = await import("./profile-filter.js");
+      return mod.statTakeover(
+        () => mod.parseProfileFilters(null),
+        () => owns,
+      ).rewriteBody;
+    };
+    const warned = (spy: ReturnType<typeof vi.spyOn>) =>
+      spy.mock.calls.filter((call) => String(call.join(" ")).includes("no filters object"));
+
+    it("warns once, since there is nothing to strip our stats from", async () => {
+      const spy = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const rewrite = await freshRewrite(true);
+      rewrite(JSON.stringify({ countryCode: "US" }));
+      rewrite(JSON.stringify({ countryCode: "US" }));
+      expect(warned(spy)).toHaveLength(1);
+      spy.mockRestore();
+    });
+
+    it("stays quiet with a filters object, with or without Sniffies' own stats in it", async () => {
+      const spy = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const rewrite = await freshRewrite(true);
+      rewrite(JSON.stringify({ filters: { BASIC_FILTERS: {} } }));
+      rewrite(body({ "stats.age": { min: 18 } }));
+      expect(warned(spy)).toHaveLength(0);
+      spy.mockRestore();
+    });
+
+    it("stays quiet while the filters are off, when we aren't stripping anything", async () => {
+      const spy = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const rewrite = await freshRewrite(false);
+      rewrite(JSON.stringify({ countryCode: "US" }));
+      expect(warned(spy)).toHaveLength(0);
+      spy.mockRestore();
+    });
   });
 
   it("is inactive with no pick, or while the filters are off", () => {

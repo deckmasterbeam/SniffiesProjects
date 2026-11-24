@@ -25,9 +25,17 @@ If the user selects only Height and/or Weight and reloads:
 From the softReload HAR, the request carries (shape only):
 
 ```json
-{ "filters": { "CRUISER_STATS": { "filterType": "CRUISER_STATS", "enabled": true,
-    "value": { "sexuality.attitude": ["vers", "top"] }, "assignmentType": "EQ" },
-  "BASIC_FILTERS": {} } }
+{
+  "filters": {
+    "CRUISER_STATS": {
+      "filterType": "CRUISER_STATS",
+      "enabled": true,
+      "value": { "sexuality.attitude": ["vers", "top"] },
+      "assignmentType": "EQ"
+    },
+    "BASIC_FILTERS": {}
+  }
+}
 ```
 
 ---
