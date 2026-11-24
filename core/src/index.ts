@@ -32,13 +32,15 @@ export {
   genderRule,
   onlineRule,
   parseGenderFilter,
+  loadFiltersMirror,
   parseProfileFilters,
+  saveFiltersMirror,
   profileFilterRules,
   rangeRule,
   profileGender,
   statTakeover,
 } from "./profile-filter.js";
-export { installProfileFiltersMenu } from "./filter-menu-ui.js";
+export { installProfileFiltersMenu } from "./filter-menu/menu.js";
 export { installSelectionLimitOverride } from "./selection-limit-hook.js";
 export {
   PROFILE_FILTERS_HTML,

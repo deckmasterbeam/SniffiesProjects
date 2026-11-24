@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 import { SELECTOR_CONTRACT } from "../../site-contract.js";
 
 // Drift canary: checks that the DOM shapes our extension code depends on
@@ -21,6 +21,22 @@ const contract = (selector: string) => {
     throw new Error(`"${selector}" is not in site-contract.ts — add it there first`);
   }
   return entry;
+};
+
+// When the browser doesn't share its location (as in this suite's), Sniffies opens a "Your location
+// may be inaccurate" dialog whose overlay covers the whole map. It comes and goes while the page
+// settles, even after a marker has been picked to click, so every attempt at the click starts by
+// calling this rather than it being done once up front.
+// Only that dialog is closed: any other one is something this test shouldn't be dismissing.
+const dismissLocationAlert = async (page: Page): Promise<void> => {
+  const close = page
+    .getByRole("dialog")
+    .filter({ hasText: "Your location may be inaccurate" })
+    .locator('[data-testid="closeModalButton"]');
+  if (await close.isVisible()) {
+    // A click can lose a race with the dialog closing itself; the next attempt tries again.
+    await close.click({ timeout: 2_000 }).catch(() => {});
+  }
 };
 
 test.describe("live sniffies.com selector drift canary", () => {
@@ -64,13 +80,17 @@ test.describe("live sniffies.com selector drift canary", () => {
           return !!hit && el.contains(hit);
         }),
       );
-    await expect
-      .poll(firstClickableIndex, {
-        message: `${avatarEntry.description} (${avatarEntry.source}) — no marker avatar is on-screen and unobstructed`,
-        timeout: 30_000,
-      })
-      .toBeGreaterThanOrEqual(0);
-    await avatars.nth(await firstClickableIndex()).click();
+    // One retried step: the location dialog can open between picking a marker and clicking it, so a
+    // short click timeout lets a blocked attempt fail fast, close the dialog and go again.
+    await expect(async () => {
+      await dismissLocationAlert(page);
+      const index = await firstClickableIndex();
+      expect(
+        index,
+        `${avatarEntry.description} (${avatarEntry.source}) — no marker avatar is on-screen and unobstructed`,
+      ).toBeGreaterThanOrEqual(0);
+      await avatars.nth(index).click({ timeout: 3_000 });
+    }).toPass({ timeout: 30_000 });
 
     const screen = page.locator(screenEntry.selector);
     await expect(screen, `${screenEntry.description} (${screenEntry.source})`).toBeVisible({

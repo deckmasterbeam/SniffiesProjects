@@ -32,7 +32,8 @@ const savedEnv: Record<string, string | undefined> = {};
 
 beforeEach(() => {
   vi.clearAllMocks();
-  for (const k of ["DASHBOARD_ENABLED", "DASHBOARD_SECRET", "POSTGRES_URL"]) savedEnv[k] = process.env[k];
+  for (const k of ["DASHBOARD_ENABLED", "DASHBOARD_SECRET", "POSTGRES_URL"])
+    savedEnv[k] = process.env[k];
   process.env.DASHBOARD_ENABLED = "true";
   process.env.DASHBOARD_SECRET = "s3cret";
   process.env.POSTGRES_URL = "postgres://localhost/test";

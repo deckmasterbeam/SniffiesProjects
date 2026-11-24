@@ -1,8 +1,8 @@
-import { nearestChoice, type RangeFilter, type RangeOptions } from "./profile-filter.js";
-import { STRINGS } from "./strings.js";
+import { nearestChoice, type RangeFilter, type RangeOptions } from "../profile-filter.js";
+import { STRINGS } from "../strings.js";
 
 const FLYOUT_ID = "snp-range-flyout";
-// Keep in sync with .snp-wheel-item's height in filter-menu.css.
+// Keep in sync with .snp-wheel-item's height in menu.css.
 const ITEM_HEIGHT = 34;
 
 interface WheelItem<T> {
@@ -89,6 +89,15 @@ const createWheel = <T>(name: string, title: string, onChange?: () => void): Whe
   };
 };
 
+/** A wheel of fixed choices beside the range wheels, e.g. Endowment's cut / uncut. */
+export interface ChoiceColumn {
+  title: string;
+  choices: WheelItem<string | null>[];
+  current: string | null;
+  /** Called with the picked choice after the range's own `onDone`. */
+  onDone: (value: string | null) => void;
+}
+
 type RangeChoice = Pick<RangeFilter, "min" | "max" | "metric" | "includeUnspecified">;
 
 export const openRangeFlyout = (
@@ -98,6 +107,7 @@ export const openRangeFlyout = (
   onDone: (next: RangeChoice) => void,
   host?: Element | null,
   checkIcon?: Element | null,
+  column?: ChoiceColumn,
 ): void => {
   document.getElementById(FLYOUT_ID)?.remove();
 
@@ -135,7 +145,7 @@ export const openRangeFlyout = (
     (metric ? options.metric : options.imperial).choices;
   // "-" leaves that end of the range open, as on Sniffies' own wheels.
   const withNone = (items: WheelItem<number>[], top = ""): WheelItem<number | null>[] => [
-    { value: null, label: "-" },
+    { value: null, label: STRINGS.range.openEnded },
     ...items.map((item, i) =>
       i === items.length - 1 ? { ...item, label: item.label + top } : item,
     ),
@@ -157,7 +167,7 @@ export const openRangeFlyout = (
     const list = choices(metric);
     const snap = (value: number | null): number | null =>
       value === null ? null : nearestChoice(list, value).value;
-    min.fill(withNone(list, " +"), snap(minValue));
+    min.fill(withNone(list, STRINGS.range.moreSuffix), snap(minValue));
     max.fill(withNone(list), snap(maxValue));
   };
   const unit: Wheel<boolean> = createWheel("unit", STRINGS.range.unit, () =>
@@ -171,6 +181,8 @@ export const openRangeFlyout = (
     current.metric,
   );
   fillBounds(current.metric, current.min, current.max);
+  const columnWheel = column ? createWheel<string | null>("column", column.title) : null;
+  columnWheel?.fill(column!.choices, column!.current);
 
   const heading = document.createElement("h1");
   heading.textContent = title;
@@ -187,6 +199,7 @@ export const openRangeFlyout = (
         metric: unit.value(),
         includeUnspecified: unspecified.checked,
       });
+      column?.onDone(columnWheel!.value());
     }),
   );
 
@@ -195,7 +208,15 @@ export const openRangeFlyout = (
   to.textContent = STRINGS.range.to;
   const body = document.createElement("div");
   body.className = "snp-wheel-container";
-  body.append(unit.el, min.el, to, max.el);
+  // One unit both ways (Endowment): nothing to choose, so no unit wheel.
+  const oneUnit = options.imperial === options.metric;
+  body.append(
+    ...(oneUnit ? [] : [unit.el]),
+    min.el,
+    to,
+    max.el,
+    ...(columnWheel ? [columnWheel.el] : []),
+  );
   const unspecified = document.createElement("input");
   unspecified.type = "checkbox";
   unspecified.checked = current.includeUnspecified;
@@ -228,6 +249,164 @@ export const openRangeFlyout = (
   for (const wheel of [unit, min, max]) {
     wheel.reveal();
   }
+  columnWheel?.reveal();
+};
+
+/**
+ * A wheel to pick several values from, like Sniffies' own for Body Type: a "-" at the top clears,
+ * and picked values carry a check mark.
+ */
+export const openMultiFlyout = (
+  title: string,
+  items: WheelItem<string>[],
+  current: string[],
+  unlisted: boolean,
+  onDone: (values: string[], unlisted: boolean) => void,
+  host?: Element | null,
+  checkIcon?: Element | null,
+): void => {
+  document.getElementById(FLYOUT_ID)?.remove();
+
+  const backdrop = document.createElement("div");
+  backdrop.id = FLYOUT_ID;
+  backdrop.className = "snp-flyout-backdrop";
+  const sheet = document.createElement("div");
+  sheet.className = "snp-flyout";
+  sheet.setAttribute("role", "dialog");
+  sheet.setAttribute("aria-label", STRINGS.range.makeASelection(title));
+  backdrop.appendChild(sheet);
+
+  const close = (): void => {
+    document.removeEventListener("keydown", onKey);
+    backdrop.remove();
+  };
+  const onKey = (event: KeyboardEvent): void => {
+    if (event.key === "Escape") {
+      close();
+    }
+  };
+  const action = (text: string, side: string, onClick: () => void): HTMLElement => {
+    const wrap = document.createElement("span");
+    wrap.className = `snp-flyout-action ${side}`;
+    const button = document.createElement("button");
+    button.type = "button";
+    button.textContent = text;
+    button.addEventListener("click", onClick);
+    wrap.appendChild(button);
+    return wrap;
+  };
+
+  const picked = new Set(current);
+
+  const unlistedInput = document.createElement("input");
+  unlistedInput.type = "checkbox";
+  unlistedInput.checked = unlisted;
+  const unlistedBox = document.createElement("i");
+  unlistedBox.className = checkIcon?.className ?? "fa fa-square";
+  const syncUnlisted = (): void => {
+    unlistedBox.classList.toggle("fa-check-square", unlistedInput.checked);
+    unlistedBox.classList.toggle("fa-square", !unlistedInput.checked);
+    unlistedBox.classList.toggle("checked", unlistedInput.checked);
+  };
+  unlistedInput.addEventListener("change", syncUnlisted);
+  syncUnlisted();
+  const unlistedLabel = document.createElement("label");
+  unlistedLabel.className = "snp-flyout-option";
+  unlistedLabel.append(unlistedInput, unlistedBox, STRINGS.filterMenu.includeUnlisted);
+
+  const prompt = document.createElement("p");
+  prompt.className = "snp-flyout-prompt";
+  const bold = document.createElement("span");
+  bold.className = "snp-flyout-bold";
+  const syncPrompt = (): void => {
+    bold.textContent = items
+      .filter((item) => picked.has(item.value))
+      .map((item) => item.label)
+      .join(", ");
+    prompt.replaceChildren(`${STRINGS.range.chooseSeveral} `, bold);
+  };
+
+  const column = document.createElement("span");
+  column.className = "snp-wheel-column";
+  const wheel = document.createElement("div");
+  wheel.className = "snp-wheel";
+  wheel.dataset.wheel = "multi";
+  wheel.setAttribute("role", "listbox");
+  wheel.setAttribute("aria-multiselectable", "true");
+  wheel.setAttribute("aria-label", title);
+  column.appendChild(wheel);
+  const entries: { value: string | null; label: string }[] = [
+    { value: null, label: STRINGS.range.openEnded },
+    ...items,
+  ];
+  const nodes = entries.map((entry, index) => {
+    const node = document.createElement("div");
+    node.className = "snp-wheel-item";
+    node.setAttribute("role", "option");
+    // The check mark is drawn by CSS, as Sniffies' own wheel does, in a box at the item's left.
+    const check = document.createElement("span");
+    check.className = "snp-wheel-check";
+    check.setAttribute("aria-hidden", "true");
+    const text = document.createElement("span");
+    text.textContent = entry.label;
+    node.append(check, text);
+    node.addEventListener("click", () => {
+      if (entry.value === null) {
+        picked.clear();
+      } else if (picked.has(entry.value)) {
+        picked.delete(entry.value);
+      } else {
+        picked.add(entry.value);
+      }
+      syncNodes();
+      syncPrompt();
+      wheel.scrollTop = index * ITEM_HEIGHT;
+    });
+    return node;
+  });
+  const syncNodes = (): void => {
+    nodes.forEach((node, index) => {
+      const value = entries[index]!.value;
+      const on = value !== null && picked.has(value);
+      node.classList.toggle("checked", on);
+      node.setAttribute("aria-selected", String(on));
+    });
+  };
+  wheel.append(...nodes);
+  syncNodes();
+  syncPrompt();
+
+  const heading = document.createElement("h1");
+  heading.textContent = title;
+  const header = document.createElement("div");
+  header.className = "snp-flyout-header";
+  header.append(
+    action(STRINGS.range.cancel, "left", close),
+    heading,
+    action(STRINGS.range.done, "right", () => {
+      close();
+      onDone(
+        items.filter((item) => picked.has(item.value)).map((item) => item.value),
+        unlistedInput.checked,
+      );
+    }),
+  );
+  const body = document.createElement("div");
+  body.className = "snp-wheel-container";
+  body.appendChild(column);
+  sheet.append(header, prompt, unlistedLabel, body);
+
+  backdrop.addEventListener("click", (event) => {
+    if (event.target === backdrop) {
+      close();
+    }
+  });
+  for (const type of ["click", "mousedown", "pointerdown", "touchstart"]) {
+    backdrop.addEventListener(type, (event) => event.stopPropagation());
+  }
+  document.addEventListener("keydown", onKey);
+
+  (host ?? document.body).appendChild(backdrop);
 };
 
 export const openChoiceFlyout = (

@@ -181,7 +181,7 @@ const main = () => {
   closeBtn.addEventListener("click", () => {
     panel.style.display = "none";
   });
-}
+};
 
 // ── Entry point ───────────────────────────────────────────────────────────────
 

@@ -3,6 +3,7 @@ import {
   gateProfileFilters,
   installProfileFiltersMenu,
   parseProfileFilters,
+  saveFiltersMirror,
   type ExtensionLocalSettings,
   type ProfileFilters,
 } from "@sniffies-projects/core";
@@ -51,6 +52,8 @@ const relay = (settings: ExtensionLocalSettings): void => {
 
   const effective = gateProfileFilters(stored, profileFiltersEnabled);
   appliedFilters ??= effective;
+  // What the next page load will apply; the hook reads it before its first request.
+  saveFiltersMirror(effective, profileFiltersEnabled);
   postState(
     blockedBots,
     botBlockingEnabled,

@@ -25,7 +25,7 @@ export const installLocationOverrideController = (
   const reloadPage = options.reloadPage ?? (() => location.reload());
 
   let currentOverride: GeoOverride = options.initialOverride;
-  
+
   const active = (): boolean => options.isPremiumEnabled();
   const hook = installGeoHook(
     () => ({ ...currentOverride, enabled: active() }),

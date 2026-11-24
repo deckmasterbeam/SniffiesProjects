@@ -10,7 +10,7 @@ Open questions), so the first step is capturing it.
 
 ## Problem
 
-Height and Weight are our filters, not Sniffies'. `buildStatRow` (`core/src/filter-menu-ui.ts`) only
+Height and Weight are our filters, not Sniffies'. `buildRangeRow` (`core/src/filter-menu/range-row.ts`) only
 enables them while Sniffies' native Cruiser Stats list is active (`parent-enabled`), because Sniffies
 treats Cruiser Stats as on only when at least one native stat filter has a value.
 

@@ -35,6 +35,15 @@ real `sniffies.com` origin (so the extension's content scripts inject exactly as
 live site), but no request ever leaves the machine. Server endpoints (`report`, `favorites`, etc.)
 are stubbed the same way via [`fixtures/server-mocks.ts`](fixtures/server-mocks.ts).
 
+**Sniffies' own API** is faked with [`fixtures/sniffies-api.ts`](fixtures/sniffies-api.ts)
+(`mockApi` answers API paths by path only, on any of the hosts Sniffies has used, and records what
+the page sent; `sendXhr` makes a request the way Sniffies' code does). Specs that need the data
+build on it: [`fixtures/bot-block.ts`](fixtures/bot-block.ts) (map init, chat init, a chat thread and
+the live WebSocket) and [`fixtures/stat-takeover.ts`](fixtures/stat-takeover.ts) (the filter
+menu's stats). Two things to know: route a WebSocket (`page.routeWebSocket`) _before_ the page
+loads, since the hooks keep the `WebSocket` they find when they inject; and stub `api.github.com`
+(the update check) in any test that asserts the console is clean.
+
 See [`fixtures/extension.ts`](fixtures/extension.ts) for the `context`/`extensionId` test fixtures,
 and [`fixtures/storage.ts`](fixtures/storage.ts) for seeding/reading `chrome.storage.local` directly
 in a test instead of clicking through the popup/settings UI.
@@ -143,7 +152,7 @@ it. If that file doesn't exist, you'll get a clear `ENOENT` on that path — tha
 ## The payload/schema canary
 
 The selector canary above only checks DOM shape. This checks the _network_ shapes
-`core/src/bot-block-hook.ts` depends on — the four surfaces it filters (`post-authentication`,
+`core/src/profile-filter-hook.ts` reads — the four surfaces it filters (`post-authentication`,
 `chat-data`, `messages`, and the live WebSocket) — against a manually-captured HAR file.
 
 ```bash

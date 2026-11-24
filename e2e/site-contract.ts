@@ -56,17 +56,17 @@ const SELECTOR_METADATA: Record<SniffiesSelectorName, SelectorMeta> = {
   },
   PROFILE_TYPE_FILTER_LABEL_SELECTOR: {
     description: "Profile Type row in the Cruisers filter menu â€” our filter rows mount after it",
-    source: "core/src/filter-menu-ui.ts",
+    source: "core/src/filter-menu/gender-row.ts",
   },
   CONNECTED_NOW_FILTER_LABEL_SELECTOR: {
     description:
       "Cruising Now row in the Cruisers filter menu â€” our Last Online row mounts after it",
-    source: "core/src/filter-menu-ui.ts",
+    source: "core/src/filter-menu/online-row.ts",
   },
   ENDOWMENT_FILTER_LABEL_SELECTOR: {
     description:
       "Endowment line under Cruiser Stats in the filter menu â€” our Height and Weight lines mount after it",
-    source: "core/src/filter-menu-ui.ts",
+    source: "core/src/filter-menu/range-row.ts",
   },
   HIDE_PHOTO_BUTTON_SELECTOR: {
     description:
@@ -89,16 +89,16 @@ const SELECTOR_METADATA: Record<SniffiesSelectorName, SelectorMeta> = {
     source: "core/src/hide-photo-click-hook.ts",
   },
   CHAT_MESSAGE_CONTAINER_SELECTOR: {
-    description: "One chat message row — the read-receipt hook appends the Seen marker to it",
+    description: "One chat message row ï¿½ the read-receipt hook appends the Seen marker to it",
     source: "core/src/read-receipt-hook.ts",
   },
   READ_MARKER_SELECTOR: {
     description:
-      "Sniffies' own Seen marker in a message row (paid accounts) — the read-receipt hook skips drawing its own when present",
+      "Sniffies' own Seen marker in a message row (paid accounts) ï¿½ the read-receipt hook skips drawing its own when present",
     source: "core/src/read-receipt-hook.ts",
   },
   OWN_MARKER_SELECTOR: {
-    description: "The account's own map marker — its element id is the user id the bookmarklet logs",
+    description: "The account's own map marker ï¿½ its element id is the user id the bookmarklet logs",
     source: "core/src/own-id-dom.ts",
   },
 };

@@ -82,7 +82,12 @@ export const STRINGS = {
     includeUnlisted: "Include profiles with none listed",
     noneListed: "none listed",
     select: "Select",
+    cut: "Cut",
+    cutLabel: "Cut",
+    uncutLabel: "Uncut",
     reloadToApply: "Reload to apply",
+    onlineAgo: (minutes: number): string =>
+      `< ${minutes < 60 ? `${minutes} min` : `${minutes / 60} hour${minutes === 60 ? "" : "s"}`} ago`,
     cruisersOnlineAfter: (time: string): string => `Cruisers online after ${time}`,
   },
   range: {
@@ -94,8 +99,52 @@ export const STRINGS = {
     cancel: "Cancel",
     done: "Done",
     selectAValue: "Select a value:",
+    chooseSeveral: "Choose up to 99:",
     includeUnlisted: (title: string): string => ` Include profiles with no ${title} listed`,
     upTo: (value: string): string => `Up to ${value}`,
+    between: (from: string, to: string): string => `${from} - ${to}`,
+    orMore: (value: string): string => `${value} +`,
+    /** Added to the top stop of a "from" wheel, which has no upper limit. */
+    moreSuffix: " +",
+    /** The wheel stop that leaves that end of a range (or a pick) open. */
+    openEnded: "-",
+    units: { feet: "ft", inches: "in", cm: "cm", lb: "lb", kg: "kg" },
+    inches: (value: number): string => `${value}"`,
+    feetAndInches: (feet: number, inches: number): string => `${feet}'${inches}"`,
+    cm: (value: number): string => `${value}cm`,
+    lb: (value: number): string => `${value}lb`,
+    kg: (value: number): string => `${value}kg`,
+  },
+  /** Labels for the values of the stats Sniffies lets you pick several of, keyed by its values. */
+  stats: {
+    position: {
+      side: "Side",
+      "bottom-sub": "Submissive bottom",
+      bottom: "Bottom",
+      "bottom-power": "Power bottom",
+      "vers-bottom": "Vers bottom",
+      vers: "Vers",
+      "vers-top": "Vers top",
+      "top-sub": "Passive top",
+      top: "Top",
+      "top-dom": "Dom top (breeder)",
+    },
+    bodyType: {
+      slim: "Slim",
+      athletic: "Athletic",
+      muscular: "Muscular",
+      average: "Average",
+      stocky: "Stocky",
+      chubby: "Chubby",
+      large: "Large",
+    },
+    sexuality: {
+      straight: "Straight",
+      "straight-curious": "Straight-curious",
+      bicurious: "Bicurious",
+      bi: "Bi",
+      gay: "Gay",
+    },
   },
 };
 

@@ -11,9 +11,15 @@ extension pages. Lives in `e2e/` — see `e2e/README.md` for setup and how to ru
 
 - [x] **Fixture page DOM shapes** — `e2e/fixtures/sniffies-mock.html` reproduces the marker-click →
       panel-open flow, including an async panel render to exercise the retry/poll logic for real.
-  - [ ] **Fake XHR/WS endpoints for bot-block-hook.ts** — not built yet. Needed once §3 (bot
-        blocking) is tackled: the four surfaces in `core/src/bot-block-hook.ts`
-        (`post-authentication`, `chat-data`, `messages`, the `prod.ws.sniffies.com` WebSocket).
+  - [x] **Fake XHR/WS endpoints for the profile-filter hook** — `e2e/fixtures/sniffies-api.ts`
+        (`mockApi`: answers API paths by path only, on any of the hosts Sniffies has used, with CORS
+        for the cross-origin ones, and records what the page sent; `sendXhr` makes the request the
+        way Sniffies' code does) and `e2e/fixtures/bot-block.ts` (the four surfaces —
+        `post-authentication`, `chat-data`, `messages`, the `prod.ws.sniffies.com` WebSocket via
+        `page.routeWebSocket`). The hook was `core/src/bot-block-hook.ts` when this was written; it is
+        now `core/src/profile-filter-hook.ts` and also applies the profile filters (§13).
+        **Gotcha:** route the WebSocket _before_ the page loads. The hooks keep the `WebSocket` they
+        find when they inject, so a route added afterwards is never the one they connect through.
 - [x] **Chrome extension loading** — `e2e/fixtures/extension.ts` loads the real built `client/dist`
       via `launchPersistentContext`, routing `sniffies.com` to the fixture HTML so the real content
       scripts inject against it with no network involved. Proven by
@@ -77,7 +83,8 @@ than replacing it.
       hostname — the API host has changed before). Playwright's `routeFromHAR` is the starting
       point, but ids/timestamps will need templating so tests can control the data (e.g. "this
       visitor is a blocked bot").
-- [ ] **WebSocket replay** — `page.routeWebSocket` to push frames (`userJoined`, `newMsg`,
+- [ ] **WebSocket replay** — (hand-built frames exist for §3, in `e2e/fixtures/bot-block.ts`; not
+      HAR-based, and only the frame types the hook reads) `page.routeWebSocket` to push frames (`userJoined`, `newMsg`,
       `newConversation`, …) on demand; also covers the "Fake XHR/WS endpoints for bot-block-hook.ts"
       item in §0.
 - [ ] **Page/DOM layer** — decide how far to go: keep the hand-built `sniffies-mock.html` (cheap,
@@ -134,25 +141,35 @@ The click-redirect is now bookmarklet-only. The extension and userscript instead
       still `"false"` with it off. The mock needs to derive `data-within-radius` from
       `emitRadiusInMiles` the way Sniffies does. Cover the extension and the userscript.
 
-## 3. Bot blocking (XHR + WebSocket filtering) — `core/src/bot-block-hook.ts`
+## 3. Bot blocking (XHR + WebSocket filtering) — `core/src/profile-filter-hook.ts`
+
+Covered by `e2e/tests/userscript/bot-block.spec.ts` (runs in CI) and
+`e2e/tests/extension/bot-block.spec.ts` (same checks; the extension's state arrives by message, so
+they poll). Fixtures: `e2e/fixtures/bot-block.ts`.
 
 Explicitly called out in the source as untestable against live Sniffies, but fully testable
 against a fixture that fakes the four surfaces:
 
-- [ ] `POST .../api/post-authentication` — blocked ids removed from `nearbyVisitors.visitors` and
+- [x] `POST .../api/post-authentication` — blocked ids removed from `nearbyVisitors.visitors` and
       `partialVisitorData`.
-- [ ] `GET .../api/v2/post-authentication/chat-data` — blocked conversations/userIds/
+- [x] `GET .../api/v2/post-authentication/chat-data` — blocked conversations/userIds/
       partialVisitorData removed.
-- [ ] `GET .../api/messages` — blocked-author messages and partialUsers removed.
-- [ ] Live WS frames (`userJoined`, `userUpdated`, `userAwake`, `userDisconnected`,
+- [x] `GET .../api/messages` — blocked-author messages and partialUsers removed.
+- [x] Live WS frames (`userJoined`, `userUpdated`, `userAwake`, `userDisconnected`,
       `userRemoved`, `newMsg`) from a blocked id never reach a page-registered
       `addEventListener("message", …)` or `.onmessage` handler.
-- [ ] API host variability: same path on two different `*.sniffies.com` hostnames both get
+      (`newConversation` isn't in the fixture's frames yet.)
+- [x] API host variability: same path on two different `*.sniffies.com` hostnames both get
       filtered (regression test for the exact bug called out in the code comments).
-- [ ] Toggling bot blocking off mid-session stops filtering new responses; toggling on filters
+      (Three: same-origin, `uswapi.sniffies.com` and `usw.api.sniffies.com`.)
+- [x] Toggling bot blocking off mid-session stops filtering new responses; toggling on filters
       again.
+      (Userscript through the panel's switch, extension through `chrome.storage`.)
 - [ ] Before the relay delivers real state (`enabled:false` default), responses pass through
-      unfiltered — no race-condition false blocking.
+      unfiltered — no race-condition false blocking. (Needs a request fired before the content
+      script's first message; Playwright's init scripts don't run in a reliable order against
+      content scripts, so this is only checked in the unit tests so far. "Already off at load" is
+      covered in both specs.)
 - [ ] Filtered ids get recorded and the popup's "N bots blocked in the last 24 hours" count
       reflects them (ties to `core/src/blocked-bot-log.ts` day-bucket logic — including a
       day-boundary case).
@@ -229,6 +246,7 @@ against a fixture that fakes the four surfaces:
   - [x] Userscript, open/close only (the geo and profile-border forms aren't exercised) — `e2e/tests/userscript/premium-panel.spec.ts`.
 - [ ] Double-injection guard: `window.__sniffiesInjected` prevents mounting twice if the script
       runs again.
+  - [x] Userscript, injected twice (one FAB, no errors, still filters once) — `e2e/tests/userscript/bot-block.spec.ts`.
   - [x] Bookmarklet (a second tap toggles the panel instead) — `e2e/tests/bookmarklet/fab-panel.spec.ts`.
 - [ ] `installHooks()` throwing doesn't prevent `mountUI` from still rendering a usable (if
       degraded) panel — verify the try/catch fallback path.
@@ -244,9 +262,18 @@ against a fixture that fakes the four surfaces:
 - [ ] All MAIN-world hooks (geo, user-id, bot-block) each guard against double-install
       (`__sniffiesPatched` etc.) — load the content scripts twice in the fixture and assert no
       duplicate patching/errors.
+  - [x] Userscript (all its hooks at once; checked through the bot-block filtering, which would
+        double-filter or throw) — `e2e/tests/userscript/bot-block.spec.ts`.
+  - [ ] Extension.
 - [ ] Console has no uncaught errors on a full "load fixture → click marker → open profile →
       toggle every feature" pass, for both packages.
   - [x] Bookmarklet — `e2e/tests/bookmarklet/console-errors.spec.ts`.
+  - [x] Userscript, including the filters' network paths and a live socket —
+        `e2e/tests/userscript/bot-block.spec.ts`.
+  - [ ] Extension.
+  - These tests stub `api.github.com` (the update check) and the userscript's `logInit` ping: left
+    alone, a rate-limited GitHub 403 or a CORS failure logs an error that has nothing to do
+    with the code under test.
 
 ---
 
@@ -266,6 +293,67 @@ other clients. See also §1 (geo), §2 (extension/userscript outside-boundary) a
       `subscriptionStatus: "active"`, future `end`) needs mocking.
   - [x] Userscript, active and free responses (the notice appears from the next load) — `e2e/tests/userscript/premium-panel.spec.ts`.
   - [ ] Chrome extension popup, and the bookmarklet.
+
+## 13. Profile filters — `core/src/profile-filter/`, `core/src/filter-menu/`
+
+Added after this todo was written (gender / height / weight / last-online in #65, the stat takeover
+since). The filters are applied to Sniffies' own network traffic, so they are testable the same way
+as §3. See `featureTODOs/Unspecified_Stat_Filters_TODO.md` §5 for what the stat takeover does and
+its manual checklist.
+
+Position / Body Type / Sexuality / Endowment are ours while the profile filters are on:
+
+- [x] The map request leaves without those stats, and Sniffies' own stats (age…) still go through —
+      `e2e/tests/{extension,userscript}/stat-takeover.spec.ts`.
+- [x] The saved filters Sniffies restores on login (`authenticate/current`) load with those stats
+      off.
+- [x] A profile with none listed is kept on the map when "none listed" is on, and hidden when off.
+- [x] Nothing is stripped or rewritten while the profile filters are off (extension).
+- [ ] Off for the userscript too.
+- [ ] The first request after a reload uses the filters mirror (`snp-applied-profile-filters`)
+      before the extension's message arrives — same ordering problem as the §3 race item.
+- [ ] Menu: our four rows replace Sniffies' (its own hidden and forced off), the sheets open (a wheel
+      with check marks for Position / Body Type / Sexuality; a range and cut / uncut for
+      Endowment), and picks survive a reload. Needs the Cruiser Stats menu markup in
+      `sniffies-mock.html` (copy it from `core/src/filter-menu/test-kit.ts`).
+- [ ] Sniffies' Cruiser Stats switch shows on while a pick is set, and Height / Weight stay enabled.
+
+The other filters:
+
+- [ ] Gender, Height, Weight and Last Online hide the right profiles in the map init, a live
+      `userJoined` frame and an Apply (`advanced-filter/search`) result; "include unspecified"
+      keeps the ones with no value. Unit-tested only.
+- [ ] "Reload to apply" appears when the filters differ from what the page loaded with, and a reload
+      clears it.
+- [ ] The master Profile filters switch (popup / userscript panel) turns every filter, and the
+      stat takeover, off and on.
+
+Drift (not part of the automated run): `site-contract.ts` doesn't list the markup these depend on yet
+(`label[for="stats.*"]`, `input#CRUISER_STATS`, `.smart-options-container`, `ui-menu-item-group`), and
+`check-har-schema.mjs` doesn't check the saved-filter shape
+(`user.private.options.filters.USERS[].enabledValues`).
+
+## 14. Features added since this was written, with no e2e coverage yet
+
+Each is a hook or UI under `core/src/` that already has unit tests; none has a spec here.
+
+- [ ] **Read receipts** — `read-receipt-hook.ts` (#86), wired in the extension's chat-view hook and the userscript. Needs
+      a fake chat thread and the read-receipt request surface.
+- [ ] **Hide sent photos** — `hide-photo-click-hook.ts`, `hide-photo-menu-hook.ts`, `sent-photos.ts`
+      (#69). The fixture page has the Hide Photo button's markup only in the canary's contract.
+- [ ] **Update prompt and version badge** — `update-check.ts`, `update-banner.ts`,
+      `version-badge.ts` (#16). Stub `api.github.com/**` with a newer release and assert the banner;
+      with an older one, none.
+- [ ] **Travel mode capture** — `city-search-hook.ts`, `city-search-status-hook.ts`,
+      `travel-capture-hook.ts`.
+- [ ] **Own-id and user-id logging** — `own-id-hook.ts`, `user-id-hook.ts`, `log-init.ts`
+      (the userscript's `logInit` ping), and the extension's relay for it.
+- [ ] **Selection limit override** — `selection-limit-hook.ts` (Position's four-pick cap lifted
+      while the profile filters are on). Unit-tested; no page-level check that Sniffies' picker model
+      is the shape it looks for.
+- [ ] **Plus hook** — `plus-hook.ts`; only the userscript's notice is covered (§12).
+- [ ] **Usage dashboard** — `server/` (#81, #84). Out of scope for these browser suites; it has its
+      own `server/tests`.
 
 ---
 

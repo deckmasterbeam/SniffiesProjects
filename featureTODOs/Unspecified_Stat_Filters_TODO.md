@@ -56,7 +56,7 @@ follow whatever the capture shows Sniffies sends for "no stats".
 ### UI
 
 A switch row under each of the four native stat rows ("Include profiles with none listed"), mounted
-via `ROWS` in `core/src/filter-menu-ui.ts` like Height / Weight. Disabled until the native stat has
+via `ROWS` in `core/src/filter-menu/menu.ts` like Height / Weight. Disabled until the native stat has
 a pick. Persisted in `ProfileFilters` next to `height` / `weight` (`parseProfileFilters` and
 `gateProfileFilters` already handle the pattern).
 
@@ -114,7 +114,7 @@ In DevTools → Network on sniffies.com, signed in:
 - [x] `statTakeover` (list rules + endowment rule) in `profile-filter.ts` + four stat filters in `core/src/profile-filter.ts` (`ProfileFilters`, parse, gate, rules).
 - [x] Request rewrite in `core/src/profile-filter-hook.ts`, with a getter for "which stats we own",
       wired like `raiseRadius` in the extension relay and userscript.
-- [x] Toggle rows (not disabled without a pick: no-op then) in `core/src/filter-menu-ui.ts`.
+- [x] Toggle rows (not disabled without a pick: no-op then) in `core/src/filter-menu/stat-row.ts`.
 - [x] Reload-persistence workaround: not needed.
 - [ ] `expectShape` warning when `filters.CRUISER_STATS` is missing from a request that should have it.
 
@@ -132,4 +132,32 @@ In DevTools → Network on sniffies.com, signed in:
 - [ ] Toggle off: only tops show, as native.
 - [ ] Same for Endowment, Body Type, Sexuality.
 - [ ] Reload keeps the native pick and our toggle.
+- [ ] Userscript (iOS Safari) behaves the same as the extension.
+
+### 5. Own rows for the four stats (manual check)
+
+Sniffies also filters the map in the browser (`passesCruiserStats` in its bundle) and hides anyone
+with no value for a stat it has on, so "include profiles with none listed" can't work on its row.
+So, while the profile filters are on, the four stats are **always** ours:
+
+- Sniffies' own rows are hidden and forced off; ours (`core/src/filter-menu/stat-row.ts`) stand in.
+  Picks live in `ProfileFilters.picks`, the "none listed" switch in `ProfileFilters.unlisted`.
+- The stats are stripped from every map request and matched client-side (`statTakeover`), so
+  Sniffies' server no longer pre-filters them.
+- Sniffies' saved filters (the `authenticate/current` response) are rewritten to load the stats as
+  off. What it had saved is kept once, to start our row from (Endowment is cm there, inches here).
+- The page hook reads `{ enabled, filters }` from `localStorage` (`snp-applied-profile-filters`),
+  which the extension keeps up to date, so it knows before its first request.
+
+Checks:
+
+- [ ] Open the menu: all four stats show our row, in Sniffies' style (white value text, check icon), and its own row for them is hidden.
+- [ ] Pick Body Type and Sexuality: the sheet is a wheel with "-" on top, check marks, "Choose up to 99: ..." and the none-listed switch.
+- [ ] Endowment sheet: range in inches (half-inch steps), cut / uncut, none-listed switch.
+- [ ] A profile with no endowment listed shows with "none listed" on, and is hidden with it off.
+- [ ] Reload: rows come back with their picks; the request has no `CRUISER_STATS` stats of ours; the Cruiser Stats switch shows on while a pick is set.
+- [ ] A pick Sniffies had saved before shows up in our row the first time only; clearing it stays cleared after a reload.
+- [ ] Clicking a row's checkbox clears its pick; clicking an empty one opens its sheet.
+- [ ] Age and the other native lines still work.
+- [ ] Profile filters off in the popup: Sniffies' own rows come back and nothing is stripped.
 - [ ] Userscript (iOS Safari) behaves the same as the extension.

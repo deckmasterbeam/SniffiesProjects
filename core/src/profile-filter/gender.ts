@@ -1,0 +1,50 @@
+import { type FilterableProfile, type SniffiesGender } from "../sniffies-api.js";
+import { type ProfileFilterRule } from "./matcher.js";
+
+export const GENDERS = ["male", "female", "nonbinary", "undefined"] as const;
+export type Gender = (typeof GENDERS)[number];
+
+export interface GenderFilter {
+  enabled: boolean;
+  /** The genders to show while enabled. Never empty. */
+  genders: Gender[];
+}
+
+export const DEFAULT_GENDER_FILTER: GenderFilter = { enabled: false, genders: [...GENDERS] };
+
+export const parseGenderFilter = (value: unknown): GenderFilter => {
+  const raw = (value ?? {}) as { enabled?: unknown; genders?: unknown };
+  const { genders } = raw;
+  const picked = Array.isArray(genders) ? GENDERS.filter((g) => genders.includes(g)) : [];
+  return { enabled: raw.enabled === true, genders: picked.length > 0 ? picked : [...GENDERS] };
+};
+
+export const allowedGenders = (filter: GenderFilter): readonly Gender[] =>
+  filter.enabled ? filter.genders : GENDERS;
+
+const WIRE_GENDERS: Partial<Record<Exclude<SniffiesGender, null>, Gender>> = {
+  man: "male",
+  woman: "female",
+  nonbinary: "nonbinary",
+};
+
+export const profileGender = (profile: FilterableProfile): Gender | null => {
+  if (!profile.data) {
+    return null;
+  }
+  const raw = profile.data.profile?.extended?.sexuality?.gender;
+  return (raw && WIRE_GENDERS[raw]) || "undefined";
+};
+
+export const genderRule = (getFilter: () => GenderFilter): ProfileFilterRule => ({
+  name: "gender",
+  mapOnly: true,
+  isActive: () => {
+    const { enabled, genders } = getFilter();
+    return enabled && genders.length > 0 && genders.length < GENDERS.length;
+  },
+  hides: (profile) => {
+    const gender = profileGender(profile);
+    return gender !== null && !getFilter().genders.includes(gender);
+  },
+});

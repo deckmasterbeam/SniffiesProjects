@@ -3,6 +3,7 @@ import {
   createLogger,
   installProfileFilterHook,
   installSelectionLimitOverride,
+  loadFiltersMirror,
   parseProfileFilters,
   profileFilterRules,
   statTakeover,
@@ -13,8 +14,10 @@ import {
   const log = createLogger("bot-block");
 
   let state: BotBlockState = { blockedIds: new Set(), enabled: false };
-  let profileFilters = parseProfileFilters(null);
-  let profileFiltersEnabled = false;
+  // The extension's message arrives after the page's first requests, so start from its mirror.
+  const mirror = loadFiltersMirror();
+  let profileFilters = mirror.filters;
+  let profileFiltersEnabled = mirror.enabled;
   let boundaryEnabled = false;
 
   window.addEventListener("message", (event) => {
@@ -38,7 +41,10 @@ import {
     });
   });
 
-  const takeover = statTakeover(() => profileFilters);
+  const takeover = statTakeover(
+    () => profileFilters,
+    () => profileFiltersEnabled,
+  );
   const result = installProfileFilterHook(
     [
       botBlockRule(
@@ -52,6 +58,7 @@ import {
     ],
     () => boundaryEnabled,
     takeover.rewriteBody,
+    takeover.disableSavedStats,
   );
   log("profile-filter hook installed", result);
 

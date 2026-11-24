@@ -7,6 +7,7 @@ import {
 } from "./profile-filter.js";
 import {
   ADVANCED_SEARCH_PATH,
+  AUTHENTICATE_CURRENT_PATH,
   CHAT_DATA_PATH,
   MESSAGES_PATH,
   POST_AUTH_PATH,
@@ -24,7 +25,13 @@ import {
   type NewMsgFrame,
 } from "./sniffies-api.js";
 
-type FilterKind = "post-authentication" | "soft-reload" | "search" | "chat-data" | "messages";
+type FilterKind =
+  | "post-authentication"
+  | "soft-reload"
+  | "search"
+  | "chat-data"
+  | "messages"
+  | "authenticate-current";
 
 const shapeLog = createLogger("profile-filter");
 const reportedShapes = new Set<string>();
@@ -159,6 +166,8 @@ const applyFilter = (kind: FilterKind, payload: unknown, matcher: ProfileMatcher
       return filterChatDataPayload(payload as ChatDataPayload, matcher);
     case "messages":
       return filterMessagesPayload(payload as MessagesPayload, matcher);
+    case "authenticate-current":
+      return payload;
   }
 };
 
@@ -267,6 +276,9 @@ const classifyXhrUrl = (url: string): FilterKind | null => {
     if (parsed.pathname === ADVANCED_SEARCH_PATH) {
       return "search";
     }
+    if (parsed.pathname === AUTHENTICATE_CURRENT_PATH) {
+      return "authenticate-current";
+    }
     if (parsed.pathname === CHAT_DATA_PATH) {
       return "chat-data";
     }
@@ -284,6 +296,7 @@ const installXhrFilter = (
   log: Logger,
   raiseRadius: () => boolean,
   rewriteBody?: (body: string) => string,
+  rewriteSaved?: (payload: unknown) => unknown,
 ): boolean => {
   const proto = XMLHttpRequest.prototype as PatchedXHRPrototype;
   if (proto.__sniffiesBotBlockPatched) {
@@ -325,10 +338,11 @@ const installXhrFilter = (
           if (cached) {
             return cached;
           }
-          const shouldFilter = matcher.isActive();
+          const shouldFilter = kind !== "authenticate-current" && matcher.isActive();
+          const shouldRestate = kind === "authenticate-current" && rewriteSaved !== undefined;
           const shouldRaise =
             raiseRadius() && (kind === "post-authentication" || kind === "soft-reload");
-          const shouldRewrite = shouldFilter || shouldRaise;
+          const shouldRewrite = shouldFilter || shouldRaise || shouldRestate;
           log(`${kind} response read`, {
             filtering: shouldFilter,
             ms: Math.round(performance.now()),
@@ -357,6 +371,9 @@ const installXhrFilter = (
             }
             if (shouldRaise) {
               json = raiseRadiusInPayload(json as NearbyVisitorsPayload);
+            }
+            if (shouldRestate) {
+              json = rewriteSaved!(json);
             }
             if (responseType !== "json") {
               text = JSON.stringify(json);
@@ -550,11 +567,12 @@ export const installProfileFilterHook = (
   rules: readonly ProfileFilterRule[],
   raiseRadius: () => boolean = () => false,
   rewriteBody?: (body: string) => string,
+  rewriteSaved?: (payload: unknown) => unknown,
 ): ProfileFilterHookResult => {
   const log = createLogger("profile-filter");
   const matcher = createProfileMatcher(rules);
   return {
-    xhrInstalled: installXhrFilter(matcher, log, raiseRadius, rewriteBody),
+    xhrInstalled: installXhrFilter(matcher, log, raiseRadius, rewriteBody, rewriteSaved),
     wsInstalled: installWebSocketFilter(matcher, log),
   };
 };
