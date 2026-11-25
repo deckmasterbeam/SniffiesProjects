@@ -1,3 +1,5 @@
+import { openRangeFlyout } from "@core/filter-menu/flyout.js";
+import { stripTestIds, type MountedRow, type Row } from "@core/filter-menu/row.js";
 import {
   HEIGHT_OPTIONS,
   rangeKey,
@@ -6,11 +8,9 @@ import {
   type ProfileFilters,
   type RangeFilter,
   type RangeOptions,
-} from "../profile-filter.js";
-import { stripTestIds, type MountedRow, type Row } from "./row.js";
-import { openRangeFlyout } from "./flyout.js";
-import { ENDOWMENT_FILTER_LABEL_SELECTOR } from "../sniffies-selectors.js";
-import { STRINGS } from "../strings.js";
+} from "@core/profile-filter.js";
+import { ENDOWMENT_FILTER_LABEL_SELECTOR } from "@core/sniffies-selectors.js";
+import { STRINGS } from "@core/strings.js";
 
 const buildRangeRow =
   (title: string, pick: (filters: ProfileFilters) => RangeFilter, options: RangeOptions) =>

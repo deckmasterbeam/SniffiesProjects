@@ -1,14 +1,14 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
-import { filterSearchPayload } from "./profile-filter-hook.js";
+import { filterSearchPayload } from "@core/profile-filter-hook.js";
 import {
   createProfileMatcher,
   loadNativePicks,
-  preferredUnits,
   parseProfileFilters,
+  preferredUnits,
   statTakeover,
   type ProfileFilters,
-} from "./profile-filter.js";
-import type { FilterableProfile, SniffiesPosition } from "./sniffies-api.js";
+} from "@core/profile-filter.js";
+import type { FilterableProfile, SniffiesPosition } from "@core/sniffies-api.js";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const profile = (
   id: string,
@@ -88,7 +88,7 @@ describe("statTakeover", () => {
     // The warning is once per page, so each test loads the module afresh.
     const freshRewrite = async (owns: boolean) => {
       vi.resetModules();
-      const mod = await import("./profile-filter.js");
+      const mod = await import("@core/profile-filter.js");
       return mod.statTakeover(
         () => mod.parseProfileFilters(null),
         () => owns,

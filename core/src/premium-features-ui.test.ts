@@ -1,12 +1,12 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { PREMIUM_FEATURES_HTML, wirePremiumFeaturesForm } from "./premium-features-ui.js";
-import type { PremiumFeaturesFormContract } from "./contracts.js";
-import { STRINGS } from "./strings.js";
+import type { PremiumFeaturesFormContract } from "@core/contracts.js";
+import { PREMIUM_FEATURES_HTML, wirePremiumFeaturesForm } from "@core/premium-features-ui.js";
 import {
   DEFAULT_PREMIUM_FEATURE_FLAGS,
   DEFAULT_PROFILE_BORDER_OPEN,
   type GeoOverride,
-} from "./settings.js";
+} from "@core/settings.js";
+import { STRINGS } from "@core/strings.js";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const NO_COORDS: GeoOverride = { enabled: false, latitude: 0, longitude: 0 };
 const CAPTURED: GeoOverride = { enabled: true, latitude: 47.6, longitude: -122.3 };

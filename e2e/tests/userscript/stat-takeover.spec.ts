@@ -1,11 +1,5 @@
 import { test } from "@playwright/test";
 import {
-  SNIFFIES_ORIGIN,
-  injectUserscript,
-  mockSniffiesPage,
-  seedUserscriptStorage,
-} from "../../fixtures/userscript.js";
-import {
   OWNED_FILTERS,
   expectNoneListedHidden,
   expectNoneListedKept,
@@ -13,6 +7,12 @@ import {
   expectSavedFiltersLoadedDisabled,
   mockSniffiesApi,
 } from "../../fixtures/stat-takeover.js";
+import {
+  SNIFFIES_ORIGIN,
+  injectUserscript,
+  mockSniffiesPage,
+  seedUserscriptStorage,
+} from "../../fixtures/userscript.js";
 
 const FILTERS_KEY = "sniffies-profile-filters";
 const ENABLED_KEY = "sniffies-profile-filters-enabled";

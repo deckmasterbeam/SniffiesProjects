@@ -1,8 +1,5 @@
-import { test, expect, type BrowserContext, type Page } from "@playwright/test";
-import { SNIFFIES_ORIGIN, injectUserscript, mockSniffiesPage } from "../../fixtures/userscript.js";
-import { mockApi, sendXhr } from "../../fixtures/sniffies-api.js";
+import { expect, test, type BrowserContext, type Page } from "@playwright/test";
 import { routeLiveSocket } from "../../fixtures/bot-block.js";
-import { joinedFrames, mapIds, responses } from "../../fixtures/profile-filters.js";
 import {
   OPTIONS_PATH,
   addFilterMenu,
@@ -11,6 +8,9 @@ import {
   seedLocalStorageOnce,
   wheelItems,
 } from "../../fixtures/filter-menu.js";
+import { joinedFrames, mapIds, responses } from "../../fixtures/profile-filters.js";
+import { mockApi, sendXhr } from "../../fixtures/sniffies-api.js";
+import { SNIFFIES_ORIGIN, injectUserscript, mockSniffiesPage } from "../../fixtures/userscript.js";
 
 const FILTERS_KEY = "sniffies-profile-filters";
 const ENABLED_KEY = "sniffies-profile-filters-enabled";

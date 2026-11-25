@@ -1,7 +1,7 @@
-import { allowedGenders, GENDERS, type Gender, type ProfileFilters } from "../profile-filter.js";
-import { stripTestIds, type MountedRow, type Row } from "./row.js";
-import { PROFILE_TYPE_FILTER_LABEL_SELECTOR } from "../sniffies-selectors.js";
-import { STRINGS } from "../strings.js";
+import { stripTestIds, type MountedRow, type Row } from "@core/filter-menu/row.js";
+import { allowedGenders, GENDERS, type Gender, type ProfileFilters } from "@core/profile-filter.js";
+import { PROFILE_TYPE_FILTER_LABEL_SELECTOR } from "@core/sniffies-selectors.js";
+import { STRINGS } from "@core/strings.js";
 
 const GENDER_ROW_ID = "snp-gender-filter";
 

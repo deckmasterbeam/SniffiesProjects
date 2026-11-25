@@ -1,6 +1,6 @@
+import { installProfileBorderRedirect } from "@core/profile-border-hook.js";
+import type { ProfileBorderOpen } from "@core/settings.js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { installProfileBorderRedirect } from "./profile-border-hook.js";
-import type { ProfileBorderOpen } from "./settings.js";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

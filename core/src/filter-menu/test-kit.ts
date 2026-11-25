@@ -1,12 +1,12 @@
-import { afterEach, beforeEach, vi } from "vitest";
-import { installProfileFiltersMenu } from "./menu.js";
-import { STRINGS } from "../strings.js";
+import { installProfileFiltersMenu } from "@core/filter-menu/menu.js";
 import {
   parseProfileFilters,
   type Gender,
   type ProfileFilters,
   type RangeFilter,
-} from "../profile-filter.js";
+} from "@core/profile-filter.js";
+import { STRINGS } from "@core/strings.js";
+import { afterEach, beforeEach, vi } from "vitest";
 
 export const statLine = (key: string, title: string, last = false): string => `
   <ui-menu-item-group variant="level3">

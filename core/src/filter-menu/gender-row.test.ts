@@ -1,17 +1,17 @@
-import { describe, expect, it, vi } from "vitest";
 import {
+  activeGenders,
+  applyButton,
+  clickGender,
   filters,
   gender,
-  row,
-  applyButton,
-  genderToggle,
   genderButtons,
-  activeGenders,
-  clickGender,
+  genderToggle,
+  row,
   useMenu,
-} from "./test-kit.js";
-import { STRINGS } from "../strings.js";
-import { GENDERS } from "../profile-filter.js";
+} from "@core/filter-menu/test-kit.js";
+import { GENDERS } from "@core/profile-filter.js";
+import { STRINGS } from "@core/strings.js";
+import { describe, expect, it, vi } from "vitest";
 
 describe("installProfileFiltersMenu", () => {
   const { install, onChange, lastChange } = useMenu();

@@ -1,12 +1,9 @@
-import { describe, expect, it, vi } from "vitest";
-import { parseProfileFilters, saveUnits, type ProfileFilters } from "../profile-filter.js";
-import { STRINGS } from "../strings.js";
 import {
   filters,
   isChecked,
   openSheet,
-  range,
   pick,
+  range,
   row,
   sheet,
   sheetButton,
@@ -15,7 +12,10 @@ import {
   useMenu,
   wheelItems,
   wheelLabels,
-} from "./test-kit.js";
+} from "@core/filter-menu/test-kit.js";
+import { parseProfileFilters, saveUnits, type ProfileFilters } from "@core/profile-filter.js";
+import { STRINGS } from "@core/strings.js";
+import { describe, expect, it, vi } from "vitest";
 
 describe("installProfileFiltersMenu", () => {
   const { install, lastChange } = useMenu();

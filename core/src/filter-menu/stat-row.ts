@@ -1,10 +1,12 @@
+import { openMultiFlyout, openRangeFlyout } from "@core/filter-menu/flyout.js";
+import { stripTestIds, type MountedRow, type Row } from "@core/filter-menu/row.js";
 import {
   clearNativePick,
   hasStatPick,
   isRangeStat,
   loadNativePicks,
-  RANGE_STAT_OPTIONS,
   ownsAnyStat,
+  RANGE_STAT_OPTIONS,
   rangeKey,
   STAT_IDS,
   STAT_KEYS,
@@ -14,10 +16,8 @@ import {
   type EndowmentPick,
   type ProfileFilters,
   type StatId,
-} from "../profile-filter.js";
-import { stripTestIds, type MountedRow, type Row } from "./row.js";
-import { openMultiFlyout, openRangeFlyout } from "./flyout.js";
-import { STRINGS } from "../strings.js";
+} from "@core/profile-filter.js";
+import { STRINGS } from "@core/strings.js";
 
 const nativeStatLine = (id: StatId): Element | null =>
   document.querySelector(`label[for="${STAT_KEYS[id]}"]`)?.closest("ui-menu-item-group") ?? null;

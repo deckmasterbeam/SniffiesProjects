@@ -1,6 +1,6 @@
 import type { Page } from "@playwright/test";
-import path from "node:path";
 import { readFileSync } from "node:fs";
+import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { SNIFFIES_ORIGIN } from "./constants.js";
 import { mockSniffiesPage, seedLocalStorage } from "./core.js";
@@ -11,7 +11,7 @@ const BOOKMARKLET_CODE = readFileSync(
   "utf-8",
 );
 
-export { SNIFFIES_ORIGIN, mockSniffiesPage, seedLocalStorage as seedBookmarkletStorage };
+export { mockSniffiesPage, seedLocalStorage as seedBookmarkletStorage, SNIFFIES_ORIGIN };
 
 /** Runs the built bookmarklet/dist/inject.js the same way tapping the bookmark does */
 export const tapBookmarklet = (page: Page) => page.addScriptTag({ content: BOOKMARKLET_CODE });

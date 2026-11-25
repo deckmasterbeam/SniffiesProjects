@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { resolve, dirname } from "node:path";
+import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitest/config";
 
@@ -19,6 +19,9 @@ export default defineConfig({
   resolve: {
     alias: {
       "@sniffies-projects/core": resolve(root, "core/src/index.ts"),
+      "@core": resolve(root, "core/src"),
+      "@icons": resolve(root, "client/icons"),
+      "@bookmarklet": resolve(root, "bookmarklet/src"),
     },
   },
   define: {

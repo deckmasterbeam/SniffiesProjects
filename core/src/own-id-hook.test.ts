@@ -1,5 +1,5 @@
+import { installOwnIdHook } from "@core/own-id-hook.js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { installOwnIdHook } from "./own-id-hook.js";
 
 const API = "https://uswapi.sniffies.com";
 const { open, send } = XMLHttpRequest.prototype;

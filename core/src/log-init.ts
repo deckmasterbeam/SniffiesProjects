@@ -1,5 +1,5 @@
-import type { LogInitOptions } from "./contracts.js";
-import { createLogger } from "./log.js";
+import type { LogInitOptions } from "@core/contracts.js";
+import { createLogger } from "@core/log.js";
 
 /**
  * Telemetry ping fired once per client init so the server can track which user ids are running which version

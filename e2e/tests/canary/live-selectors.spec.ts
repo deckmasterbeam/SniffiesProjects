@@ -1,4 +1,4 @@
-import { test, expect, type Page } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import { SELECTOR_CONTRACT } from "../../site-contract.js";
 
 // Drift canary: checks that the DOM shapes our extension code depends on

@@ -1,6 +1,3 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
-import { onlineSinceLabel } from "../profile-filter.js";
-import { STRINGS } from "../strings.js";
 import {
   applyButton,
   filters,
@@ -11,7 +8,10 @@ import {
   sheetButton,
   useMenu,
   wheelLabels,
-} from "./test-kit.js";
+} from "@core/filter-menu/test-kit.js";
+import { onlineSinceLabel } from "@core/profile-filter.js";
+import { STRINGS } from "@core/strings.js";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 describe("installProfileFiltersMenu", () => {
   const { install, onChange, lastChange } = useMenu();

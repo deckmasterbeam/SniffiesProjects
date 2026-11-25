@@ -1,4 +1,3 @@
-import { describe, expect, it, vi } from "vitest";
 import {
   apiOriginFromPastRequests,
   findConversationWith,
@@ -6,8 +5,9 @@ import {
   lookupChat,
   setAllPhotosHidden,
   type Chat,
-} from "./sent-photos.js";
-import type { ChatDataPayload } from "./sniffies-api.js";
+} from "@core/sent-photos.js";
+import type { ChatDataPayload } from "@core/sniffies-api.js";
+import { describe, expect, it, vi } from "vitest";
 
 const ME = "me";
 const THEM = "them";

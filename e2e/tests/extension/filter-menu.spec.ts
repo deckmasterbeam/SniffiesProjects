@@ -1,16 +1,16 @@
 import type { BrowserContext, Page } from "@playwright/test";
-import { test, expect, SNIFFIES_ORIGIN } from "../../fixtures/extension.js";
-import { setExtensionStorage } from "../../fixtures/storage.js";
-import { mockApi, sendXhr } from "../../fixtures/sniffies-api.js";
 import { routeLiveSocket } from "../../fixtures/bot-block.js";
-import { joinedFrames, mapIds, responses } from "../../fixtures/profile-filters.js";
+import { expect, SNIFFIES_ORIGIN, test } from "../../fixtures/extension.js";
 import {
-  OPTIONS_PATH,
   addFilterMenu,
   applyAndReload,
   neighbour,
+  OPTIONS_PATH,
   wheelItems,
 } from "../../fixtures/filter-menu.js";
+import { joinedFrames, mapIds, responses } from "../../fixtures/profile-filters.js";
+import { mockApi, sendXhr } from "../../fixtures/sniffies-api.js";
+import { setExtensionStorage } from "../../fixtures/storage.js";
 
 /** Same cases as `tests/userscript/filter-menu.spec.ts`, against the real extension. */
 

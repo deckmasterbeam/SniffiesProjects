@@ -1,5 +1,5 @@
+import { preferredUnits, saveUnits, unitsFromAccount } from "@core/profile-filter/units.js";
 import { afterEach, describe, expect, it } from "vitest";
-import { preferredUnits, saveUnits, unitsFromAccount } from "./units.js";
 
 const account = (options: unknown, countryCode?: string): unknown => ({
   user: { private: { options }, data: { profile: { countryCode } } },

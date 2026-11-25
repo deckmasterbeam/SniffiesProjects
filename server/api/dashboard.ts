@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { json, requireFeatureFlag, requireDb } from "./_shared.js";
+import { json, requireDb, requireFeatureFlag } from "./_shared.js";
 
 const esc = (v: unknown): string => String(v).replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 
@@ -18,8 +18,6 @@ const handler = async (req: VercelRequest, res: VercelResponse): Promise<void> =
     return;
   }
 
-  // Only the separately-deployed, Vercel-Authentication-protected project sets
-  // this; the public API project leaves it unset so this 404s there.
   if (!requireFeatureFlag(res, "DASHBOARD_ENABLED")) {
     return;
   }

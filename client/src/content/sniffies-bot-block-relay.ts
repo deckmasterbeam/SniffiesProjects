@@ -1,4 +1,10 @@
 import {
+  SETTINGS_KEYS,
+  getLocalSettings,
+  recordBlockedBotEvent,
+  setProfileFilters,
+} from "@client/shared/settings.js";
+import {
   createLogger,
   gateProfileFilters,
   installProfileFiltersMenu,
@@ -7,12 +13,6 @@ import {
   type ExtensionLocalSettings,
   type ProfileFilters,
 } from "@sniffies-projects/core";
-import {
-  SETTINGS_KEYS,
-  getLocalSettings,
-  recordBlockedBotEvent,
-  setProfileFilters,
-} from "../shared/settings.js";
 
 const log = createLogger("bot-block-relay");
 

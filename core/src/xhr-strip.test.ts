@@ -1,6 +1,6 @@
+import { installProfileFilterHook } from "@core/profile-filter-hook.js";
+import { parseProfileFilters, statTakeover, type ProfileFilters } from "@core/profile-filter.js";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { installProfileFilterHook } from "./profile-filter-hook.js";
-import { parseProfileFilters, statTakeover, type ProfileFilters } from "./profile-filter.js";
 
 const sent: unknown[] = [];
 

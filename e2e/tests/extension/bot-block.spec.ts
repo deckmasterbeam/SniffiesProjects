@@ -1,18 +1,18 @@
 import type { BrowserContext, Page } from "@playwright/test";
-import { test, expect, SNIFFIES_ORIGIN } from "../../fixtures/extension.js";
-import { setExtensionStorage } from "../../fixtures/storage.js";
-import { API_ORIGINS, mockApi } from "../../fixtures/sniffies-api.js";
 import {
   BOT_ID,
   BOT_RESPONSES,
-  FRAMES_FROM_OK,
-  OK_ID,
   chatIds,
   deliverFrames,
+  FRAMES_FROM_OK,
   mapIds,
+  OK_ID,
   routeLiveSocket,
   threadIds,
 } from "../../fixtures/bot-block.js";
+import { expect, SNIFFIES_ORIGIN, test } from "../../fixtures/extension.js";
+import { API_ORIGINS, mockApi } from "../../fixtures/sniffies-api.js";
+import { setExtensionStorage } from "../../fixtures/storage.js";
 
 /**
  * Same checks as `tests/userscript/bot-block.spec.ts`, against the real extension: the content

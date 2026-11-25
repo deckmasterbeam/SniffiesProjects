@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { json, applyCors, requireClientAuth, requireDb } from "./_shared.js";
+import { applyCors, json, requireClientAuth, requireDb } from "./_shared.js";
 
 const CLIENT_TYPES = ["chrome-client", "userscript", "bookmarklet"] as const;
 type ClientType = (typeof CLIENT_TYPES)[number];

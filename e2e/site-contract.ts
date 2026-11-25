@@ -88,8 +88,7 @@ const SELECTOR_METADATA: Record<SniffiesSelectorName, SelectorMeta> = {
     source: "core/src/read-receipt-hook.ts",
   },
   OWN_MARKER_SELECTOR: {
-    description:
-      "The account's own map marker. Its element id is the user id the bookmarklet logs",
+    description: "The account's own map marker. Its element id is the user id the bookmarklet logs",
     source: "core/src/own-id-dom.ts",
   },
 };

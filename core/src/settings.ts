@@ -1,5 +1,5 @@
-import type { BlockedBotDailyLog } from "./blocked-bot-log.js";
-import { DEFAULT_PROFILE_FILTERS, type ProfileFilters } from "./profile-filter.js";
+import type { BlockedBotDailyLog } from "@core/blocked-bot-log.js";
+import { DEFAULT_PROFILE_FILTERS, type ProfileFilters } from "@core/profile-filter.js";
 
 export interface GeoOverride {
   enabled: boolean;

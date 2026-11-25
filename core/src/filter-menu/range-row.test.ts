@@ -1,22 +1,22 @@
-import { describe, expect, it, vi } from "vitest";
 import {
-  filters,
-  range,
-  row,
   applyButton,
-  statCheckbox,
-  statValue,
+  filters,
   isChecked,
   openSheet,
-  sheet,
-  wheelLabels,
   pick,
   picked,
+  range,
+  row,
+  sheet,
   sheetButton,
+  statCheckbox,
+  statValue,
   useMenu,
-} from "./test-kit.js";
-import { saveUnits } from "../profile-filter.js";
-import { STRINGS } from "../strings.js";
+  wheelLabels,
+} from "@core/filter-menu/test-kit.js";
+import { saveUnits } from "@core/profile-filter.js";
+import { STRINGS } from "@core/strings.js";
+import { describe, expect, it, vi } from "vitest";
 
 describe("installProfileFiltersMenu", () => {
   const { install, onChange, lastChange } = useMenu();

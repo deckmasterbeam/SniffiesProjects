@@ -1,7 +1,7 @@
-import { createLogger } from "./log.js";
-import { MESSAGES_PATH, isSniffiesApiHost, type MessagesPayload } from "./sniffies-api.js";
-import { CHAT_MESSAGE_CONTAINER_SELECTOR, READ_MARKER_SELECTOR } from "./sniffies-selectors.js";
-import { STRINGS } from "./strings.js";
+import { createLogger } from "@core/log.js";
+import { MESSAGES_PATH, isSniffiesApiHost, type MessagesPayload } from "@core/sniffies-api.js";
+import { CHAT_MESSAGE_CONTAINER_SELECTOR, READ_MARKER_SELECTOR } from "@core/sniffies-selectors.js";
+import { STRINGS } from "@core/strings.js";
 
 const log = createLogger("read-receipt");
 

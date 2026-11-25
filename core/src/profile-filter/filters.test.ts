@@ -1,8 +1,18 @@
+import {
+  DEFAULT_PROFILE_FILTERS,
+  gateProfileFilters,
+  loadFiltersMirror,
+  parseProfileFilters,
+  saveFiltersMirror,
+} from "@core/profile-filter/filters.js";
+import {
+  hasStatPick,
+  ownsAnyStat,
+  statKey,
+  statPickLabel,
+} from "@core/profile-filter/stat-picks.js";
+import { STRINGS } from "@core/strings.js";
 import { beforeEach, describe, expect, it } from "vitest";
-import { STRINGS } from "../strings.js";
-import { DEFAULT_PROFILE_FILTERS, gateProfileFilters, parseProfileFilters } from "./filters.js";
-import { loadFiltersMirror, saveFiltersMirror } from "./filters.js";
-import { hasStatPick, ownsAnyStat, statKey, statPickLabel } from "./stat-picks.js";
 
 describe("profile filters", () => {
   beforeEach(() => localStorage.clear());

@@ -1,9 +1,13 @@
 import { DEFAULT_PROFILE_FILTERS } from "@sniffies-projects/core";
+import { installReportFeature, refreshBlockedBotsIfStale } from "@userscript/report.js";
+import {
+  getBlockedBots,
+  setBlockedBots,
+  setBotBlockingEnabled,
+} from "@userscript/shared/local-storage.js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { installReportFeature, refreshBlockedBotsIfStale } from "./report.js";
-import { getBlockedBots, setBlockedBots, setBotBlockingEnabled } from "./shared/local-storage.js";
 
-vi.mock("./shared/env.js", () => ({
+vi.mock("@userscript/shared/env.js", () => ({
   SERVER_BASE: "https://server.example",
   CLIENT_SECRET: "test-secret",
   VERSION: "1.2.3",

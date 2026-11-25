@@ -1,5 +1,5 @@
-import { STRINGS } from "../strings.js";
-import { type ProfileFilterRule } from "./matcher.js";
+import { type ProfileFilterRule } from "@core/profile-filter/matcher.js";
+import { STRINGS } from "@core/strings.js";
 
 export interface OnlineFilter {
   enabled: boolean;

@@ -1,7 +1,7 @@
 // Generates public/index.html at build time so its version stays in sync
 // with package.json. Runs as part of the Vercel build step (see package.json's "build").
 
-import { readFileSync, mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 
 const { version } = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
 

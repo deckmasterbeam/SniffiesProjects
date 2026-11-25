@@ -1,5 +1,5 @@
-import { createLogger } from "./log.js";
-import { WS_HOST, WS_USER_ID_PARAM } from "./sniffies-api.js";
+import { createLogger } from "@core/log.js";
+import { WS_HOST, WS_USER_ID_PARAM } from "@core/sniffies-api.js";
 
 type PatchedWebSocketCtor = typeof WebSocket & { __sniffiesUserIdPatched?: boolean };
 

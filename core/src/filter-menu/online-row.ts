@@ -1,3 +1,5 @@
+import { openChoiceFlyout } from "@core/filter-menu/flyout.js";
+import { stripTestIds, type MountedRow, type Row } from "@core/filter-menu/row.js";
 import {
   clockText,
   ONLINE_MINUTES,
@@ -5,11 +7,9 @@ import {
   onlineLabel,
   onlineSinceLabel,
   type ProfileFilters,
-} from "../profile-filter.js";
-import { stripTestIds, type MountedRow, type Row } from "./row.js";
-import { openChoiceFlyout } from "./flyout.js";
-import { CONNECTED_NOW_FILTER_LABEL_SELECTOR } from "../sniffies-selectors.js";
-import { STRINGS } from "../strings.js";
+} from "@core/profile-filter.js";
+import { CONNECTED_NOW_FILTER_LABEL_SELECTOR } from "@core/sniffies-selectors.js";
+import { STRINGS } from "@core/strings.js";
 
 const PAGE_LOADED_AT = Date.now();
 

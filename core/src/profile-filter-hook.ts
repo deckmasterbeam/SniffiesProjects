@@ -1,10 +1,10 @@
-import { createLogger, type Logger } from "./log.js";
+import { createLogger, type Logger } from "@core/log.js";
 import {
   createProfileMatcher,
   type ProfileChecks,
   type ProfileFilterRule,
   type ProfileMatcher,
-} from "./profile-filter.js";
+} from "@core/profile-filter.js";
 import {
   ADVANCED_SEARCH_PATH,
   AUTHENTICATE_CURRENT_PATH,
@@ -23,7 +23,7 @@ import {
   type NearbyVisitorsPayload,
   type NewConversationFrame,
   type NewMsgFrame,
-} from "./sniffies-api.js";
+} from "@core/sniffies-api.js";
 
 type FilterKind =
   | "post-authentication"

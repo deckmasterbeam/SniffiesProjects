@@ -1,4 +1,4 @@
-import { context, build } from "esbuild";
+import { build, context } from "esbuild";
 import { spawnSync } from "node:child_process";
 import { mkdir, readFile, rm } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
@@ -26,6 +26,9 @@ const buildOptions = {
   logLevel: "info",
   alias: {
     "@sniffies-projects/core": resolve(root, "../core/src/index.ts"),
+    "@core": resolve(root, "../core/src"),
+    "@icons": resolve(root, "../client/icons"),
+    "@bookmarklet": resolve(root, "src"),
   },
   loader: {
     ".css": "text",

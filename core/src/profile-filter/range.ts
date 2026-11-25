@@ -1,13 +1,13 @@
+import { type ProfileFilterRule } from "@core/profile-filter/matcher.js";
+import { preferredUnits } from "@core/profile-filter/units.js";
 import {
   CM_PER_INCH,
   HEIGHT_LIMITS,
   LB_PER_KG,
   WEIGHT_LIMITS,
   type FilterableProfile,
-} from "../sniffies-api.js";
-import { STRINGS } from "../strings.js";
-import { type ProfileFilterRule } from "./matcher.js";
-import { preferredUnits } from "./units.js";
+} from "@core/sniffies-api.js";
+import { STRINGS } from "@core/strings.js";
 
 export interface RangeFilter {
   enabled: boolean;

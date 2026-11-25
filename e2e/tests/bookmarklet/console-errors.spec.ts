@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import { SNIFFIES_ORIGIN, mockSniffiesPage, tapBookmarklet } from "../../fixtures/bookmarklet.js";
 
 test("full pass produces no console or page errors", async ({ page, context }) => {

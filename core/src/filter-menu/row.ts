@@ -1,4 +1,4 @@
-import type { ProfileFilters } from "../profile-filter.js";
+import type { ProfileFilters } from "@core/profile-filter.js";
 
 export interface MountedRow {
   root: HTMLElement;

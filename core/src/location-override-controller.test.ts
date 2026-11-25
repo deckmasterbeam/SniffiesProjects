@@ -1,6 +1,6 @@
+import { installLocationOverrideController } from "@core/location-override-controller.js";
+import type { GeoOverride } from "@core/settings.js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { installLocationOverrideController } from "./location-override-controller.js";
-import type { GeoOverride } from "./settings.js";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

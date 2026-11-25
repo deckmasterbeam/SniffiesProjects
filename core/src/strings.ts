@@ -1,4 +1,4 @@
-import type { SniffiesBodyType, SniffiesPosition, SniffiesSexuality } from "./sniffies-api.js";
+import type { SniffiesBodyType, SniffiesPosition, SniffiesSexuality } from "@core/sniffies-api.js";
 
 export const STRINGS = {
   updateBanner: {

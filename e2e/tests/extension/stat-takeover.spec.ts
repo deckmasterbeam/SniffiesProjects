@@ -1,14 +1,14 @@
 import type { BrowserContext, Page } from "@playwright/test";
-import { test, expect, SNIFFIES_ORIGIN } from "../../fixtures/extension.js";
-import { setExtensionStorage } from "../../fixtures/storage.js";
+import { expect, SNIFFIES_ORIGIN, test } from "../../fixtures/extension.js";
 import {
-  OWNED_FILTERS,
   expectNoneListedHidden,
   expectNoneListedKept,
   expectRequestStripped,
   expectSavedFiltersLoadedDisabled,
   mockSniffiesApi,
+  OWNED_FILTERS,
 } from "../../fixtures/stat-takeover.js";
+import { setExtensionStorage } from "../../fixtures/storage.js";
 
 const MIRROR = "snp-applied-profile-filters";
 

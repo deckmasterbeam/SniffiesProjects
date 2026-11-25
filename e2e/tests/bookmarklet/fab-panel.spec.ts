@@ -1,9 +1,9 @@
-import { test, expect } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import {
   SNIFFIES_ORIGIN,
   addIconHolder,
-  removeIconHolder,
   mockSniffiesPage,
+  removeIconHolder,
   tapBookmarklet,
 } from "../../fixtures/bookmarklet.js";
 

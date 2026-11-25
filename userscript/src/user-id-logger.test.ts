@@ -1,7 +1,7 @@
+import { installUserIdLogging } from "@userscript/user-id-logger.js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { installUserIdLogging } from "./user-id-logger.js";
 
-vi.mock("./shared/env.js", () => ({
+vi.mock("@userscript/shared/env.js", () => ({
   SERVER_BASE: "https://server.example",
   CLIENT_SECRET: "test-secret",
   VERSION: "1.2.3",

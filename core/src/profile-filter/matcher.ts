@@ -1,6 +1,6 @@
-import type { BotBlockState } from "../contracts.js";
-import { createLogger } from "../log.js";
-import { type FilterableProfile } from "../sniffies-api.js";
+import type { BotBlockState } from "@core/contracts.js";
+import { createLogger } from "@core/log.js";
+import { type FilterableProfile } from "@core/sniffies-api.js";
 
 export interface ProfileFilterRule {
   name: string;

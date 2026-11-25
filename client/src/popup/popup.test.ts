@@ -1,5 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { STRINGS } from "@sniffies-projects/core";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const POPUP_HTML = `
   <button id="open-settings"></button>
@@ -49,7 +49,7 @@ const loadModule = async () => {
     writable: true,
     configurable: true,
   });
-  await import("./popup.js");
+  await import("@client/popup/popup.js");
   await flushPromises();
 };
 
@@ -61,12 +61,13 @@ describe("popup — settings button", () => {
 
   it("is shown in debug builds", async () => {
     vi.resetModules();
-    vi.doMock("../shared/env.js", async () => {
-      const actual = await vi.importActual<typeof import("../shared/env.js")>("../shared/env.js");
+    vi.doMock("@client/shared/env.js", async () => {
+      const actual =
+        await vi.importActual<typeof import("@client/shared/env.js")>("@client/shared/env.js");
       return { ...actual, DEBUG: true };
     });
     document.body.innerHTML = POPUP_HTML;
-    await import("./popup.js");
+    await import("@client/popup/popup.js");
     await flushPromises();
     vi.doUnmock("../shared/env.js");
     expect(document.getElementById("open-settings")!.style.display).toBe("");
@@ -95,7 +96,7 @@ const loadWithStored = async (stored: Record<string, unknown>) => {
   vi.resetModules();
   (chrome.storage.local.get as ReturnType<typeof vi.fn>).mockResolvedValueOnce(stored);
   document.body.innerHTML = POPUP_HTML;
-  await import("./popup.js");
+  await import("@client/popup/popup.js");
   await flushPromises();
 };
 
@@ -178,7 +179,7 @@ describe("popup — favorites", () => {
       writable: true,
       configurable: true,
     });
-    const mod = await import("./popup.js");
+    const mod = await import("@client/popup/popup.js");
     await flushPromises();
     const { favoritesEnabled } = getElements();
     favoritesEnabled.checked = true;

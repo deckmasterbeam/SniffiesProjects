@@ -1,8 +1,6 @@
 import type { BrowserContext, Page } from "@playwright/test";
-import { test, expect, SNIFFIES_ORIGIN } from "../../fixtures/extension.js";
-import { setExtensionStorage } from "../../fixtures/storage.js";
-import { mockApi } from "../../fixtures/sniffies-api.js";
 import { deliverFrames, routeLiveSocket } from "../../fixtures/bot-block.js";
+import { expect, SNIFFIES_ORIGIN, test } from "../../fixtures/extension.js";
 import {
   CASES,
   joinedFrames,
@@ -11,6 +9,8 @@ import {
   responses,
   searchIds,
 } from "../../fixtures/profile-filters.js";
+import { mockApi } from "../../fixtures/sniffies-api.js";
+import { setExtensionStorage } from "../../fixtures/storage.js";
 
 /**
  * Same cases as `tests/userscript/profile-filters.spec.ts`, against the real extension: its state

@@ -1,5 +1,5 @@
+import { watchOwnIdInDom } from "@core/own-id-dom.js";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { watchOwnIdInDom } from "./own-id-dom.js";
 
 const marker = (id: string, testid = "cv-marker-container"): string =>
   `<div data-testid="${testid}" id="${id}"></div>`;

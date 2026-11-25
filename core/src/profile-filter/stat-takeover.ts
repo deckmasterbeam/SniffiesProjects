@@ -1,22 +1,22 @@
-import { createLogger } from "../log.js";
-import { type FilterableProfile } from "../sniffies-api.js";
+import { createLogger } from "@core/log.js";
+import { type ProfileFilters } from "@core/profile-filter/filters.js";
+import { type ProfileFilterRule } from "@core/profile-filter/matcher.js";
 import {
-  STAT_IDS,
-  STAT_KEYS,
   type EndowmentPick,
+  type ListStatId,
   RANGE_STAT_TOP,
   type RangePick,
   type RangeStatId,
-  type ListStatId,
+  STAT_IDS,
+  STAT_KEYS,
   type StatPicks,
   hasStatPick,
-  parseStatPicks,
   loadNativePicks,
+  parseStatPicks,
   saveNativePicks,
-} from "./stat-picks.js";
-import { type ProfileFilterRule } from "./matcher.js";
-import { type ProfileFilters } from "./filters.js";
-import { saveUnits, unitsFromAccount } from "./units.js";
+} from "@core/profile-filter/stat-picks.js";
+import { saveUnits, unitsFromAccount } from "@core/profile-filter/units.js";
+import { type FilterableProfile } from "@core/sniffies-api.js";
 
 const log = createLogger("profile-filter");
 let reportedNoFilters = false;

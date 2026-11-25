@@ -3,8 +3,8 @@ import {
   unitChoices,
   type RangeFilter,
   type RangeOptions,
-} from "../profile-filter.js";
-import { STRINGS } from "../strings.js";
+} from "@core/profile-filter.js";
+import { STRINGS } from "@core/strings.js";
 
 const FLYOUT_ID = "snp-range-flyout";
 // Keep in sync with .snp-wheel-item's height in menu.css.

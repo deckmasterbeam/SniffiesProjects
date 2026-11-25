@@ -17,6 +17,9 @@ jobs:
       - name: Install dependencies
         run: node scripts/install-all.mjs
 
+      - name: Lint (absolute imports)
+        run: yarn lint
+
       - name: Run unit tests
         run: node scripts/test-all.mjs
 

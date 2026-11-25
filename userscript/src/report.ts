@@ -3,13 +3,13 @@ import {
   gateProfileFilters,
   installProfileFilterHook,
   installReportButtonInjection,
-  refreshBlockedBotsIfStale as refreshBlockedBotsIfStaleShared,
-  type BotBlockState,
   profileFilterRules,
+  refreshBlockedBotsIfStale as refreshBlockedBotsIfStaleShared,
   statTakeover,
+  type BotBlockState,
   type ProfileFilters,
 } from "@sniffies-projects/core";
-import { CLIENT_SECRET, SERVER_BASE } from "./shared/env.js";
+import { CLIENT_SECRET, SERVER_BASE } from "@userscript/shared/env.js";
 import {
   getBlockedBots,
   getBlockedBotsFetchedAt,
@@ -18,7 +18,7 @@ import {
   getProfileFiltersEnabled,
   recordBlockedBotEvent,
   setBlockedBots,
-} from "./shared/local-storage.js";
+} from "@userscript/shared/local-storage.js";
 
 export interface ReportFeatureState {
   currentSniffiesUserId: string;

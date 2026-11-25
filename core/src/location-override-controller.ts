@@ -1,11 +1,11 @@
-import type { LocationOverrideControllerOptions } from "./contracts.js";
-import { installCitySearchXhrObserver } from "./city-search-hook.js";
-import { installCitySearchStatusUI } from "./city-search-status-hook.js";
-import { installGeoHook } from "./geo-hook.js";
-import { hasCapturedCoords, type GeoOverride } from "./settings.js";
-import { LOCATION_PATH, type LocationPutBody } from "./sniffies-api.js";
-import { extractTravelDestination, installTravelClickArmer } from "./travel-capture-hook.js";
-import { createLogger } from "./log.js";
+import { installCitySearchXhrObserver } from "@core/city-search-hook.js";
+import { installCitySearchStatusUI } from "@core/city-search-status-hook.js";
+import type { LocationOverrideControllerOptions } from "@core/contracts.js";
+import { installGeoHook } from "@core/geo-hook.js";
+import { createLogger } from "@core/log.js";
+import { hasCapturedCoords, type GeoOverride } from "@core/settings.js";
+import { LOCATION_PATH, type LocationPutBody } from "@core/sniffies-api.js";
+import { extractTravelDestination, installTravelClickArmer } from "@core/travel-capture-hook.js";
 
 const log = createLogger("location-override");
 

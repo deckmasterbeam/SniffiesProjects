@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { json, applyCors, requireClientAuth, requireDb } from "./_shared.js";
+import { applyCors, json, requireClientAuth, requireDb } from "./_shared.js";
 
 const REPORT_TYPES = ["bot_suspected"] as const;
 type ReportType = (typeof REPORT_TYPES)[number];

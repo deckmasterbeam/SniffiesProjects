@@ -1,5 +1,12 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { BotBlockState } from "./contracts.js";
+import type { BotBlockState } from "@core/contracts.js";
+import {
+  filterChatDataPayload,
+  filterMessagesPayload,
+  filterPostAuthenticationPayload,
+  installProfileFilterHook,
+  raiseRadiusInPayload,
+  shouldFilterWebSocketFrame,
+} from "@core/profile-filter-hook.js";
 import {
   botBlockRule,
   createProfileMatcher,
@@ -10,16 +17,9 @@ import {
   profileFilterRules,
   type Gender,
   type ProfileFilters,
-} from "./profile-filter.js";
-import {
-  filterChatDataPayload,
-  filterMessagesPayload,
-  filterPostAuthenticationPayload,
-  installProfileFilterHook,
-  raiseRadiusInPayload,
-  shouldFilterWebSocketFrame,
-} from "./profile-filter-hook.js";
-import type { SniffiesGender } from "./sniffies-api.js";
+} from "@core/profile-filter.js";
+import type { SniffiesGender } from "@core/sniffies-api.js";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const blocking = (ids: string[]) =>
   createProfileMatcher([botBlockRule(() => ({ blockedIds: new Set(ids), enabled: true }))]);
@@ -973,7 +973,7 @@ describe("online rule", () => {
 describe("unexpected profile shape", () => {
   it("warns once per missing field, never for fields that are merely null", async () => {
     vi.resetModules();
-    const { createProfileMatcher: create } = await import("./profile-filter.js");
+    const { createProfileMatcher: create } = await import("@core/profile-filter.js");
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
     const full = (_id: string) => ({
       _id,
@@ -1000,8 +1000,8 @@ describe("unexpected profile shape", () => {
 describe("unexpected payload shape", () => {
   it("warns once per missing list or malformed frame", async () => {
     vi.resetModules();
-    const hook = await import("./profile-filter-hook.js");
-    const { createProfileMatcher: create } = await import("./profile-filter.js");
+    const hook = await import("@core/profile-filter-hook.js");
+    const { createProfileMatcher: create } = await import("@core/profile-filter.js");
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
     const matcher = create([]);
     const texts = () => warnSpy.mock.calls.map((c) => c.join(" "));
@@ -1018,7 +1018,7 @@ describe("unexpected payload shape", () => {
     expect(texts()).toHaveLength(2);
     expect(texts()[0]).toContain("no nearbyVisitors.visitors list");
 
-    const { genderRule: gender } = await import("./profile-filter.js");
+    const { genderRule: gender } = await import("@core/profile-filter.js");
     const active = create([gender(() => ({ enabled: true, genders: ["woman"] }))]);
     hook.shouldFilterWebSocketFrame(JSON.stringify({ eventName: "userAwake", data: 5 }), active);
     hook.shouldFilterWebSocketFrame(JSON.stringify({ eventName: "userJoined", data: {} }), active);

@@ -1,5 +1,5 @@
+import { installSelectionLimitOverride } from "@core/selection-limit-hook.js";
 import { afterEach, describe, expect, it } from "vitest";
-import { installSelectionLimitOverride } from "./selection-limit-hook.js";
 
 type WithLimit = { maxSelections?: number };
 

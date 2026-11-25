@@ -3,16 +3,26 @@ import {
   DEFAULT_GENDER_FILTER,
   genderRule,
   parseGenderFilter,
-} from "./gender.js";
-import { type ProfileFilterRule } from "./matcher.js";
+} from "@core/profile-filter/gender.js";
+import { type ProfileFilterRule } from "@core/profile-filter/matcher.js";
 import {
   type OnlineFilter,
   DEFAULT_ONLINE_FILTER,
   onlineRule,
   parseOnlineFilter,
-} from "./online.js";
-import { type RangeFilter, defaultRangeFilter, parseRangeFilter, rangeRule } from "./range.js";
-import { type StatId, type StatPicks, parseStatPicks, STAT_IDS } from "./stat-picks.js";
+} from "@core/profile-filter/online.js";
+import {
+  type RangeFilter,
+  defaultRangeFilter,
+  parseRangeFilter,
+  rangeRule,
+} from "@core/profile-filter/range.js";
+import {
+  type StatId,
+  type StatPicks,
+  parseStatPicks,
+  STAT_IDS,
+} from "@core/profile-filter/stat-picks.js";
 
 export interface ProfileFilters {
   unlisted: Record<StatId, boolean>;

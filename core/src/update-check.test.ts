@@ -1,5 +1,5 @@
+import { fetchLatestVersion, isNewerVersion, isUpdateAvailable } from "@core/update-check.js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { fetchLatestVersion, isNewerVersion, isUpdateAvailable } from "./update-check.js";
 
 describe("isNewerVersion", () => {
   it("returns true when b has a higher minor version", () => {

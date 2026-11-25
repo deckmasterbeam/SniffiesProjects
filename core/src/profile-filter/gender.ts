@@ -1,5 +1,5 @@
-import { type FilterableProfile, type SniffiesGender } from "../sniffies-api.js";
-import { type ProfileFilterRule } from "./matcher.js";
+import { type ProfileFilterRule } from "@core/profile-filter/matcher.js";
+import { type FilterableProfile, type SniffiesGender } from "@core/sniffies-api.js";
 
 export const GENDERS = ["man", "woman", "nonbinary", "undefined"] as const;
 export type Gender = (typeof GENDERS)[number];

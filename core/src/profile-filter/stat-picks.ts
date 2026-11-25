@@ -1,7 +1,7 @@
-import { CM_PER_INCH } from "../sniffies-api.js";
-import { STRINGS } from "../strings.js";
-import { type ProfileFilters } from "./filters.js";
-import { rangeLabel, type RangeOptions } from "./range.js";
+import { type ProfileFilters } from "@core/profile-filter/filters.js";
+import { rangeLabel, type RangeOptions } from "@core/profile-filter/range.js";
+import { CM_PER_INCH } from "@core/sniffies-api.js";
+import { STRINGS } from "@core/strings.js";
 
 // Sniffies' server applies these, so it never sends profiles that don't list the stat. While a
 // stat's "include unlisted" switch is on, we strip it from the outgoing request and match it here.

@@ -1,23 +1,21 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   MENU_HTML,
+  activeGenders,
+  applyButton,
+  clickGender,
   filters,
   gender,
-  range,
-  row,
-  applyButton,
   genderToggle,
-  activeGenders,
-  clickGender,
-  statValue,
   isChecked,
   openSheet,
   pick,
+  row,
   sheetButton,
+  statValue,
   useMenu,
-} from "./test-kit.js";
-import { STRINGS } from "../strings.js";
-import { type Gender } from "../profile-filter.js";
+} from "@core/filter-menu/test-kit.js";
+import { STRINGS } from "@core/strings.js";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 describe("installProfileFiltersMenu", () => {
   const { install, uninstall, onChange } = useMenu();
@@ -99,7 +97,7 @@ describe("installProfileFiltersMenu", () => {
 
     it("warns once when only one of Profile Type / Cruising Now stays in the menu", async () => {
       vi.resetModules();
-      const { installProfileFiltersMenu: freshInstall } = await import("./menu.js");
+      const { installProfileFiltersMenu: freshInstall } = await import("@core/filter-menu/menu.js");
       vi.useFakeTimers();
       const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
       document.querySelector("ui-list-item-level-2")!.remove();
@@ -116,7 +114,7 @@ describe("installProfileFiltersMenu", () => {
 
     it("stays quiet when the menu isn't open at all", async () => {
       vi.resetModules();
-      const { installProfileFiltersMenu: freshInstall } = await import("./menu.js");
+      const { installProfileFiltersMenu: freshInstall } = await import("@core/filter-menu/menu.js");
       vi.useFakeTimers();
       const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
       document.body.innerHTML = "";

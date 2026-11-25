@@ -10,7 +10,10 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "skipLibCheck": true,
-    "noEmit": true
+    "noEmit": true,
+    "paths": {
+      "@core/*": ["../core/src/*"]
+    }
   },
   "include": ["tests/**/*.ts", "fixtures/**/*.ts", "site-contract.ts", "playwright.config.ts"]
 }

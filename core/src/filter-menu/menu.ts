@@ -1,12 +1,12 @@
-import type { ProfileFiltersMenuContract } from "../contracts.js";
-import { createLogger } from "../log.js";
-import FILTER_MENU_CSS from "./menu.css";
-import { type Row } from "./row.js";
-import { GENDER_ROW, profileTypeRow } from "./gender-row.js";
-import { cruisingNowRow, ONLINE_ROW } from "./online-row.js";
-import { RANGE_ROWS } from "./range-row.js";
-import { createOwnedSync, STAT_ROWS } from "./stat-row.js";
-import { STRINGS } from "../strings.js";
+import type { ProfileFiltersMenuContract } from "@core/contracts.js";
+import { GENDER_ROW, profileTypeRow } from "@core/filter-menu/gender-row.js";
+import FILTER_MENU_CSS from "@core/filter-menu/menu.css";
+import { cruisingNowRow, ONLINE_ROW } from "@core/filter-menu/online-row.js";
+import { RANGE_ROWS } from "@core/filter-menu/range-row.js";
+import { type Row } from "@core/filter-menu/row.js";
+import { createOwnedSync, STAT_ROWS } from "@core/filter-menu/stat-row.js";
+import { createLogger } from "@core/log.js";
+import { STRINGS } from "@core/strings.js";
 
 const STYLE_ID = "snp-filter-menu-style";
 

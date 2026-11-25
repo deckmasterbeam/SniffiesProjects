@@ -1,11 +1,4 @@
-import { test, expect, type Page } from "@playwright/test";
-import {
-  SNIFFIES_ORIGIN,
-  injectUserscript,
-  mockSniffiesPage,
-  seedUserscriptStorage,
-} from "../../fixtures/userscript.js";
-import { API_ORIGINS, mockApi } from "../../fixtures/sniffies-api.js";
+import { expect, test, type Page } from "@playwright/test";
 import {
   BOT_ID,
   BOT_RESPONSES,
@@ -13,10 +6,17 @@ import {
   OK_ID,
   chatIds,
   deliverFrames,
-  routeLiveSocket,
   mapIds,
+  routeLiveSocket,
   threadIds,
 } from "../../fixtures/bot-block.js";
+import { API_ORIGINS, mockApi } from "../../fixtures/sniffies-api.js";
+import {
+  SNIFFIES_ORIGIN,
+  injectUserscript,
+  mockSniffiesPage,
+  seedUserscriptStorage,
+} from "../../fixtures/userscript.js";
 
 const BLOCKED_KEY = "sniffies-blocked-bots";
 // Recent, so the userscript doesn't go and refetch the list from the server.

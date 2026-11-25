@@ -1,6 +1,6 @@
 import type { BrowserContext, Page } from "@playwright/test";
-import path from "node:path";
 import { readFileSync } from "node:fs";
+import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { SNIFFIES_ORIGIN } from "./constants.js";
 

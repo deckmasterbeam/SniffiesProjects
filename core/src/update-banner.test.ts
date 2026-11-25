@@ -1,6 +1,6 @@
+import UPDATE_BANNER_HTML from "@core/update-banner.html";
+import { wireUpdateBanner } from "@core/update-banner.js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import UPDATE_BANNER_HTML from "./update-banner.html";
-import { wireUpdateBanner } from "./update-banner.js";
 
 let container: HTMLElement;
 let fetchMock: ReturnType<typeof vi.fn>;

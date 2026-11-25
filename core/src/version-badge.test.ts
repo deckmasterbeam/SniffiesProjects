@@ -1,6 +1,6 @@
+import VERSION_BADGE_HTML from "@core/version-badge.html";
+import { wireVersionBadge } from "@core/version-badge.js";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import VERSION_BADGE_HTML from "./version-badge.html";
-import { wireVersionBadge } from "./version-badge.js";
 
 let container: HTMLElement;
 

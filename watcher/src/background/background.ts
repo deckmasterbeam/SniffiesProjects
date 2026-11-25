@@ -1,15 +1,11 @@
-// Background service worker for the watcher extension.
-// Fetches watched user IDs from the server, then sends SMS notifications
-// when those users come online.
-
 declare const __SERVER_BASE__: string;
 declare const __WATCHER_SECRET__: string;
 
 import { createLogger } from "@sniffies-projects/core";
 import {
+  clearNotifyTimestamp,
   getNotifyTimestamp,
   setNotifyTimestamp,
-  clearNotifyTimestamp,
 } from "../shared/settings.js";
 
 const log = createLogger("bg");
