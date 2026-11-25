@@ -1,6 +1,6 @@
+import { BOT_BLOCK_HTML, wireBotBlockForm } from "@core/bot-block-ui.js";
+import { STRINGS } from "@core/strings.js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { BOT_BLOCK_HTML, wireBotBlockForm } from "./bot-block-ui.js";
-import { STRINGS } from "./strings.js";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

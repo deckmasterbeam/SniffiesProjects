@@ -1,5 +1,5 @@
+import { findSeenMessageId } from "@core/read-receipt-hook.js";
 import { describe, expect, it } from "vitest";
-import { findSeenMessageId } from "./read-receipt-hook.js";
 
 const ME = "me";
 const THEM = "them";

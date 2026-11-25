@@ -4,7 +4,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 const loadModule = async () => {
   vi.resetModules();
-  await import("./inject.js");
+  await import("@bookmarklet/inject.js");
 };
 
 const panelDisplay = (): string | undefined =>

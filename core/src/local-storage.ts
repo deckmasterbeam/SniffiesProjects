@@ -4,7 +4,7 @@ import {
   parsePremiumFeatureFlags,
   type PremiumFeatureFlags,
   type ProfileBorderOpen,
-} from "./settings.js";
+} from "@core/settings.js";
 
 // All of core's localStorage keys and their getters/setters live here
 const PROFILE_BORDER_STORAGE_KEY = "sniffies-profile-border";

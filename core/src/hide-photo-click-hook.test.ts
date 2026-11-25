@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
+import { installHidePhotoClick } from "@core/hide-photo-click-hook.js";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { installHidePhotoClick } from "./hide-photo-click-hook.js";
 
 // Trimmed from a real Sniffies sent-photo bubble with the Hide Photo tooltip open.
 const PHOTO_HTML = `

@@ -51,7 +51,7 @@ export default defineConfig({
       },
     },
     {
-      // Fixture-based Chrome extension tests — PLAYWRIGHT_TESTING_TODO.md §0
+      // Fixture-based Chrome extension tests
       // onward. No `use: devices[...]` here: tests import `test`/`expect`
       // from fixtures/extension.ts, whose custom `context` fixture launches
       // Chromium itself (chromium.launchPersistentContext with

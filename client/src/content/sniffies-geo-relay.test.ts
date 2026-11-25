@@ -1,5 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { GeoOverride } from "@sniffies-projects/core";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const dispatchHookMessage = (data: unknown, source: WindowProxy | null = window) => {
   window.dispatchEvent(new MessageEvent("message", { data, source }));
@@ -32,7 +32,7 @@ describe("sniffies-geo-relay — initial load", () => {
     const postMessageSpy = vi.spyOn(window, "postMessage");
 
     vi.resetModules();
-    await import("./sniffies-geo-relay.js");
+    await import("@client/content/sniffies-geo-relay.js");
     await flushPromises();
 
     expect(postMessageSpy).toHaveBeenCalledWith(
@@ -61,7 +61,7 @@ describe("sniffies-geo-relay", () => {
     const addListenerSpy = vi.spyOn(window, "addEventListener");
     postMessageSpy = vi.spyOn(window, "postMessage");
     vi.resetModules();
-    await import("./sniffies-geo-relay.js");
+    await import("@client/content/sniffies-geo-relay.js");
     const registered = addListenerSpy.mock.calls.find(([type]) => type === "message");
     messageListener = registered?.[1] as EventListenerOrEventListenerObject | undefined;
     addListenerSpy.mockRestore();

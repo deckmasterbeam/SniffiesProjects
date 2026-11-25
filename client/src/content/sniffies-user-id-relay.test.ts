@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("../shared/env.js", () => ({
+vi.mock("@client/shared/env.js", () => ({
   DEBUG: false,
   SERVER_BASE: "https://server.example",
   CLIENT_SECRET: "test-secret",
@@ -29,7 +29,7 @@ const loadModule = async () => {
     version: "1.2.3",
   });
   const addListenerSpy = vi.spyOn(window, "addEventListener");
-  await import("./sniffies-user-id-relay.js");
+  await import("@client/content/sniffies-user-id-relay.js");
   const registered = addListenerSpy.mock.calls.find(([type]) => type === "message");
   messageListener = registered?.[1];
   addListenerSpy.mockRestore();

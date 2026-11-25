@@ -1,13 +1,13 @@
-import { afterEach, describe, expect, it } from "vitest";
 import {
   getPremiumFeatureFlags,
-  setPremiumFeatureFlags,
   getPremiumFeaturesEnabled,
-  setPremiumFeaturesEnabled,
   getProfileBorderOpen,
+  setPremiumFeatureFlags,
+  setPremiumFeaturesEnabled,
   setProfileBorderOpen,
-} from "./local-storage.js";
-import { DEFAULT_PROFILE_BORDER_OPEN } from "./settings.js";
+} from "@core/local-storage.js";
+import { DEFAULT_PROFILE_BORDER_OPEN } from "@core/settings.js";
+import { afterEach, describe, expect, it } from "vitest";
 
 afterEach(() => {
   localStorage.clear();

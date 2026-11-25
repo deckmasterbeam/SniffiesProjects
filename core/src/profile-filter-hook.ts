@@ -1,11 +1,13 @@
-import { createLogger, type Logger } from "./log.js";
+import { createLogger, type Logger } from "@core/log.js";
 import {
   createProfileMatcher,
   type ProfileChecks,
   type ProfileFilterRule,
   type ProfileMatcher,
-} from "./profile-filter.js";
+} from "@core/profile-filter.js";
 import {
+  ADVANCED_SEARCH_PATH,
+  AUTHENTICATE_CURRENT_PATH,
   CHAT_DATA_PATH,
   MESSAGES_PATH,
   POST_AUTH_PATH,
@@ -13,6 +15,7 @@ import {
   WS_HOST,
   WS_USER_ID_PARAM,
   isSniffiesApiHost,
+  type AdvancedSearchPayload,
   type ChatDataPayload,
   type Conversation,
   type FilterableProfile,
@@ -20,9 +23,15 @@ import {
   type NearbyVisitorsPayload,
   type NewConversationFrame,
   type NewMsgFrame,
-} from "./sniffies-api.js";
+} from "@core/sniffies-api.js";
 
-type FilterKind = "post-authentication" | "soft-reload" | "chat-data" | "messages";
+type FilterKind =
+  | "post-authentication"
+  | "soft-reload"
+  | "search"
+  | "chat-data"
+  | "messages"
+  | "authenticate-current";
 
 const shapeLog = createLogger("profile-filter");
 const reportedShapes = new Set<string>();
@@ -56,6 +65,21 @@ export const filterPostAuthenticationPayload = (
   // The profile cards behind the chat list, not map markers.
   if (payload.partialVisitorData) {
     payload.partialVisitorData = filterProfiles(payload.partialVisitorData, matcher.chat);
+  }
+  return payload;
+};
+
+/** Removes hidden accounts from the filter menu's Apply results. */
+export const filterSearchPayload = (
+  payload: AdvancedSearchPayload,
+  matcher: ProfileMatcher,
+): AdvancedSearchPayload => {
+  expectShape(
+    Array.isArray(payload.result?.nearbyUsers),
+    "search result has no result.nearbyUsers list",
+  );
+  if (payload.result?.nearbyUsers) {
+    payload.result.nearbyUsers = filterProfiles(payload.result.nearbyUsers, matcher);
   }
   return payload;
 };
@@ -136,10 +160,14 @@ const applyFilter = (kind: FilterKind, payload: unknown, matcher: ProfileMatcher
     case "post-authentication":
     case "soft-reload":
       return filterPostAuthenticationPayload(payload as NearbyVisitorsPayload, matcher);
+    case "search":
+      return filterSearchPayload(payload as AdvancedSearchPayload, matcher);
     case "chat-data":
       return filterChatDataPayload(payload as ChatDataPayload, matcher);
     case "messages":
       return filterMessagesPayload(payload as MessagesPayload, matcher);
+    case "authenticate-current":
+      return payload;
   }
 };
 
@@ -245,6 +273,12 @@ const classifyXhrUrl = (url: string): FilterKind | null => {
     if (parsed.pathname === SOFT_RELOAD_PATH) {
       return "soft-reload";
     }
+    if (parsed.pathname === ADVANCED_SEARCH_PATH) {
+      return "search";
+    }
+    if (parsed.pathname === AUTHENTICATE_CURRENT_PATH) {
+      return "authenticate-current";
+    }
     if (parsed.pathname === CHAT_DATA_PATH) {
       return "chat-data";
     }
@@ -261,6 +295,8 @@ const installXhrFilter = (
   matcher: ProfileMatcher,
   log: Logger,
   raiseRadius: () => boolean,
+  rewriteBody?: (body: string) => string,
+  rewriteSaved?: (payload: unknown) => unknown,
 ): boolean => {
   const proto = XMLHttpRequest.prototype as PatchedXHRPrototype;
   if (proto.__sniffiesBotBlockPatched) {
@@ -289,6 +325,11 @@ const installXhrFilter = (
 
   proto.send = function (this: XhrWithFilterKind, ...args: unknown[]) {
     const kind = this.__sniffiesFilterKind;
+    if (kind === "post-authentication" || kind === "soft-reload" || kind === "search") {
+      if (rewriteBody && typeof args[0] === "string") {
+        args[0] = rewriteBody(args[0]);
+      }
+    }
     if (kind) {
       const responseType = this.responseType || "";
       if (responseType === "" || responseType === "text" || responseType === "json") {
@@ -297,10 +338,11 @@ const installXhrFilter = (
           if (cached) {
             return cached;
           }
-          const shouldFilter = matcher.isActive();
+          const shouldFilter = kind !== "authenticate-current" && matcher.isActive();
+          const shouldRestate = kind === "authenticate-current" && rewriteSaved !== undefined;
           const shouldRaise =
             raiseRadius() && (kind === "post-authentication" || kind === "soft-reload");
-          const shouldRewrite = shouldFilter || shouldRaise;
+          const shouldRewrite = shouldFilter || shouldRaise || shouldRestate;
           log(`${kind} response read`, {
             filtering: shouldFilter,
             ms: Math.round(performance.now()),
@@ -329,6 +371,9 @@ const installXhrFilter = (
             }
             if (shouldRaise) {
               json = raiseRadiusInPayload(json as NearbyVisitorsPayload);
+            }
+            if (shouldRestate) {
+              json = rewriteSaved!(json);
             }
             if (responseType !== "json") {
               text = JSON.stringify(json);
@@ -473,7 +518,8 @@ const patchSocketInstance = (
 
 const installWebSocketFilter = (matcher: ProfileMatcher, log: Logger): boolean => {
   const NativeWebSocket = (typeof WebSocket !== "undefined" ? WebSocket : undefined) as
-    PatchedWebSocketCtor | undefined;
+    | PatchedWebSocketCtor
+    | undefined;
   if (!NativeWebSocket || NativeWebSocket.__sniffiesBotBlockPatched) {
     log("WebSocket filter not installed (no WebSocket or already patched)");
     return false;
@@ -520,11 +566,13 @@ export interface ProfileFilterHookResult {
 export const installProfileFilterHook = (
   rules: readonly ProfileFilterRule[],
   raiseRadius: () => boolean = () => false,
+  rewriteBody?: (body: string) => string,
+  rewriteSaved?: (payload: unknown) => unknown,
 ): ProfileFilterHookResult => {
   const log = createLogger("profile-filter");
   const matcher = createProfileMatcher(rules);
   return {
-    xhrInstalled: installXhrFilter(matcher, log, raiseRadius),
+    xhrInstalled: installXhrFilter(matcher, log, raiseRadius, rewriteBody, rewriteSaved),
     wsInstalled: installWebSocketFilter(matcher, log),
   };
 };

@@ -1,5 +1,5 @@
+import { extractTravelDestination, installTravelClickArmer } from "@core/travel-capture-hook.js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { extractTravelDestination, installTravelClickArmer } from "./travel-capture-hook.js";
 
 const click = (el: Element) => el.dispatchEvent(new MouseEvent("click", { bubbles: true }));
 

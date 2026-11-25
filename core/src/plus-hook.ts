@@ -1,4 +1,4 @@
-import { AUTHENTICATE_CURRENT_PATH, type AuthenticateCurrentPayload } from "./sniffies-api.js";
+import { AUTHENTICATE_CURRENT_PATH, type AuthenticateCurrentPayload } from "@core/sniffies-api.js";
 
 /** True when the account has an active Sniffies Plus membership that hasn't ended. */
 export const isPlusMembership = (body: AuthenticateCurrentPayload, now = Date.now()): boolean => {

@@ -1,8 +1,8 @@
 import {
-  installLocationOverrideController,
   DEFAULT_GEO_OVERRIDE,
   type GeoOverride,
   createLogger,
+  installLocationOverrideController,
 } from "@sniffies-projects/core";
 
 (() => {

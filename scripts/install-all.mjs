@@ -7,7 +7,8 @@ import { fileURLToPath } from "node:url";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
-const packages = ["core", "client", "bookmarklet", "userscript", "server", "watcher", "e2e"];
+// "." is the repo root: ESLint and the Prettier import-sorting plugin the packages share.
+const packages = [".", "core", "client", "bookmarklet", "userscript", "server", "watcher", "e2e"];
 
 let failed = false;
 

@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import { SNIFFIES_ORIGIN, mockSniffiesPage, tapBookmarklet } from "../../fixtures/bookmarklet.js";
 
 test("full pass produces no console or page errors", async ({ page, context }) => {
@@ -11,6 +11,9 @@ test("full pass produces no console or page errors", async ({ page, context }) =
   });
 
   await mockSniffiesPage(context);
+  // The update check asks GitHub for releases; a rate-limited 403 would log an error unrelated to
+  // the bookmarklet.
+  await context.route("https://api.github.com/**", (route) => route.fulfill({ json: [] }));
   // The fixture's marker avatars point at a host that doesn't resolve, which
   // would log a resource error that has nothing to do with the bookmarklet.
   await context.route("https://cdn.sniffies.test/**", (route) =>

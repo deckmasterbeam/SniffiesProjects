@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { getLocalSettings, recordBlockedBotEvent } from "./settings.js";
+import { getLocalSettings, recordBlockedBotEvent } from "@client/shared/settings.js";
+import { describe, expect, it } from "vitest";
 
 describe("recordBlockedBotEvent", () => {
   it("merges ids from overlapping concurrent calls instead of racing", async () => {

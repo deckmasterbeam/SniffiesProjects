@@ -1,6 +1,6 @@
-import { test, expect, SNIFFIES_ORIGIN } from "../../fixtures/extension.js";
-import { setExtensionStorage } from "../../fixtures/storage.js";
 import { STRINGS } from "../../../core/src/strings.js";
+import { expect, SNIFFIES_ORIGIN, test } from "../../fixtures/extension.js";
+import { setExtensionStorage } from "../../fixtures/storage.js";
 
 test("extension loads and injects on the fixture page", async ({ context, extensionId }) => {
   expect(extensionId).toMatch(/^[a-p]{32}$/);

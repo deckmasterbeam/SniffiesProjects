@@ -14,6 +14,32 @@ export const WS_USER_ID_PARAM = "userId";
 
 export type SniffiesGender = "man" | "woman" | "nonbinary" | null;
 
+/** Position: `sexuality.attitude`. */
+export type SniffiesPosition =
+  | "side"
+  | "bottom-sub"
+  | "bottom"
+  | "bottom-power"
+  | "vers-bottom"
+  | "vers"
+  | "vers-top"
+  | "top-sub"
+  | "top"
+  | "top-dom";
+
+/** Sexuality: `sexuality.spectrum`. */
+export type SniffiesSexuality = "straight" | "straight-curious" | "bicurious" | "bi" | "gay";
+
+/** Body type: `stats.body`. */
+export type SniffiesBodyType =
+  | "slim"
+  | "athletic"
+  | "muscular"
+  | "average"
+  | "stocky"
+  | "chubby"
+  | "large";
+
 /** A Sniffies account as it appears on the wire. `data` is absent when only the id is known. */
 export interface FilterableProfile {
   _id: string;
@@ -21,9 +47,19 @@ export interface FilterableProfile {
     connectUpdateTime?: string;
     profile?: {
       extended?: {
-        sexuality?: { gender?: SniffiesGender };
+        sexuality?: {
+          gender?: SniffiesGender;
+          attitude?: SniffiesPosition | null;
+          spectrum?: SniffiesSexuality | null;
+        };
         /** Whole numbers, whatever units the profile was entered in. */
-        stats?: { heightInCm?: number | null; weightInKg?: number | null };
+        stats?: {
+          age?: number | null;
+          heightInCm?: number | null;
+          weightInKg?: number | null;
+          body?: SniffiesBodyType | null;
+          endowment?: { lengthInCm?: number | null; isCut?: boolean | null } | null;
+        };
       };
     };
   };
@@ -62,6 +98,14 @@ export interface AuthenticateCurrentPayload {
 export const POST_AUTH_PATH = "/api/post-authentication";
 /** POST — "Cruise this area": reloads the map for a new spot. Same visitor lists as the map init. */
 export const SOFT_RELOAD_PATH = "/api/softReload";
+
+/** POST - the filter menu's Apply. Same profiles as the map init, under `result.nearbyUsers`. */
+export const ADVANCED_SEARCH_PATH = "/api/advanced-filter/search";
+
+export interface AdvancedSearchPayload {
+  result?: { nearbyUsers?: FilterableProfile[] };
+  [key: string]: unknown;
+}
 
 export interface NearbyVisitorsPayload {
   nearbyVisitors?: {

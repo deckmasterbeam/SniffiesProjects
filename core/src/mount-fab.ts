@@ -1,4 +1,4 @@
-import { ICON_HOLDER_RIGHT_BOTTOM_SELECTOR } from "./sniffies-selectors.js";
+import { ICON_HOLDER_RIGHT_BOTTOM_SELECTOR } from "@core/sniffies-selectors.js";
 
 // class for buttons that show up on the map
 const ICON_HOLDER_ROW_CLASS = "lower-map-icon";

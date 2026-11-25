@@ -1,6 +1,6 @@
-import { logInit, createLogger } from "@sniffies-projects/core";
-import { CLIENT_SECRET, SERVER_BASE } from "../shared/env.js";
-import { setHasPlus, setSniffiesUserId } from "../shared/settings.js";
+import { CLIENT_SECRET, SERVER_BASE } from "@client/shared/env.js";
+import { setHasPlus, setSniffiesUserId } from "@client/shared/settings.js";
+import { createLogger, logInit } from "@sniffies-projects/core";
 
 const log = createLogger("user-id-relay");
 

@@ -1,4 +1,3 @@
-import { afterEach, describe, expect, it } from "vitest";
 import {
   getBlockedBotEventsByDay,
   getBlockedBots,
@@ -9,7 +8,8 @@ import {
   setBlockedBots,
   setBotBlockingEnabled,
   setBotBlockingSectionOpen,
-} from "./local-storage.js";
+} from "@userscript/shared/local-storage.js";
+import { afterEach, describe, expect, it } from "vitest";
 
 afterEach(() => {
   localStorage.clear();

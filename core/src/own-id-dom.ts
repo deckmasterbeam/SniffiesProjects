@@ -1,5 +1,5 @@
-import { createLogger } from "./log.js";
-import { OWN_MARKER_SELECTOR } from "./sniffies-selectors.js";
+import { createLogger } from "@core/log.js";
+import { OWN_MARKER_SELECTOR } from "@core/sniffies-selectors.js";
 
 const log = createLogger("own-id-dom");
 

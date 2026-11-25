@@ -1,10 +1,10 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { neon } from "@neondatabase/serverless";
 import type { VercelResponse } from "@vercel/node";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import handler from "../api/favorites.js";
 import { makeReq, makeRes } from "./_helpers.js";
 
 vi.mock("@neondatabase/serverless", () => ({ neon: vi.fn() }));
-import { neon } from "@neondatabase/serverless";
 const mockNeon = vi.mocked(neon);
 
 const SECRET = "client-secret";

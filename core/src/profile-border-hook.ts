@@ -1,6 +1,6 @@
-import type { ProfileBorderOpen } from "./settings.js";
-import { createLogger } from "./log.js";
-import { MARKER_CONTAINER_SELECTOR } from "./sniffies-selectors.js";
+import { createLogger } from "@core/log.js";
+import type { ProfileBorderOpen } from "@core/settings.js";
+import { MARKER_CONTAINER_SELECTOR } from "@core/sniffies-selectors.js";
 
 export interface ProfileBorderHookResult {
   uninstall: () => void;

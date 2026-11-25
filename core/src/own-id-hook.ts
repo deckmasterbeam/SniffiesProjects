@@ -1,9 +1,9 @@
-import { createLogger } from "./log.js";
+import { createLogger } from "@core/log.js";
 import {
   AUTHENTICATE_CURRENT_PATH,
   isSniffiesApiHost,
   type AuthenticateCurrentPayload,
-} from "./sniffies-api.js";
+} from "@core/sniffies-api.js";
 
 const log = createLogger("own-id");
 

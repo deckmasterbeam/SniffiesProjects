@@ -1,11 +1,11 @@
-import RAW_REPORT_MODAL_HTML from "./report-modal.html";
-import { STRINGS, render } from "./strings.js";
-import REPORT_MODAL_CSS from "./report-modal.css";
-import type { ReportFormContract } from "./contracts.js";
+import type { ReportFormContract } from "@core/contracts.js";
+import REPORT_MODAL_CSS from "@core/report-modal.css";
+import RAW_REPORT_MODAL_HTML from "@core/report-modal.html";
+import { STRINGS, render } from "@core/strings.js";
 
 const REPORT_MODAL_HTML = render(RAW_REPORT_MODAL_HTML);
 
-export { REPORT_MODAL_HTML, REPORT_MODAL_CSS };
+export { REPORT_MODAL_CSS, REPORT_MODAL_HTML };
 export type { ReportFormContract };
 
 export interface ReportModalHandle {

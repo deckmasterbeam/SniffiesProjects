@@ -3,16 +3,16 @@ import {
   DEBUG,
   FAVORITES_NOTIFICATIONS_ENABLED,
   SERVER_BASE,
-} from "../shared/env.js";
+} from "@client/shared/env.js";
+import { SETTINGS_KEYS, getLocalSettings, setBlockedBots } from "@client/shared/settings.js";
 import {
+  APP_SCREEN_SELECTOR,
+  NAME_LABEL_SELECTOR,
   createLogger,
   installReportButtonInjection,
   refreshBlockedBotsIfStale,
-  APP_SCREEN_SELECTOR,
-  NAME_LABEL_SELECTOR,
   type MarkerSelection,
 } from "@sniffies-projects/core";
-import { SETTINGS_KEYS, getLocalSettings, setBlockedBots } from "../shared/settings.js";
 
 const clientHeaders = (): Record<string, string> => ({
   "Content-Type": "application/json",

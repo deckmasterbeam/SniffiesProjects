@@ -1,5 +1,5 @@
+import { SETTINGS_KEYS, getLocalSettings, setGeoOverride } from "@client/shared/settings.js";
 import { createLogger, type GeoOverride } from "@sniffies-projects/core";
-import { SETTINGS_KEYS, getLocalSettings, setGeoOverride } from "../shared/settings.js";
 
 const log = createLogger("geo-relay");
 

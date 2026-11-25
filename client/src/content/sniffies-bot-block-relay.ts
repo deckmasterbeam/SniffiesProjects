@@ -1,17 +1,18 @@
 import {
-  createLogger,
-  gateProfileFilters,
-  installProfileFiltersMenu,
-  parseProfileFilters,
-  type ExtensionLocalSettings,
-  type ProfileFilters,
-} from "@sniffies-projects/core";
-import {
   SETTINGS_KEYS,
   getLocalSettings,
   recordBlockedBotEvent,
   setProfileFilters,
-} from "../shared/settings.js";
+} from "@client/shared/settings.js";
+import {
+  createLogger,
+  gateProfileFilters,
+  installProfileFiltersMenu,
+  parseProfileFilters,
+  saveFiltersMirror,
+  type ExtensionLocalSettings,
+  type ProfileFilters,
+} from "@sniffies-projects/core";
 
 const log = createLogger("bot-block-relay");
 
@@ -51,6 +52,8 @@ const relay = (settings: ExtensionLocalSettings): void => {
 
   const effective = gateProfileFilters(stored, profileFiltersEnabled);
   appliedFilters ??= effective;
+  // What the next page load will apply; the hook reads it before its first request.
+  saveFiltersMirror(effective, profileFiltersEnabled);
   postState(
     blockedBots,
     botBlockingEnabled,

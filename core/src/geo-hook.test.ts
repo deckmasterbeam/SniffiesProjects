@@ -1,6 +1,6 @@
+import { installGeoHook } from "@core/geo-hook.js";
+import type { GeoOverride } from "@core/settings.js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { installGeoHook } from "./geo-hook.js";
-import type { GeoOverride } from "./settings.js";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

@@ -1,5 +1,5 @@
+import { mountFab } from "@core/mount-fab.js";
 import { afterEach, describe, expect, it } from "vitest";
-import { mountFab } from "./mount-fab.js";
 
 const makeIconHolder = (): HTMLElement => {
   const holder = document.createElement("div");

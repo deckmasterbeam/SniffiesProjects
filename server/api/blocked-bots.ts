@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { json, applyCors, requireClientAuth, requireDb } from "./_shared.js";
+import { applyCors, json, requireClientAuth, requireDb } from "./_shared.js";
 
 const handler = async (req: VercelRequest, res: VercelResponse): Promise<void> => {
   applyCors(req, res, "GET, OPTIONS", true);

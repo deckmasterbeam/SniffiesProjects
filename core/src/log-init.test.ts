@@ -1,5 +1,5 @@
+import { logInit } from "@core/log-init.js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { logInit } from "./log-init.js";
 
 const OPTS = {
   serverBase: "https://server.example",

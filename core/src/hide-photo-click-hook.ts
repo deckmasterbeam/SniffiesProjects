@@ -1,11 +1,11 @@
-import { createLogger } from "./log.js";
+import { createLogger } from "@core/log.js";
+import type { SentPhotoHider } from "@core/sent-photos.js";
 import {
   HIDE_ALL_PHOTOS_BUTTON_SELECTOR,
   HIDE_PHOTO_BUTTON_SELECTOR,
   PHOTO_MESSAGE_SELECTOR,
   UNHIDE_ALL_PHOTOS_BUTTON_SELECTOR,
-} from "./sniffies-selectors.js";
-import type { SentPhotoHider } from "./sent-photos.js";
+} from "@core/sniffies-selectors.js";
 
 const log = createLogger("hide-photo");
 
@@ -22,12 +22,6 @@ const messageIdFor = (button: Element): string | null => {
 const openProfileId = (): string | null =>
   location.pathname.match(/^\/profile\/([a-f0-9]{16,})/i)?.[1] ?? null;
 
-/**
- * Takes over clicks on Sniffies' paywalled photo-hiding buttons: "Hide Photo" on one photo, and
- * "Hide All My Photos" / "Unhide All My Photos" in the profile menu. The click is swallowed
- * before Sniffies' handler runs and the request is made directly. After a success the page
- * reloads, since Sniffies only shows hidden state on load.
- */
 export const installHidePhotoClick = (
   hider: Pick<SentPhotoHider, "hideOne" | "setAllHidden">,
   isEnabled: () => boolean,

@@ -1,6 +1,6 @@
-import { context, build } from "esbuild";
+import { build, context } from "esbuild";
 import { spawnSync } from "node:child_process";
-import { mkdir, rm, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { REQUIRED_RELEASE_ENV_VARS } from "../../scripts/release-env.mjs";
@@ -65,6 +65,9 @@ const buildOptions = {
   logLevel: "info",
   alias: {
     "@sniffies-projects/core": resolve(root, "../core/src/index.ts"),
+    "@core": resolve(root, "../core/src"),
+    "@icons": resolve(root, "../client/icons"),
+    "@userscript": resolve(root, "src"),
   },
   loader: {
     ".css": "text",

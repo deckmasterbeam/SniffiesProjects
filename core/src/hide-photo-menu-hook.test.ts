@@ -1,7 +1,6 @@
-// @vitest-environment jsdom
+import { installHidePhotoMenuButtons } from "@core/hide-photo-menu-hook.js";
+import { STRINGS } from "@core/strings.js";
 import { afterEach, describe, expect, it } from "vitest";
-import { installHidePhotoMenuButtons } from "./hide-photo-menu-hook.js";
-import { STRINGS } from "./strings.js";
 
 const FREE_MENU = `
   <div data-testid="profileOptionsContainer">

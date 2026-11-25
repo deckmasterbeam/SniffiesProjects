@@ -15,7 +15,9 @@
     "skipLibCheck": true,
     "noEmit": true,
     "paths": {
-      "@sniffies-projects/core": ["../core/src/index.ts"]
+      "@sniffies-projects/core": ["../core/src/index.ts"],
+      "@core/*": ["../core/src/*"],
+      "@client/*": ["./src/*"]
     }
   },
   "include": ["src/**/*.ts", "scripts/**/*.mjs", "../core/src/ambient.d.ts"]

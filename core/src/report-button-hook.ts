@@ -1,19 +1,19 @@
-import type { MarkerSelection, ReportButtonInjectionOptions } from "./contracts.js";
-import { createLogger } from "./log.js";
-import { STRINGS } from "./strings.js";
+import type { MarkerSelection, ReportButtonInjectionOptions } from "@core/contracts.js";
+import { createLogger } from "@core/log.js";
 import {
-  REPORT_MODAL_HTML,
   REPORT_MODAL_CSS,
+  REPORT_MODAL_HTML,
   wireReportModal,
   type ReportModalHandle,
-} from "./report-ui.js";
+} from "@core/report-ui.js";
 import {
-  MARKER_AVATAR_SELECTOR as MARKER_SELECTOR,
   APP_SCREEN_SELECTOR,
+  MARKER_AVATAR_SELECTOR as MARKER_SELECTOR,
   NAME_LABEL_SELECTOR,
   PIN_BUTTON_SELECTOR,
   PROFILE_OPTIONS_MENU_SELECTOR,
-} from "./sniffies-selectors.js";
+} from "@core/sniffies-selectors.js";
+import { STRINGS } from "@core/strings.js";
 
 const log = createLogger("report-button");
 const REPORT_INJECTED_ATTR = "data-sniffies-report-injection";

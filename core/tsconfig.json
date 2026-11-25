@@ -9,7 +9,10 @@
     "noImplicitOverride": true,
     "isolatedModules": true,
     "skipLibCheck": true,
-    "noEmit": true
+    "noEmit": true,
+    "paths": {
+      "@core/*": ["./src/*"]
+    }
   },
   "include": ["src/**/*.ts"]
 }

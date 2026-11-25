@@ -1,6 +1,6 @@
+import { REPORT_MODAL_HTML, wireReportModal } from "@core/report-ui.js";
+import { STRINGS } from "@core/strings.js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { REPORT_MODAL_HTML, wireReportModal } from "./report-ui.js";
-import { STRINGS } from "./strings.js";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

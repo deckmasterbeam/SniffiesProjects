@@ -1,7 +1,5 @@
-// Sniffies bookmarklet injection script
-// Bookmarklet loader:
-//   javascript:(function(){var s=document.createElement('script');s.src='https://YOUR_VERCEL_URL/inject.js?t='+Date.now();document.head.appendChild(s);})();
-
+import PANEL_HTML from "@bookmarklet/panel.html";
+import FAB_ICON_PNG from "@icons/icon48.png";
 import {
   getPremiumFeatureFlags,
   getPremiumFeaturesEnabled,
@@ -13,18 +11,11 @@ import {
   installHidePhotoMenuButtons,
   installProfileBorderRedirect,
   installReadReceipt,
-  installSentPhotoHider,
   installSelectionLimitOverride,
+  installSentPhotoHider,
   logInit,
   mountFab,
   PANEL_CSS,
-  UPDATE_BANNER_CSS,
-  UPDATE_BANNER_HTML,
-  VERSION_BADGE_CSS,
-  VERSION_BADGE_HTML,
-  watchOwnIdInDom,
-  wireVersionBadge,
-  wireUpdateBanner,
   PREMIUM_FEATURES_CSS,
   PREMIUM_FEATURES_HTML,
   PROFILE_FILTERS_CSS,
@@ -35,11 +26,16 @@ import {
   setProfileBorderOpen,
   setProfileFiltersEnabled,
   setProfileFiltersSectionOpen,
+  UPDATE_BANNER_CSS,
+  UPDATE_BANNER_HTML,
+  VERSION_BADGE_CSS,
+  VERSION_BADGE_HTML,
+  watchOwnIdInDom,
   wirePremiumFeaturesForm,
   wireProfileFiltersForm,
+  wireUpdateBanner,
+  wireVersionBadge,
 } from "@sniffies-projects/core";
-import FAB_ICON_PNG from "../../client/icons/icon48.png";
-import PANEL_HTML from "./panel.html";
 
 // ── Guard ────────────────────────────────────────────────────────────────────
 
@@ -51,7 +47,7 @@ declare global {
 
 // ── Main ─────────────────────────────────────────────────────────────────────
 
-function main(): void {
+const main = () => {
   if (!location.hostname.endsWith("sniffies.com")) {
     return;
   }
@@ -185,7 +181,7 @@ function main(): void {
   closeBtn.addEventListener("click", () => {
     panel.style.display = "none";
   });
-}
+};
 
 // ── Entry point ───────────────────────────────────────────────────────────────
 

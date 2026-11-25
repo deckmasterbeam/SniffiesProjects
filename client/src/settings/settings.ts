@@ -1,4 +1,4 @@
-import { CLIENT_SECRET, FAVORITES_NOTIFICATIONS_ENABLED, SERVER_BASE } from "../shared/env.js";
+import { CLIENT_SECRET, FAVORITES_NOTIFICATIONS_ENABLED, SERVER_BASE } from "@client/shared/env.js";
 import {
   PHONE_E164_REGEX,
   SNIFFIES_USER_ID_REGEX,
@@ -7,7 +7,7 @@ import {
   setBlockedBots,
   setGuid,
   setPhone,
-} from "../shared/settings.js";
+} from "@client/shared/settings.js";
 
 if (!FAVORITES_NOTIFICATIONS_ENABLED) {
   for (const sel of [".phone-section", ".recovery-section", ".favorites-section"]) {

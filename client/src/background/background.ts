@@ -1,6 +1,3 @@
-// Background service worker (Manifest V3).
-// Runs on demand; do not rely on long-lived global state.
-
 import { createLogger } from "@sniffies-projects/core";
 
 const log = createLogger("bg");
