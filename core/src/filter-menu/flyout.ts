@@ -1,4 +1,4 @@
-import { nearestChoice, type RangeFilter, type RangeOptions } from "../profile-filter.js";
+import { nearestChoice, unitChoices, type RangeFilter, type RangeOptions } from "../profile-filter.js";
 import { STRINGS } from "../strings.js";
 
 const FLYOUT_ID = "snp-range-flyout";
@@ -98,7 +98,7 @@ export interface ChoiceColumn {
   onDone: (value: string | null) => void;
 }
 
-type RangeChoice = Pick<RangeFilter, "min" | "max" | "metric" | "includeUnspecified">;
+type RangeChoice = Pick<RangeFilter, "min" | "max" | "includeUnspecified">;
 
 export const openRangeFlyout = (
   title: string,
@@ -141,8 +141,8 @@ export const openRangeFlyout = (
     return wrap;
   };
 
-  const choices = (metric: boolean): WheelItem<number>[] =>
-    (metric ? options.metric : options.imperial).choices;
+  // The account's units, not a choice made here.
+  const choices: WheelItem<number>[] = unitChoices(options);
   // "-" leaves that end of the range open, as on Sniffies' own wheels.
   const withNone = (items: WheelItem<number>[], top = ""): WheelItem<number | null>[] => [
     { value: null, label: STRINGS.range.openEnded },
@@ -157,30 +157,15 @@ export const openRangeFlyout = (
     if (from === null || to === null || (to - from) * step > 0) {
       return;
     }
-    const list = choices(unit.value());
-    const next = list[list.findIndex((choice) => choice.value === from) + step];
+    const next = choices[choices.findIndex((choice) => choice.value === from) + step];
     other.set(next ? next.value : null);
   };
   const min: Wheel<number | null> = createWheel("min", STRINGS.range.min, () => push(min, max, 1));
   const max: Wheel<number | null> = createWheel("max", STRINGS.range.max, () => push(max, min, -1));
-  const fillBounds = (metric: boolean, minValue: number | null, maxValue: number | null): void => {
-    const list = choices(metric);
-    const snap = (value: number | null): number | null =>
-      value === null ? null : nearestChoice(list, value).value;
-    min.fill(withNone(list, STRINGS.range.moreSuffix), snap(minValue));
-    max.fill(withNone(list), snap(maxValue));
-  };
-  const unit: Wheel<boolean> = createWheel("unit", STRINGS.range.unit, () =>
-    fillBounds(unit.value(), min.value(), max.value()),
-  );
-  unit.fill(
-    [
-      { value: false, label: options.imperial.unit },
-      { value: true, label: options.metric.unit },
-    ],
-    current.metric,
-  );
-  fillBounds(current.metric, current.min, current.max);
+  const snap = (value: number | null): number | null =>
+    value === null ? null : nearestChoice(choices, value).value;
+  min.fill(withNone(choices, STRINGS.range.moreSuffix), snap(current.min));
+  max.fill(withNone(choices), snap(current.max));
   const columnWheel = column ? createWheel<string | null>("column", column.title) : null;
   columnWheel?.fill(column!.choices, column!.current);
 
@@ -196,7 +181,6 @@ export const openRangeFlyout = (
       onDone({
         min: min.value(),
         max: max.value(),
-        metric: unit.value(),
         includeUnspecified: unspecified.checked,
       });
       column?.onDone(columnWheel!.value());
@@ -208,15 +192,8 @@ export const openRangeFlyout = (
   to.textContent = STRINGS.range.to;
   const body = document.createElement("div");
   body.className = "snp-wheel-container";
-  // One unit both ways (Endowment): nothing to choose, so no unit wheel.
-  const oneUnit = options.imperial === options.metric;
-  body.append(
-    ...(oneUnit ? [] : [unit.el]),
-    min.el,
-    to,
-    max.el,
-    ...(columnWheel ? [columnWheel.el] : []),
-  );
+
+  body.append(...(columnWheel ? [columnWheel.el] : []), min.el, to, max.el);
   const unspecified = document.createElement("input");
   unspecified.type = "checkbox";
   unspecified.checked = current.includeUnspecified;
@@ -246,16 +223,12 @@ export const openRangeFlyout = (
   document.addEventListener("keydown", onKey);
 
   (host ?? document.body).appendChild(backdrop);
-  for (const wheel of [unit, min, max]) {
+  for (const wheel of [min, max]) {
     wheel.reveal();
   }
   columnWheel?.reveal();
 };
 
-/**
- * A wheel to pick several values from, like Sniffies' own for Body Type: a "-" at the top clears,
- * and picked values carry a check mark.
- */
 export const openMultiFlyout = (
   title: string,
   items: WheelItem<string>[],

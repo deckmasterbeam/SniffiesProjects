@@ -1,29 +1,23 @@
-import { STAT_IDS, type StatId, type StatPicks, parseStatPicks } from "./stat-picks.js";
-import { statTakeover } from "./stat-takeover.js";
 import {
   type GenderFilter,
   DEFAULT_GENDER_FILTER,
-  parseGenderFilter,
   genderRule,
+  parseGenderFilter,
 } from "./gender.js";
+import { type ProfileFilterRule } from "./matcher.js";
 import {
   type OnlineFilter,
   DEFAULT_ONLINE_FILTER,
-  parseOnlineFilter,
   onlineRule,
+  parseOnlineFilter,
 } from "./online.js";
-import { type ProfileFilterRule } from "./matcher.js";
 import { type RangeFilter, defaultRangeFilter, parseRangeFilter, rangeRule } from "./range.js";
+import { type StatId, type StatPicks, parseStatPicks, STAT_IDS } from "./stat-picks.js";
 
 // ── All the filters the user sets from Sniffies filter menu ─────────────────
 
 export interface ProfileFilters {
-  /** Per native stat: also show profiles that don't list it (see `statTakeover`). */
   unlisted: Record<StatId, boolean>;
-  /**
-   * Per native stat: what to show, set from our own row. Sniffies' native rows for these stats are
-   * hidden and forced off, so these are matched here instead. Empty (but present) once cleared.
-   */
   picks: StatPicks;
   gender: GenderFilter;
   height: RangeFilter;
@@ -83,8 +77,6 @@ export const profileFilterRules = (getFilters: () => ProfileFilters): ProfileFil
   onlineRule(() => getFilters().online),
 ];
 
-// The page hook can't wait for the extension's message before its first request, so the
-// extension also leaves the filters it applied here, where the hook can read them straight away.
 const FILTERS_MIRROR_KEY = "snp-applied-profile-filters";
 
 export const saveFiltersMirror = (filters: ProfileFilters, enabled: boolean): void => {

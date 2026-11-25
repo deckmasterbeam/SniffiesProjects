@@ -73,7 +73,7 @@ describe("the stat takeover through real XHR sends", () => {
   };
   const owned = parseProfileFilters({
     unlisted: { endowment: true },
-    picks: { endowment: { min: 8, max: 12, cut: "cut" } },
+    picks: { endowment: { min: 20, max: 30, cut: "cut" } },
   });
 
   it.each([
@@ -134,7 +134,7 @@ describe("the stat takeover through real XHR sends", () => {
     expect(entry.enabledValues).toEqual({ "stats.endowment": false, "stats.age": true });
     // And what it had saved is kept, to start our row from.
     expect(JSON.parse(localStorage.getItem("snp-native-stat-picks")!)).toEqual({
-      endowment: { min: 8, max: 12, cut: "cut" },
+      endowment: { min: 20, max: 30, cut: "cut" },
     });
   });
 
@@ -179,7 +179,7 @@ describe("the stat takeover through real XHR sends", () => {
     const withUnlisted = (unlisted: boolean) =>
       parseProfileFilters({
         unlisted: { endowment: unlisted },
-        picks: { endowment: { min: 8, max: 12, cut: "cut" } },
+        picks: { endowment: { min: 20, max: 30, cut: "cut" } },
       });
 
     it("stays when none listed is on", () => {

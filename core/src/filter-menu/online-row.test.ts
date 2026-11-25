@@ -148,6 +148,40 @@ describe("installProfileFiltersMenu", () => {
       expect(applyButton("online").hidden).toBe(false);
     });
 
+    const cruisingNowOn = (): HTMLInputElement => {
+      const native = document.querySelector<HTMLInputElement>("#CONNECTED_NOW")!;
+      native.checked = true;
+      native
+        .closest(".list-item-level-2")!
+        .addEventListener("click", () => (native.checked = !native.checked));
+      return native;
+    };
+
+    it("turning Online After on turns Cruising Now off, by clicking its row", () => {
+      install(filters({ online: { enabled: false, minutes: 60 } }));
+      const native = cruisingNowOn();
+      expect(native.disabled).toBe(true);
+      toggle().click();
+      expect(native.checked).toBe(false);
+    });
+
+    it("picking an Online After time turns Cruising Now off", () => {
+      install(filters());
+      const native = cruisingNowOn();
+      openSheet();
+      pick("choice", "< 3 hours ago");
+      sheetButton(STRINGS.range.done).click();
+      expect(native.checked).toBe(false);
+    });
+
+    it("leaves Cruising Now alone when it's already off", () => {
+      install(filters({ online: { enabled: false, minutes: 60 } }));
+      const native = cruisingNowOn();
+      native.checked = false;
+      toggle().click();
+      expect(native.checked).toBe(false);
+    });
+
     it("Cancel leaves the filter alone", () => {
       install(filters());
       openSheet();

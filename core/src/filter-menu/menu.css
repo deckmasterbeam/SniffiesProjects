@@ -289,11 +289,6 @@
   color: #4b84e6;
 }
 
-/*
- * Sniffies only colours its stat lines under `.smart-options-container.active`, and drops that
- * class while all of its own stats are off, which they are while we own one. These repeat its
- * colours for our lines, which are enabled either way.
- */
 .snp-filter-row .list-item.parent-enabled .stat-name,
 .snp-filter-row .list-item.parent-enabled .stat-button,
 .snp-filter-row .list-item.parent-enabled .stat-button button .text-value,
@@ -316,4 +311,32 @@
 
 .snp-native-hidden {
   display: none !important;
+}
+
+.snp-wheel-column:has([data-wheel="min"], [data-wheel="max"], [data-wheel="column"]) p {
+  margin-bottom: 8px;
+  font-size: 18px;
+  color: #d4d9e4;
+}
+
+.snp-wheel[data-wheel="min"],
+.snp-wheel[data-wheel="max"],
+.snp-wheel[data-wheel="column"] {
+  background: none;
+  border-radius: 0;
+}
+
+.snp-wheel[data-wheel="min"] .snp-wheel-item,
+.snp-wheel[data-wheel="max"] .snp-wheel-item,
+.snp-wheel[data-wheel="column"] .snp-wheel-item {
+  color: #5b6fae;
+}
+
+.snp-wheel[data-wheel="min"] .snp-wheel-item.selected,
+.snp-wheel[data-wheel="max"] .snp-wheel-item.selected,
+.snp-wheel[data-wheel="column"] .snp-wheel-item.selected {
+  border-top: 1px solid rgba(255, 255, 255, 0.45);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.45);
+  box-sizing: border-box;
+  color: #ffffff;
 }

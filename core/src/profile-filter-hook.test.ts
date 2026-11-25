@@ -144,23 +144,23 @@ describe("gender rule", () => {
         structuredClone(payload),
         allowingGenders(allowed),
       ).nearbyVisitors?.visitors?.map((v) => v._id);
-    expect(ids(["female", "nonbinary"])).toEqual(["f", "nb"]);
-    expect(ids(["male"])).toEqual(["m"]);
+    expect(ids(["woman", "nonbinary"])).toEqual(["f", "nb"]);
+    expect(ids(["man"])).toEqual(["m"]);
     expect(ids(["undefined"])).toEqual(["u", "missing"]);
   });
 
   it("is inactive when every gender (or, defensively, none) is allowed", () => {
-    expect(allowingGenders(["male", "female", "nonbinary", "undefined"]).isActive()).toBe(false);
+    expect(allowingGenders(["man", "woman", "nonbinary", "undefined"]).isActive()).toBe(false);
     expect(allowingGenders([]).isActive()).toBe(false);
-    expect(allowingGenders(["male"]).isActive()).toBe(true);
+    expect(allowingGenders(["man"]).isActive()).toBe(true);
   });
 
   it("is inactive while switched off, whatever is selected", () => {
-    expect(allowingGenders(["male"], false).isActive()).toBe(false);
+    expect(allowingGenders(["man"], false).isActive()).toBe(false);
   });
 
   it("only hides map markers: chats, messages and their profile cards are left alone", () => {
-    const matcher = allowingGenders(["female"]);
+    const matcher = allowingGenders(["woman"]);
     const frame = (eventName: string, data: unknown) => JSON.stringify({ eventName, data });
 
     const map = filterPostAuthenticationPayload(
@@ -202,7 +202,7 @@ describe("gender rule", () => {
   });
 
   it("remembers a userJoined profile for later id-only frames", () => {
-    const matcher = allowingGenders(["female"]);
+    const matcher = allowingGenders(["woman"]);
     const frame = (eventName: string, data: unknown) => JSON.stringify({ eventName, data });
     expect(shouldFilterWebSocketFrame(frame("userAwake", "m"), matcher)).toBe(false);
     expect(shouldFilterWebSocketFrame(frame("userJoined", withGender("m", "man")), matcher)).toBe(
@@ -219,7 +219,7 @@ describe("gender rule", () => {
   });
 
   it("never hides the logged-in user", () => {
-    const matcher = allowingGenders(["female"]);
+    const matcher = allowingGenders(["woman"]);
     matcher.setSelfId("me");
     const payload = {
       nearbyVisitors: { visitors: [withGender("me", "man"), withGender("m", "man")] },
@@ -232,7 +232,7 @@ describe("gender rule", () => {
     const onBots = vi.fn();
     const matcher = createProfileMatcher([
       botBlockRule(() => ({ blockedIds: new Set(["bot"]), enabled: true }), onBots),
-      genderRule(() => ({ enabled: true, genders: ["female"] })),
+      genderRule(() => ({ enabled: true, genders: ["woman"] })),
     ]);
     filterPostAuthenticationPayload(
       { nearbyVisitors: { visitors: [withGender("bot", "man"), withGender("m", "man")] } },
@@ -274,7 +274,7 @@ describe("height and weight rules", () => {
     max: number | null,
     enabled = true,
     includeUnspecified = false,
-  ) => ({ enabled, min, max, metric: true, includeUnspecified });
+  ) => ({ enabled, min, max, includeUnspecified });
 
   it("keeps only profiles inside the inclusive range, hiding ones that don't state a value", () => {
     expect(shownWith({ height: range(178, 196) })).toEqual(["mid", "tall-heavy", "no-weight"]);
@@ -1019,7 +1019,7 @@ describe("unexpected payload shape", () => {
     expect(texts()[0]).toContain("no nearbyVisitors.visitors list");
 
     const { genderRule: gender } = await import("./profile-filter.js");
-    const active = create([gender(() => ({ enabled: true, genders: ["female"] }))]);
+    const active = create([gender(() => ({ enabled: true, genders: ["woman"] }))]);
     hook.shouldFilterWebSocketFrame(JSON.stringify({ eventName: "userAwake", data: 5 }), active);
     hook.shouldFilterWebSocketFrame(JSON.stringify({ eventName: "userJoined", data: {} }), active);
     expect(texts()).toHaveLength(4);

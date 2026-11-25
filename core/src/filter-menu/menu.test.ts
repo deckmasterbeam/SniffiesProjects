@@ -61,8 +61,8 @@ describe("installProfileFiltersMenu", () => {
     });
 
     it("re-mounts with the current state when Sniffies rebuilds the menu", async () => {
-      install(filters(gender(false, "male", "female")));
-      clickGender("male");
+      install(filters(gender(false, "man", "woman")));
+      clickGender("man");
       genderToggle().click();
       openSheet("height");
       pick("min", `5'10"`);
@@ -70,7 +70,7 @@ describe("installProfileFiltersMenu", () => {
       document.body.innerHTML = "";
       document.body.innerHTML = MENU_HTML;
       await new Promise((resolve) => setTimeout(resolve, 0));
-      expect(activeGenders()).toEqual(["female"]);
+      expect(activeGenders()).toEqual(["woman"]);
       expect(genderToggle().checked).toBe(true);
       expect(applyButton("gender").hidden).toBe(false);
       expect(statValue("height")).toBe(`5'10" +`);

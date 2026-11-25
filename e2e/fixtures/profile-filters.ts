@@ -67,7 +67,6 @@ const range = (min: number, max: number, includeUnspecified = false) => ({
   enabled: true,
   min,
   max,
-  metric: true,
   includeUnspecified,
 });
 
@@ -75,12 +74,12 @@ export const CASES: Case[] = [
   { name: "no filter is on", filters: {}, keeps: ALL },
   {
     name: "Gender: men only",
-    filters: { gender: { enabled: true, genders: ["male"] } },
+    filters: { gender: { enabled: true, genders: ["man"] } },
     keeps: ["man180", "tall200", "stale"],
   },
   {
     name: "Gender: men and not specified",
-    filters: { gender: { enabled: true, genders: ["male", "undefined"] } },
+    filters: { gender: { enabled: true, genders: ["man", "undefined"] } },
     keeps: ["man180", "blank", "tall200", "stale"],
   },
   {

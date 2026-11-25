@@ -65,9 +65,9 @@ describe("profile filters", () => {
 
     it("labels the picks the way the row reads them", () => {
       expect(statPickLabel("position", ["top", "bottom-sub"])).toBe("Top, Submissive bottom");
-      expect(statPickLabel("endowment", { min: 8, max: 12, cut: "cut" })).toBe('8" - 12", cut');
-      expect(statPickLabel("endowment", { min: 8 })).toBe('8" +');
-      expect(statPickLabel("endowment", { max: 5, cut: "uncut" })).toBe(
+      expect(statPickLabel("endowment", { min: 20, max: 30, cut: "cut" })).toBe('8" - 12", cut');
+      expect(statPickLabel("endowment", { min: 20 })).toBe('8" +');
+      expect(statPickLabel("endowment", { max: 13, cut: "uncut" })).toBe(
         `${STRINGS.range.upTo('5"')}, uncut`,
       );
       // A value it has no label for reads as itself, rather than disappearing.
@@ -78,7 +78,7 @@ describe("profile filters", () => {
   describe("the copy the page hook starts from", () => {
     it("round-trips the filters and whether they are on", () => {
       const filters = parseProfileFilters({
-        picks: { endowment: { min: 8, max: 12, cut: "cut" } },
+        picks: { endowment: { min: 20, max: 30, cut: "cut" } },
         unlisted: { endowment: true },
       });
       saveFiltersMirror(filters, true);

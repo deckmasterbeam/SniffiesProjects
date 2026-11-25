@@ -14,7 +14,6 @@ import {
   const log = createLogger("bot-block");
 
   let state: BotBlockState = { blockedIds: new Set(), enabled: false };
-  // The extension's message arrives after the page's first requests, so start from its mirror.
   const mirror = loadFiltersMirror();
   let profileFilters = mirror.filters;
   let profileFiltersEnabled = mirror.enabled;

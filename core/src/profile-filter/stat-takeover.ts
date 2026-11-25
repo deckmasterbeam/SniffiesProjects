@@ -1,20 +1,20 @@
 import { createLogger } from "../log.js";
-import { CM_PER_INCH, type FilterableProfile } from "../sniffies-api.js";
+import { type FilterableProfile } from "../sniffies-api.js";
 import {
   STAT_IDS,
   STAT_KEYS,
   type EndowmentPick,
-  ENDOWMENT_TOP_INCHES,
+  ENDOWMENT_TOP_CM,
   type ListStatId,
   type StatPicks,
   hasStatPick,
   parseStatPicks,
   loadNativePicks,
   saveNativePicks,
-  nativePick,
 } from "./stat-picks.js";
 import { type ProfileFilterRule } from "./matcher.js";
 import { type ProfileFilters } from "./filters.js";
+import { saveUnits, unitsFromAccount } from "./units.js";
 
 const log = createLogger("profile-filter");
 let reportedNoFilters = false;
@@ -60,10 +60,8 @@ const endowmentRule = (
           return true;
         }
       } else if (
-        (typeof min === "number" && length < Math.round(min * CM_PER_INCH)) ||
-        (typeof max === "number" &&
-          max < ENDOWMENT_TOP_INCHES &&
-          length > Math.round(max * CM_PER_INCH))
+        (typeof min === "number" && length < min) ||
+        (typeof max === "number" && max < ENDOWMENT_TOP_CM && length > max)
       ) {
         return true;
       }
@@ -85,12 +83,6 @@ interface SavedFilter {
   enabledValues?: Record<string, boolean>;
 }
 
-/**
- * Turns off our stats in a saved filter, returning the picks it had on for them.
- *
- * `Object.hasOwn` rather than `in`: the selection-limit hook defines an accessor for
- * `sexuality.attitude` on `Object.prototype`, which `in` sees and assigning to would add the key.
- */
 const disableOurStats = (saved: SavedFilter): StatPicks => {
   const enabled = saved.enabledValues;
   const had: StatPicks = {};
@@ -100,19 +92,13 @@ const disableOurStats = (saved: SavedFilter): StatPicks => {
   for (const id of STAT_IDS.filter((stat) => Object.hasOwn(enabled, STAT_KEYS[stat]))) {
     const key = STAT_KEYS[id];
     if (enabled[key] && saved.value?.[key] !== undefined) {
-      Object.assign(had, parseStatPicks({ [id]: nativePick(id, saved.value[key]) }));
+      Object.assign(had, parseStatPicks({ [id]: saved.value[key] }));
     }
     enabled[key] = false;
   }
   return had;
 };
 
-/**
- * Sniffies' own rows for these stats are replaced by ours, and Sniffies filters the map in the
- * browser too, hiding anyone with no value for a stat it has on. So `owns` (the profile filters
- * are on) takes them over completely: `rules` hide profiles our picks don't match, `rewriteBody`
- * keeps the stats out of map requests, and `disableSavedStats` loads them as off.
- */
 export const statTakeover = (
   getFilters: () => ProfileFilters,
   owns: () => boolean = () => true,
@@ -130,9 +116,7 @@ export const statTakeover = (
     } catch {
       return body;
     }
-    // Without a `filters` object there is nowhere to strip our stats from: Sniffies has changed the
-    // request, and its server would filter on them. (No `CRUISER_STATS` in it is normal: that is only
-    // there while one of Sniffies' own stats, like age, is on.)
+
     if (
       owns() &&
       (typeof json?.filters !== "object" || json.filters === null) &&
@@ -156,7 +140,7 @@ export const statTakeover = (
       } else if (sent[key] === undefined) {
         delete native[id];
       } else {
-        Object.assign(native, parseStatPicks({ [id]: nativePick(id, sent[key]) }));
+        Object.assign(native, parseStatPicks({ [id]: sent[key] }));
       }
     }
     if (!ours) {
@@ -170,11 +154,12 @@ export const statTakeover = (
     }
     return JSON.stringify(json);
   };
-  /**
-   * Sniffies restores its saved filters from the `authenticate/current` response. Remember the
-   * picks it had for these stats (to start our rows from) and load the stats as off.
-   */
+
   const disableSavedStats = (payload: unknown): unknown => {
+    const units = unitsFromAccount(payload);
+    if (units) {
+      saveUnits(units);
+    }
     const users = (
       payload as {
         user?: { private?: { options?: { filters?: { USERS?: unknown } } } };

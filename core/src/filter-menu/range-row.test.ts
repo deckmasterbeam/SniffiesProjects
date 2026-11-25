@@ -15,6 +15,7 @@ import {
   sheetButton,
   useMenu,
 } from "./test-kit.js";
+import { saveUnits } from "../profile-filter.js";
 import { STRINGS } from "../strings.js";
 
 describe("installProfileFiltersMenu", () => {
@@ -28,6 +29,12 @@ describe("installProfileFiltersMenu", () => {
       expect(row("height").querySelector(".text-value")!.classList).toContain("placeholder");
       expect(isChecked("height")).toBe(false);
       expect(row("height").querySelector(".list-item")!.classList).toContain("parent-enabled");
+    });
+
+    it("aren't hidden along with the Endowment line they're cloned from", () => {
+      install(filters());
+      expect(row("height").classList.contains("snp-native-hidden")).toBe(false);
+      expect(row("weight").classList.contains("snp-native-hidden")).toBe(false);
     });
 
     describe("Cruiser Stats off", () => {
@@ -78,7 +85,7 @@ describe("installProfileFiltersMenu", () => {
       install(
         filters({
           height: range({ min: 178, max: 191 }),
-          weight: range({ min: null, max: 80, metric: true }),
+          weight: range({ min: null, max: 80 }),
         }),
       );
       expect(statValue("height")).toBe(`5'10" - 6'3"`);
@@ -87,7 +94,7 @@ describe("installProfileFiltersMenu", () => {
       expect(isChecked("height")).toBe(true);
       expect(statCheckbox("height").classList).toContain("active");
       expect(row("height").querySelector(".stat-button")!.classList).toContain("active");
-      expect(statValue("weight")).toBe(STRINGS.range.upTo("80kg"));
+      expect(statValue("weight")).toBe(STRINGS.range.upTo("175lb"));
     });
 
     it("clicking the checkbox switches a set range off and on, keeping the range", () => {
@@ -142,7 +149,7 @@ describe("installProfileFiltersMenu", () => {
   });
 
   describe("range sheet", () => {
-    it("opens from the line with Cancel / title / Done and unit, min and max wheels", () => {
+    it("opens from the line with Cancel / title / Done and min and max wheels", () => {
       install(filters());
       openSheet("height");
       expect(sheet()!.querySelector("h1")!.textContent).toBe(STRINGS.filterMenu.height);
@@ -153,8 +160,6 @@ describe("installProfileFiltersMenu", () => {
         STRINGS.range.cancel,
         STRINGS.range.done,
       ]);
-      expect(wheelLabels("unit")).toEqual(["ft", "cm"]);
-      expect(picked("unit")).toBe("ft");
       expect(picked("min")).toBe("-");
       expect(picked("max")).toBe("-");
     });
@@ -176,16 +181,23 @@ describe("installProfileFiltersMenu", () => {
       expect(weights).toHaveLength(1 + 63);
     });
 
-    it("offers metric ranges on the unit wheel: height in 1cm steps, weight in 5kg steps", () => {
+    it("follows the account's units, with no unit wheel to choose from", () => {
       install(filters());
       openSheet("height");
-      pick("unit", "cm");
+      expect(wheelLabels("unit")).toEqual([]);
+      expect(wheelLabels("min")[1]).toBe(`4'0"`);
+      sheetButton(STRINGS.range.cancel).click();
+    });
+
+    it("offers metric ranges when the account is metric: height in 1cm steps, weight in 5kg steps", () => {
+      saveUnits("metric");
+      install(filters());
+      openSheet("height");
       expect(wheelLabels("min").slice(1, 3)).toEqual(["120cm", "121cm"]);
       expect(wheelLabels("min").at(-1)).toBe("210cm +");
       sheetButton(STRINGS.range.cancel).click();
 
       openSheet("weight");
-      pick("unit", "kg");
       expect(wheelLabels("min").slice(1, 3)).toEqual(["40kg", "45kg"]);
       expect(wheelLabels("min").at(-1)).toBe("180kg +");
     });
@@ -305,15 +317,14 @@ describe("installProfileFiltersMenu", () => {
       expect(picked("max")).toBe("350lb");
     });
 
-    it("switching the unit wheel keeps the picked range, snapped to the new unit's choices", () => {
+    it("a saved range snaps to the account's metric choices", () => {
+      saveUnits("metric");
       install(filters({ weight: range({ min: 68 }) }));
-      openSheet("weight");
-      pick("unit", "kg");
-      expect(picked("min")).toBe("70kg");
-      expect(picked("max")).toBe("-");
-      sheetButton(STRINGS.range.done).click();
-      expect(lastChange().weight).toEqual(range({ min: 70, metric: true }));
       expect(statValue("weight")).toBe("70kg +");
+      openSheet("weight");
+      expect(picked("min")).toBe("70kg");
+      sheetButton(STRINGS.range.done).click();
+      expect(lastChange().weight).toEqual(range({ min: 70 }));
     });
 
     it("mounts where Sniffies puts its own sheets: as a child of the stats filter", () => {

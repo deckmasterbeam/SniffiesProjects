@@ -3,6 +3,7 @@ import { filterSearchPayload } from "./profile-filter-hook.js";
 import {
   createProfileMatcher,
   loadNativePicks,
+  preferredUnits,
   parseProfileFilters,
   statTakeover,
   type ProfileFilters,
@@ -136,7 +137,7 @@ describe("statTakeover", () => {
       profile("long", null, { lengthInCm: 31, isCut: true }),
       profile("uncut", null, { lengthInCm: 18, isCut: false }),
     ];
-    const pick = { endowment: { min: 3, max: 9, cut: "cut" } };
+    const pick = { endowment: { min: 8, max: 23, cut: "cut" } };
     expect(shown(setup(pick).matcher, ...people)).toEqual(["ok"]);
     expect(shown(setup(pick, { endowment: true }).matcher, ...people)).toEqual([
       "ok",
@@ -156,7 +157,7 @@ describe("statTakeover", () => {
     // Sniffies' endowment is in cm; ours is in inches.
     expect(loadNativePicks()).toEqual({
       position: ["top"],
-      endowment: { min: 8, max: 12, cut: "cut" },
+      endowment: { min: 20, max: 30, cut: "cut" },
     });
     takeover.rewriteBody(JSON.stringify({ filters: { BASIC_FILTERS: {} } }));
     expect(loadNativePicks()).toEqual({});
@@ -200,7 +201,7 @@ describe("statTakeover", () => {
         "stats.age": true,
       });
       // Only a stat that was on counts as a pick to start from.
-      expect(loadNativePicks()).toEqual({ endowment: { min: 8, max: 12, cut: "cut" } });
+      expect(loadNativePicks()).toEqual({ endowment: { min: 20, max: 30, cut: "cut" } });
       expect(takeover.disableSavedStats({ user: {} })).toEqual({ user: {} });
     });
 
@@ -221,6 +222,12 @@ describe("statTakeover", () => {
       } finally {
         delete (Object.prototype as Record<string, unknown>)["stats.body"];
       }
+    });
+
+    it("remembers the account's units from the same response, filters on or off", () => {
+      const payload = { user: { private: { options: { units: "metric" } } } };
+      setup({}, {}, false).takeover.disableSavedStats(payload);
+      expect(preferredUnits()).toBe("metric");
     });
 
     it("leaves them alone while the filters are off", () => {

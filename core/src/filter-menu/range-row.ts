@@ -32,6 +32,7 @@ const buildRangeRow =
     }
     const filter = pick(filters);
     stripTestIds(root);
+    root.classList.remove("snp-native-hidden");
 
     group.classList.remove("no-border-bottom");
     item.classList.remove("last");

@@ -8,8 +8,8 @@ import { STRINGS } from "../strings.js";
 export const GENDER_ROW_ID = "snp-gender-filter";
 
 const GENDER_LABELS: Record<Gender, string> = {
-  male: STRINGS.filterMenu.male,
-  female: STRINGS.filterMenu.female,
+  man: STRINGS.filterMenu.man,
+  woman: STRINGS.filterMenu.woman,
   nonbinary: STRINGS.filterMenu.nonbinary,
   undefined: STRINGS.filterMenu.notSpecified,
 };

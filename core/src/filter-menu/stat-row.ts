@@ -17,11 +17,6 @@ import { stripTestIds, type MountedRow, type Row } from "./row.js";
 import { openMultiFlyout, openRangeFlyout } from "./flyout.js";
 import { STRINGS } from "../strings.js";
 
-// ── Position / Body Type / Sexuality / Endowment ──
-// Sniffies' own rows for these are hidden and forced off, and these rows stand in for them: it
-// filters the map in the browser too, and hides anyone with no value for a stat it has on, which
-// would make "include profiles with none listed" impossible.
-
 const nativeStatLine = (id: OwnedStatId): Element | null =>
   document.querySelector(`label[for="${STAT_KEYS[id]}"]`)?.closest("ui-menu-item-group") ?? null;
 
@@ -45,7 +40,6 @@ const buildOwnedStatRow =
     const title = name.textContent?.trim() ?? id;
     const host = root.closest("smart-select-filter") ?? anchor.closest("smart-select-filter");
 
-    // Cleared, not removed: no pick at all is what lets Sniffies' old pick start the row off.
     const emptyPick = (): unknown => (id === "endowment" ? {} : []);
     const clear = (): void => {
       (filters.picks as Record<string, unknown>)[id] = emptyPick();
@@ -89,7 +83,6 @@ const buildOwnedStatRow =
         {
           min: current.min ?? null,
           max: current.max ?? null,
-          metric: false,
           includeUnspecified: filters.unlisted.endowment,
         },
         (next) => {
@@ -139,8 +132,7 @@ const buildOwnedStatRow =
         openSheet();
       }
     });
-    // Sniffies turns its Cruiser Stats switch off once none of *its* stats is on, which is always
-    // so for the ones we've taken over, so this row doesn't follow that switch.
+    
     item.classList.add("parent-enabled");
 
     return {
@@ -170,14 +162,10 @@ const ownedStatRow = (id: OwnedStatId): Row => ({
 
 export const STAT_ROWS: Row[] = STAT_IDS.map(ownedStatRow);
 
-// Their native rows are hidden and forced off, so Sniffies' own check of the map (which hides
-// anyone with no value for an enabled stat) never sees them.
 export const createOwnedSync = (filters: ProfileFilters): (() => void) => {
   const forcedAt = new Map<string, number>();
   let shownOn: HTMLInputElement | null = null;
   return () => {
-    // With its own stats all off, Sniffies shows the Cruiser Stats switch off. We're still
-    // filtering on stats, so show it on while one of ours is, and put it back afterwards.
     const master = document.querySelector<HTMLInputElement>("input#CRUISER_STATS");
     const filtering = ownsAnyStat(filters);
     if (master && filtering && !master.checked) {

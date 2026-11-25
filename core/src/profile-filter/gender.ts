@@ -1,12 +1,11 @@
 import { type FilterableProfile, type SniffiesGender } from "../sniffies-api.js";
 import { type ProfileFilterRule } from "./matcher.js";
 
-export const GENDERS = ["male", "female", "nonbinary", "undefined"] as const;
+export const GENDERS = ["man", "woman", "nonbinary", "undefined"] as const;
 export type Gender = (typeof GENDERS)[number];
 
 export interface GenderFilter {
   enabled: boolean;
-  /** The genders to show while enabled. Never empty. */
   genders: Gender[];
 }
 
@@ -23,8 +22,8 @@ export const allowedGenders = (filter: GenderFilter): readonly Gender[] =>
   filter.enabled ? filter.genders : GENDERS;
 
 const WIRE_GENDERS: Partial<Record<Exclude<SniffiesGender, null>, Gender>> = {
-  man: "male",
-  woman: "female",
+  man: "man",
+  woman: "woman",
   nonbinary: "nonbinary",
 };
 

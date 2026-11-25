@@ -30,7 +30,7 @@ Extra filters in the Sniffies' filter menu, and no cap on how many options you c
 
 | Filter       | What it does                                                                        | Chrome extension | Userscript | Bookmarklet |
 | ------------ | ----------------------------------------------------------------------------------- | ---------------- | ---------- | ----------- |
-| Gender       | New filter with: Male / Female / Nonbinary / Not specified buttons | Yes              | Yes        | No          |
+| Gender       | New filter with: Man / Woman / Nonbinary / Not specified buttons | Yes              | Yes        | No          |
 | Online After | Pick how long to look back (15 min to 48 hours) for recently online people         | Yes              | Yes        | No          |
 | Height       | New filter under Cruiser Stats                   | Yes              | Yes        | No          |
 | Weight       | New filter under Cruiser Stats                 | Yes              | Yes        | No          |

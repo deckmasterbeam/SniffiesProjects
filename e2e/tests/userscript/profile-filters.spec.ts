@@ -66,8 +66,8 @@ test("the master switch off filters nothing, whatever is set", async ({ page, co
 
 test("filters combine: a profile has to pass all of them", async ({ page, context }) => {
   await load(page, context, {
-    gender: { enabled: true, genders: ["male"] },
-    height: { enabled: true, min: 170, max: 190, metric: true, includeUnspecified: false },
+    gender: { enabled: true, genders: ["man"] },
+    height: { enabled: true, min: 170, max: 190, includeUnspecified: false },
     online: { enabled: true, minutes: 60 },
   });
   // Men, 170–190 cm, seen within the hour: man180 only (stale is out on time, tall200 on height).

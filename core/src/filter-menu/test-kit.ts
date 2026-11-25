@@ -8,7 +8,6 @@ import {
   type RangeFilter,
 } from "../profile-filter.js";
 
-// Trimmed from the live Map Layers → Cruisers menu markup.
 export const statLine = (key: string, title: string, last = false): string => `
   <ui-menu-item-group variant="level3">
     <div class="menu-item-group${last ? " no-border-bottom" : ""} level3">
@@ -77,7 +76,6 @@ export const MENU_HTML = `
   </filter-group-component>
 `;
 
-// jsdom's navigator.language is en-US, so untouched range filters start out imperial.
 export const filters = (overrides: Partial<ProfileFilters> = {}): ProfileFilters => ({
   ...parseProfileFilters(null),
   ...overrides,
@@ -89,12 +87,10 @@ export const range = (overrides: Partial<RangeFilter>): RangeFilter => ({
   enabled: true,
   min: null,
   max: null,
-  metric: false,
   includeUnspecified: false,
   ...overrides,
 });
 
-// The cutoff line; its clock text is "12:00" or "12:00PM" depending on the locale.
 export const onlineAfter = (time: string): RegExp =>
   new RegExp(`^${STRINGS.filterMenu.cruisersOnlineAfter(time)}${time ? "(PM)?$" : ""}`);
 
@@ -116,7 +112,6 @@ export const clickGender = (name: string): void =>
     .find((b) => b.dataset.gender === name)!
     .click();
 
-// Stat lines (Height / Weight) and the sheet they open.
 export const statCheckbox = (id: string): HTMLElement =>
   row(id).querySelector<HTMLElement>("label")!;
 export const statValue = (id: string): string =>
@@ -140,7 +135,6 @@ export const picked = (wheel: string): string =>
 export const sheetButton = (text: string): HTMLButtonElement =>
   [...sheet()!.querySelectorAll("button")].find((b) => b.textContent === text)!;
 
-/** Installs the menu under test and cleans up after each test; call inside a `describe`. */
 export const useMenu = () => {
   let off: () => void = () => {};
   const onChange = vi.fn<(next: ProfileFilters) => void>();
@@ -160,6 +154,8 @@ export const useMenu = () => {
 
   beforeEach(() => {
     onChange.mockClear();
+    // No saved account units: the jsdom locale (en-US) is imperial.
+    localStorage.clear();
     document.body.innerHTML = MENU_HTML;
   });
 

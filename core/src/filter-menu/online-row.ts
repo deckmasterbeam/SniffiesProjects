@@ -45,6 +45,13 @@ const buildOnlineRow = (
   since.className = "snp-online-since";
   titleLine.after(since);
 
+  const turnOffCruisingNow = (): void => {
+    const native = cruisingNowRow();
+    if (native?.querySelector<HTMLInputElement>("#CONNECTED_NOW")?.checked) {
+      native.querySelector<HTMLElement>(".list-item-level-2")?.click();
+    }
+  };
+
   const openPicker = (): void => {
     const now = Date.now();
     openChoiceFlyout(
@@ -66,6 +73,7 @@ const buildOnlineRow = (
           pickedAt: Date.now(),
           ...(mode === "static" && { cutoff: Date.now() - minutes * 60_000 }),
         };
+        turnOffCruisingNow();
         changed();
       },
       root.closest("smart-select-filter"),
@@ -86,6 +94,9 @@ const buildOnlineRow = (
       return;
     }
     filters.online.enabled = toggle.checked;
+    if (toggle.checked) {
+      turnOffCruisingNow();
+    }
     changed();
   });
 

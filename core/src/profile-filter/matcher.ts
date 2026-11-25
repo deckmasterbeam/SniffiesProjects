@@ -7,7 +7,6 @@ export interface ProfileFilterRule {
   isActive: () => boolean;
   hides: (profile: FilterableProfile) => boolean;
   mapOnly?: boolean;
-  /** Swallow `userDisconnected` / `userRemoved` frames while active */
   keepsOnMap?: boolean;
   onFiltered?: (ids: string[]) => void;
 }
@@ -22,7 +21,6 @@ export interface ProfileMatcher extends ProfileChecks {
   keepsOnMap: () => boolean;
   chat: ProfileChecks;
   setSelfId: (id: string) => void;
-  /** Applies a partial `userUpdated` profile to the last full one: only its connect time. */
   noteUpdate: (partial: FilterableProfile) => void;
   flush: () => { rule: string; ids: string[] }[];
 }

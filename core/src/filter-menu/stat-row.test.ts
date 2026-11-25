@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { parseProfileFilters, type ProfileFilters } from "../profile-filter.js";
+import { parseProfileFilters, saveUnits, type ProfileFilters } from "../profile-filter.js";
 import { STRINGS } from "../strings.js";
 import {
   filters,
@@ -39,7 +39,7 @@ describe("installProfileFiltersMenu", () => {
     it("shows the picks, and none listed when it is on", () => {
       install(
         withPicks(
-          { sexuality: ["gay", "bi"], endowment: { min: 1, max: 3.5, cut: "cut" } },
+          { sexuality: ["gay", "bi"], endowment: { min: 3, max: 9, cut: "cut" } },
           { endowment: true },
         ),
       );
@@ -75,7 +75,7 @@ describe("installProfileFiltersMenu", () => {
 
       it("shows it on while one of our stats is filtering, and puts it back after", () => {
         const master = withMaster();
-        install(withPicks({ endowment: { min: 8, max: 12 } }));
+        install(withPicks({ endowment: { min: 20, max: 30 } }));
         expect(master.checked).toBe(true);
         statCheckbox("endowment").click();
         expect(master.checked).toBe(false);
@@ -89,7 +89,7 @@ describe("installProfileFiltersMenu", () => {
 
       it("doesn't stop our row, or Height and Weight, working", () => {
         withMaster();
-        install(withPicks({ endowment: { min: 8, max: 12 } }));
+        install(withPicks({ endowment: { min: 20, max: 30 } }));
         expect(row("endowment").querySelector(".list-item")!.classList).toContain("parent-enabled");
         expect(row("height").querySelector(".list-item")!.classList).toContain("parent-enabled");
       });
@@ -171,7 +171,21 @@ describe("installProfileFiltersMenu", () => {
         pick("max", '3.5"');
         pick("column", "Cut");
         sheetButton(STRINGS.range.done).click();
-        expect(lastChange().picks.endowment).toEqual({ min: 1, max: 3.5, cut: "cut" });
+        expect(lastChange().picks.endowment).toEqual({ min: 3, max: 9, cut: "cut" });
+      });
+
+      it("offers centimetres when the account is metric", () => {
+        saveUnits("metric");
+        install(withPicks({ endowment: { min: 12, max: 18 } }));
+        expect(statValue("endowment")).toBe("12cm - 18cm");
+        openSheet("endowment");
+        expect(wheelLabels("min").slice(1, 3)).toEqual(["2cm", "3cm"]);
+        expect(wheelLabels("min").at(-1)).toBe("30cm +");
+        expect(wheelLabels("unit")).toEqual([]);
+        pick("min", "10cm");
+        pick("max", "20cm");
+        sheetButton(STRINGS.range.done).click();
+        expect(lastChange().picks.endowment).toEqual({ min: 10, max: 20 });
       });
     });
 

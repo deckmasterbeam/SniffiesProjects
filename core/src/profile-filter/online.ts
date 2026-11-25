@@ -5,11 +5,8 @@ import { type ProfileFilterRule } from "./matcher.js";
 
 export interface OnlineFilter {
   enabled: boolean;
-  /** Seen within this many minutes of now. */
   minutes: number | null;
-  /** When the menu's Done last confirmed the pick; the cutoff moves to then on the next reload. Not restored from storage. */
   pickedAt?: number;
-  /** Static mode: the fixed time to be seen after, instead of a lookback that moves with each reload. */
   cutoff?: number;
 }
 
