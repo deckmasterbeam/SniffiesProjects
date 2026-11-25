@@ -1,8 +1,6 @@
 import { STRINGS } from "../strings.js";
 import { type ProfileFilterRule } from "./matcher.js";
 
-// ── Last online ──────────────────────────────────────────────────────────────
-
 export interface OnlineFilter {
   enabled: boolean;
   minutes: number | null;

@@ -3,9 +3,7 @@ import { stripTestIds, type MountedRow, type Row } from "./row.js";
 import { PROFILE_TYPE_FILTER_LABEL_SELECTOR } from "../sniffies-selectors.js";
 import { STRINGS } from "../strings.js";
 
-// ── Gender: a switch row like "Profile Type", with one on/off button per gender ──
-
-export const GENDER_ROW_ID = "snp-gender-filter";
+const GENDER_ROW_ID = "snp-gender-filter";
 
 const GENDER_LABELS: Record<Gender, string> = {
   man: STRINGS.filterMenu.man,

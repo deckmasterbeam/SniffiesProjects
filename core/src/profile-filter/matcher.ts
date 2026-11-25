@@ -116,8 +116,6 @@ export const createProfileMatcher = (rules: readonly ProfileFilterRule[]): Profi
   };
 };
 
-// ── Rules ────────────────────────────────────────────────────────────────────
-
 export const botBlockRule = (
   getState: () => BotBlockState,
   onFiltered?: (ids: string[]) => void,

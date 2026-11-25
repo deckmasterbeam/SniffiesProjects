@@ -9,8 +9,6 @@ import { STRINGS } from "../strings.js";
 import { type ProfileFilterRule } from "./matcher.js";
 import { preferredUnits } from "./units.js";
 
-// ── Height / weight ──────────────────────────────────────────────────────────
-
 export interface RangeFilter {
   enabled: boolean;
   min: number | null;

@@ -13,8 +13,6 @@ import { openRangeFlyout } from "./flyout.js";
 import { ENDOWMENT_FILTER_LABEL_SELECTOR } from "../sniffies-selectors.js";
 import { STRINGS } from "../strings.js";
 
-// ── Height / weight: our own filters, cloned from Endowment's line ──
-
 const buildRangeRow =
   (title: string, pick: (filters: ProfileFilters) => RangeFilter, options: RangeOptions) =>
   (anchor: Element, filters: ProfileFilters, changed: () => void): MountedRow | null => {

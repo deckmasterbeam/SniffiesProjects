@@ -11,17 +11,17 @@ import {
   statPickLabel,
   type EndowmentPick,
   type ProfileFilters,
-  type StatId as OwnedStatId,
+  type StatId,
 } from "../profile-filter.js";
 import { stripTestIds, type MountedRow, type Row } from "./row.js";
 import { openMultiFlyout, openRangeFlyout } from "./flyout.js";
 import { STRINGS } from "../strings.js";
 
-const nativeStatLine = (id: OwnedStatId): Element | null =>
+const nativeStatLine = (id: StatId): Element | null =>
   document.querySelector(`label[for="${STAT_KEYS[id]}"]`)?.closest("ui-menu-item-group") ?? null;
 
 const buildOwnedStatRow =
-  (id: OwnedStatId) =>
+  (id: StatId) =>
   (anchor: Element, filters: ProfileFilters, changed: () => void): MountedRow | null => {
     const root = anchor.cloneNode(true) as HTMLElement;
     const item = root.querySelector(".list-item");
@@ -40,23 +40,20 @@ const buildOwnedStatRow =
     const title = name.textContent?.trim() ?? id;
     const host = root.closest("smart-select-filter") ?? anchor.closest("smart-select-filter");
 
-    const emptyPick = (): unknown => (id === "endowment" ? {} : []);
-    const clear = (): void => {
-      (filters.picks as Record<string, unknown>)[id] = emptyPick();
-      changed();
+    const setPick = (pick: unknown): void => {
+      (filters.picks as Record<string, unknown>)[id] = pick;
     };
+    const emptyPick = (): unknown => (id === "endowment" ? {} : []);
     const finish = (pick: unknown, unlisted: boolean): void => {
       filters.unlisted[id] = unlisted;
-      (filters.picks as Record<string, unknown>)[id] = hasStatPick(id, pick as never)
-        ? pick
-        : emptyPick();
+      setPick(hasStatPick(id, pick as never) ? pick : emptyPick());
       changed();
     };
     // The first time, start from what Sniffies had saved for this stat.
     if (filters.picks[id] === undefined) {
       const seed = loadNativePicks()[id];
       if (seed !== undefined) {
-        (filters.picks as Record<string, unknown>)[id] = seed;
+        setPick(seed);
         clearNativePick(id);
         changed();
       }
@@ -68,7 +65,7 @@ const buildOwnedStatRow =
           STAT_OPTIONS[id],
           (filters.picks[id] as string[] | undefined) ?? [],
           filters.unlisted[id],
-          (values, include) => finish(values, include),
+          finish,
           host,
           checkbox,
         );
@@ -122,7 +119,8 @@ const buildOwnedStatRow =
         return;
       }
       if (hasStatPick(id, filters.picks[id])) {
-        clear();
+        setPick(emptyPick());
+        changed();
       } else {
         openSheet();
       }
@@ -132,7 +130,6 @@ const buildOwnedStatRow =
         openSheet();
       }
     });
-    
     item.classList.add("parent-enabled");
 
     return {
@@ -153,7 +150,7 @@ const buildOwnedStatRow =
     };
   };
 
-const ownedStatRow = (id: OwnedStatId): Row => ({
+const ownedStatRow = (id: StatId): Row => ({
   id: `snp-${id}-filter`,
   anchor: () => nativeStatLine(id),
   key: (f) => statKey(f, id),

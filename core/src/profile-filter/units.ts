@@ -1,10 +1,7 @@
-// ── Imperial or metric: follows the Sniffies account, never chosen in our menu ───────────────
-
 export type Units = "imperial" | "metric";
 
 const isUnits = (value: unknown): value is Units => value === "imperial" || value === "metric";
 
-/** Sniffies' own default for an account with no setting: imperial in these countries, else metric. */
 const IMPERIAL_COUNTRIES = ["US", "LR", "MM"];
 
 const UNITS_KEY = "snp-preferred-units";

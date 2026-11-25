@@ -14,8 +14,6 @@ import {
 import { type RangeFilter, defaultRangeFilter, parseRangeFilter, rangeRule } from "./range.js";
 import { type StatId, type StatPicks, parseStatPicks, STAT_IDS } from "./stat-picks.js";
 
-// ── All the filters the user sets from Sniffies filter menu ─────────────────
-
 export interface ProfileFilters {
   unlisted: Record<StatId, boolean>;
   picks: StatPicks;
