@@ -1,3 +1,5 @@
+import type { SniffiesBodyType, SniffiesPosition, SniffiesSexuality } from "./sniffies-api.js";
+
 export const STRINGS = {
   updateBanner: {
     message:
@@ -126,7 +128,7 @@ export const STRINGS = {
       "top-sub": "Passive top",
       top: "Top",
       "top-dom": "Dom top (breeder)",
-    },
+    } satisfies Record<SniffiesPosition, string>,
     bodyType: {
       slim: "Slim",
       athletic: "Athletic",
@@ -135,14 +137,14 @@ export const STRINGS = {
       stocky: "Stocky",
       chubby: "Chubby",
       large: "Large",
-    },
+    } satisfies Record<SniffiesBodyType, string>,
     sexuality: {
       straight: "Straight",
       "straight-curious": "Straight-curious",
       bicurious: "Bicurious",
       bi: "Bi",
       gay: "Gay",
-    },
+    } satisfies Record<SniffiesSexuality, string>,
   },
 };
 

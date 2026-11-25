@@ -8,15 +8,16 @@ import {
   statTakeover,
   type ProfileFilters,
 } from "./profile-filter.js";
-import type { FilterableProfile } from "./sniffies-api.js";
+import type { FilterableProfile, SniffiesPosition } from "./sniffies-api.js";
 
 const profile = (
   id: string,
-  attitude: string | null,
+  attitude: SniffiesPosition | null,
   endowment: { lengthInCm: number | null; isCut: boolean | null } | null = null,
+  age: number | null = null,
 ): FilterableProfile => ({
   _id: id,
-  data: { profile: { extended: { sexuality: { attitude }, stats: { endowment } } } },
+  data: { profile: { extended: { sexuality: { attitude }, stats: { endowment, age } } } },
 });
 
 const setup = (
@@ -43,7 +44,7 @@ const shown = (matcher: ReturnType<typeof createProfileMatcher>, ...p: Filterabl
 describe("statTakeover", () => {
   beforeEach(() => localStorage.clear());
 
-  it("strips all four stats from a request while the filters are on, leaving the rest", () => {
+  it("strips every stat of ours from a request while the filters are on, leaving the rest", () => {
     const { takeover } = setup();
     const everything = body({
       "sexuality.attitude": ["top"],
@@ -54,9 +55,9 @@ describe("statTakeover", () => {
     expect(JSON.parse(takeover.rewriteBody(everything)).filters).toEqual({ BASIC_FILTERS: {} });
 
     const withAge = JSON.parse(
-      takeover.rewriteBody(body({ "stats.age": { min: 18, max: 29 }, "stats.body": ["slim"] })),
+      takeover.rewriteBody(body({ "health.hivStatus": ["negative"], "stats.body": ["slim"] })),
     );
-    expect(withAge.filters.CRUISER_STATS.value).toEqual({ "stats.age": { min: 18, max: 29 } });
+    expect(withAge.filters.CRUISER_STATS.value).toEqual({ "health.hivStatus": ["negative"] });
     expect(takeover.rewriteBody("not json")).toBe("not json");
   });
 
@@ -109,7 +110,7 @@ describe("statTakeover", () => {
       const spy = vi.spyOn(console, "warn").mockImplementation(() => {});
       const rewrite = await freshRewrite(true);
       rewrite(JSON.stringify({ filters: { BASIC_FILTERS: {} } }));
-      rewrite(body({ "stats.age": { min: 18 } }));
+      rewrite(body({ "health.hivStatus": ["negative"] }));
       expect(warned(spy)).toHaveLength(0);
       spy.mockRestore();
     });
@@ -146,6 +147,26 @@ describe("statTakeover", () => {
     ]);
   });
 
+  it("matches age, treating the top stop as '90 and up'", () => {
+    const people = [
+      profile("young", null, null, 22),
+      profile("ok", null, null, 30),
+      profile("old", null, null, 45),
+      profile("ninety", null, null, 90),
+      profile("none", null, null, null),
+    ];
+    expect(shown(setup({ age: { min: 25, max: 40 } }).matcher, ...people)).toEqual(["ok"]);
+    expect(shown(setup({ age: { min: 25, max: 40 } }, { age: true }).matcher, ...people)).toEqual([
+      "ok",
+      "none",
+    ]);
+    expect(shown(setup({ age: { min: 40, max: 90 } }).matcher, ...people)).toEqual([
+      "old",
+      "ninety",
+    ]);
+    expect(setup({ age: {} }).matcher.isActive()).toBe(false);
+  });
+
   it("remembers what Sniffies sent for the stats while the filters are off", () => {
     const { takeover } = setup({}, {}, false);
     takeover.rewriteBody(
@@ -175,12 +196,12 @@ describe("statTakeover", () => {
                   value: {
                     "stats.endowment": { min: 20, max: 30, cut: "cut" },
                     "sexuality.attitude": ["side"],
-                    "stats.age": { min: 18, max: 29 },
+                    "health.hivStatus": ["negative"],
                   },
                   enabledValues: {
                     "stats.endowment": true,
                     "sexuality.attitude": false,
-                    "stats.age": true,
+                    "health.hivStatus": true,
                   },
                 },
               ],
@@ -198,7 +219,7 @@ describe("statTakeover", () => {
       expect(enabled(out)).toEqual({
         "stats.endowment": false,
         "sexuality.attitude": false,
-        "stats.age": true,
+        "health.hivStatus": true,
       });
       // Only a stat that was on counts as a pick to start from.
       expect(loadNativePicks()).toEqual({ endowment: { min: 20, max: 30, cut: "cut" } });

@@ -6,7 +6,6 @@ const IMPERIAL_COUNTRIES = ["US", "LR", "MM"];
 
 const UNITS_KEY = "snp-preferred-units";
 
-/** The units from an `authenticate/current` response: the account's setting, else its country's. */
 export const unitsFromAccount = (payload: unknown): Units | null => {
   const user = (
     payload as {

@@ -40,6 +40,7 @@ describe("installProfileFiltersMenu", () => {
       const lines = [...document.querySelectorAll(".smart-options-container > *")];
       expect(lines.map((l) => l.querySelector("label span")?.textContent)).toEqual([
         "Age",
+        "Age",
         "Endowment",
         "Endowment",
         STRINGS.filterMenu.height,

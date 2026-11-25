@@ -1,9 +1,11 @@
 import {
   clearNativePick,
-  ENDOWMENT_OPTIONS,
   hasStatPick,
+  isRangeStat,
   loadNativePicks,
+  RANGE_STAT_OPTIONS,
   ownsAnyStat,
+  rangeKey,
   STAT_IDS,
   STAT_KEYS,
   STAT_OPTIONS,
@@ -43,7 +45,7 @@ const buildOwnedStatRow =
     const setPick = (pick: unknown): void => {
       (filters.picks as Record<string, unknown>)[id] = pick;
     };
-    const emptyPick = (): unknown => (id === "endowment" ? {} : []);
+    const emptyPick = (): unknown => (isRangeStat(id) ? {} : []);
     const finish = (pick: unknown, unlisted: boolean): void => {
       filters.unlisted[id] = unlisted;
       setPick(hasStatPick(id, pick as never) ? pick : emptyPick());
@@ -59,7 +61,7 @@ const buildOwnedStatRow =
       }
     }
     const openSheet = (): void => {
-      if (id !== "endowment") {
+      if (!isRangeStat(id)) {
         openMultiFlyout(
           title,
           STAT_OPTIONS[id],
@@ -71,45 +73,48 @@ const buildOwnedStatRow =
         );
         return;
       }
-      const current = (filters.picks.endowment ?? {}) as EndowmentPick;
-      let range: { min: number | null; max: number | null; includeUnspecified: boolean } | null =
-        null;
+      const current = (filters.picks[id] ?? {}) as EndowmentPick;
+      const save = (
+        range: { min: number | null; max: number | null; includeUnspecified: boolean },
+        cut: string | null,
+      ): void =>
+        finish(
+          {
+            ...(range.min !== null && { min: range.min }),
+            ...(range.max !== null && { max: range.max }),
+            ...(cut !== null && { cut }),
+          },
+          range.includeUnspecified,
+        );
+      let range: Parameters<typeof save>[0] | null = null;
       openRangeFlyout(
         title,
-        ENDOWMENT_OPTIONS,
+        RANGE_STAT_OPTIONS[id],
         {
           min: current.min ?? null,
           max: current.max ?? null,
-          includeUnspecified: filters.unlisted.endowment,
+          includeUnspecified: filters.unlisted[id],
         },
         (next) => {
           range = next;
+          if (id !== "endowment") {
+            save(next, null);
+          }
         },
         host,
         checkbox,
-        {
-          title: STRINGS.filterMenu.cut,
-          choices: [
-            { value: null, label: STRINGS.range.openEnded },
-            { value: "cut", label: STRINGS.filterMenu.cutLabel },
-            { value: "uncut", label: STRINGS.filterMenu.uncutLabel },
-          ],
-          current: current.cut ?? null,
-          onDone: (cut) => {
-            const picked = range;
-            if (!picked) {
-              return;
+        id === "endowment"
+          ? {
+              title: STRINGS.filterMenu.cut,
+              choices: [
+                { value: null, label: STRINGS.range.openEnded },
+                { value: "cut", label: STRINGS.filterMenu.cutLabel },
+                { value: "uncut", label: STRINGS.filterMenu.uncutLabel },
+              ],
+              current: current.cut ?? null,
+              onDone: (cut) => range && save(range, cut),
             }
-            finish(
-              {
-                ...(picked.min !== null && { min: picked.min }),
-                ...(picked.max !== null && { max: picked.max }),
-                ...(cut !== null && { cut }),
-              },
-              picked.includeUnspecified,
-            );
-          },
-        },
+          : undefined,
       );
     };
 
@@ -164,7 +169,8 @@ export const createOwnedSync = (filters: ProfileFilters): (() => void) => {
   let shownOn: HTMLInputElement | null = null;
   return () => {
     const master = document.querySelector<HTMLInputElement>("input#CRUISER_STATS");
-    const filtering = ownsAnyStat(filters);
+    const filtering =
+      ownsAnyStat(filters) || rangeKey(filters.height) !== "" || rangeKey(filters.weight) !== "";
     if (master && filtering && !master.checked) {
       master.checked = true;
       shownOn = master;

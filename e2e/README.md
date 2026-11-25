@@ -1,6 +1,6 @@
 # Sniffies Tools — Playwright E2E
 
-Two things live here, tracked in the root [`PLAYWRIGHT_TESTING_TODO.md`](../PLAYWRIGHT_TESTING_TODO.md):
+Two things live here, tracked in the root [`PLAYWRIGHT_TESTING_TODO.md`](../featureTODOs/PLAYWRIGHT_TESTING_TODO.md):
 
 1. **Fixture-based extension/userscript tests** (§0–§11 of the TODO) — harness + a first smoke test
    exist for both the Chrome extension (`extension` project) and the userscript (`userscript`
@@ -67,7 +67,7 @@ plain `localStorage`/DOM/`fetch`/geolocation — no `GM_*` APIs a manager would 
 
 **Not yet covered:** a real userscript-manager-based test (e.g. Tampermonkey loaded into a
 persistent context, installing the `.user.js` through it) — tracked as a follow-up in
-[`PLAYWRIGHT_TESTING_TODO.md`](../PLAYWRIGHT_TESTING_TODO.md) §0. Direct injection is the primary
+[`PLAYWRIGHT_TESTING_TODO.md`](../featureTODOs/PLAYWRIGHT_TESTING_TODO.md). Direct injection is the primary
 strategy for actual feature testing either way; the manager-based test exists to catch drift in the
 install/match/run-at pipeline itself, which direct injection can't.
 

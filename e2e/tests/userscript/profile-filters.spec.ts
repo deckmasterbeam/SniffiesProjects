@@ -27,7 +27,6 @@ const load = async (
 ): Promise<void> => {
   await mockSniffiesPage(context);
   await mockApi(context, responses());
-  // Nothing here should depend on what GitHub or the userscript's own server answers.
   await context.route("https://api.github.com/**", (route) => route.fulfill({ json: [] }));
   await routeLiveSocket(page, joinedFrames());
   await seedUserscriptStorage(page, {

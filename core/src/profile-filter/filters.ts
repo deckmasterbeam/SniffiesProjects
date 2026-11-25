@@ -24,7 +24,7 @@ export interface ProfileFilters {
 }
 
 export const DEFAULT_PROFILE_FILTERS: ProfileFilters = {
-  unlisted: { position: false, bodyType: false, sexuality: false, endowment: false },
+  unlisted: { age: false, position: false, bodyType: false, sexuality: false, endowment: false },
   picks: {},
   gender: DEFAULT_GENDER_FILTER,
   height: defaultRangeFilter(),

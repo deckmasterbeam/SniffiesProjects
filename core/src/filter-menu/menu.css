@@ -243,13 +243,11 @@
   color: var(--wheel-checked, #ffffff);
 }
 
-/* A wheel you pick several values from: room at the left for the check mark. */
 .snp-wheel[data-wheel="multi"] .snp-wheel-item {
   position: relative;
   padding: 0 1.75em;
 }
 
-/* Drawn like Sniffies' own `.ui-wheel__check`: an L-shaped border, rotated into a tick. */
 .snp-wheel-check {
   position: absolute;
   top: 50%;

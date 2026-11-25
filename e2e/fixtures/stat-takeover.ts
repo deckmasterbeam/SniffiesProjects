@@ -3,20 +3,22 @@ import { SNIFFIES_ORIGIN } from "./constants.js";
 import { mockApi, sendXhr } from "./sniffies-api.js";
 
 /**
- * Shared by the extension and userscript specs: Position / Body Type / Sexuality / Endowment are
- * ours while the profile filters are on (see featureTODOs/Unspecified_Stat_Filters_TODO.md §5), so
- * Sniffies' own network traffic has to be rewritten the same way in both.
+ * Shared by the extension and userscript specs: Age / Position / Body Type / Sexuality / Endowment
+ * are ours while the profile filters are on, so Sniffies' own network traffic has to be rewritten
+ * the same way in both.
  */
 
-/** Endowment 8"–12", cut, with profiles that list none included. */
+/** Age and endowment ranges (8"–12", cut), with profiles that list none included. */
 export const OWNED_FILTERS = {
-  unlisted: { endowment: true },
-  picks: { endowment: { min: 8, max: 12, cut: "cut" } },
+  unlisted: { age: true, endowment: true },
+  picks: { age: { min: 18, max: 29 }, endowment: { min: 20, max: 30, cut: "cut" } },
 };
 
 const MATCH = {
   _id: "match",
-  data: { profile: { extended: { stats: { endowment: { lengthInCm: 25, isCut: true } } } } },
+  data: {
+    profile: { extended: { stats: { age: 25, endowment: { lengthInCm: 25, isCut: true } } } },
+  },
 };
 const NONE_LISTED = {
   _id: "noneListed",
@@ -24,7 +26,9 @@ const NONE_LISTED = {
 };
 const TOO_SMALL = {
   _id: "tooSmall",
-  data: { profile: { extended: { stats: { endowment: { lengthInCm: 10, isCut: true } } } } },
+  data: {
+    profile: { extended: { stats: { age: 25, endowment: { lengthInCm: 10, isCut: true } } } },
+  },
 };
 
 /** What Sniffies' server sends back, per path. The map holds one profile of each kind. */
@@ -43,9 +47,14 @@ const RESPONSES: Record<string, unknown> = {
                 filterType: "CRUISER_STATS",
                 value: {
                   "stats.age": { min: 18, max: 29 },
+                  "health.hivStatus": ["negative"],
                   "stats.endowment": { min: 20, max: 30, cut: "cut" },
                 },
-                enabledValues: { "stats.age": true, "stats.endowment": true },
+                enabledValues: {
+                  "stats.age": true,
+                  "health.hivStatus": true,
+                  "stats.endowment": true,
+                },
                 enabled: true,
               },
             ],
@@ -74,18 +83,26 @@ export const expectRequestStripped = async (page: Page, posted: Record<string, s
   await post(
     page,
     "/api/post-authentication",
-    filtersRequest({ "stats.age": { min: 18, max: 29 }, "stats.endowment": { min: 20, max: 30 } }),
+    filtersRequest({
+      "stats.age": { min: 18, max: 29 },
+      "health.hivStatus": ["negative"],
+      "stats.endowment": { min: 20, max: 30 },
+    }),
   );
   const body = JSON.parse(posted["/api/post-authentication"]!.at(-1)!);
   // Its own stats still go through.
-  expect(body.filters.CRUISER_STATS.value).toEqual({ "stats.age": { min: 18, max: 29 } });
+  expect(body.filters.CRUISER_STATS.value).toEqual({ "health.hivStatus": ["negative"] });
 };
 
 /** Sniffies restores the stat as off, so its own map check never sees it. */
 export const expectSavedFiltersLoadedDisabled = async (page: Page) => {
   const response = JSON.parse(await post(page, "/api/authenticate/current", {}));
   const [entry] = response.user.private.options.filters.USERS;
-  expect(entry.enabledValues).toEqual({ "stats.age": true, "stats.endowment": false });
+  expect(entry.enabledValues).toEqual({
+    "stats.age": false,
+    "health.hivStatus": true,
+    "stats.endowment": false,
+  });
   // The pick itself is left in place.
   expect(entry.value["stats.endowment"]).toEqual({ min: 20, max: 30, cut: "cut" });
 };

@@ -2,7 +2,7 @@ import type { BrowserContext, Page } from "@playwright/test";
 import { SNIFFIES_ORIGIN } from "./constants.js";
 
 /**
- * Sniffies' API host has changed before (see PLAYWRIGHT_TESTING_TODO.md §0b), so tests can serve
+ * Sniffies' API host has changed before (between two captures an hour apart), so tests can serve
  * the same paths from several of the hosts it has used. Same-origin needs no CORS handling; the
  * others are cross-origin from the fixture page and do.
  */

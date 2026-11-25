@@ -2,10 +2,8 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { installProfileFilterHook } from "./profile-filter-hook.js";
 import { parseProfileFilters, statTakeover, type ProfileFilters } from "./profile-filter.js";
 
-// Records what reaches the "network": the body the page's own code sent, after our patches.
 const sent: unknown[] = [];
-// A new class each time: the hook marks the prototype it patched, so reusing one would skip the
-// install in every test after the first.
+
 const makeFakeXhr = (): typeof XMLHttpRequest => {
   class FakeXhr {
     responseType = "";
@@ -95,10 +93,10 @@ describe("the stat takeover through real XHR sends", () => {
     request(
       "POST",
       `${API}/api/softReload`,
-      filtersBody({ "stats.age": { min: 18, max: 29 }, "stats.endowment": { min: 20 } }),
+      filtersBody({ "health.hivStatus": ["negative"], "stats.endowment": { min: 20 } }),
     );
     expect(JSON.parse(sent[0] as string).filters.CRUISER_STATS.value).toEqual({
-      "stats.age": { min: 18, max: 29 },
+      "health.hivStatus": ["negative"],
     });
   });
 
@@ -120,7 +118,7 @@ describe("the stat takeover through real XHR sends", () => {
                 {
                   filterType: "CRUISER_STATS",
                   value: { "stats.endowment": { min: 20, max: 30, cut: "cut" } },
-                  enabledValues: { "stats.endowment": true, "stats.age": true },
+                  enabledValues: { "stats.endowment": true, "health.hivStatus": true },
                   enabled: true,
                 },
               ],
@@ -131,7 +129,7 @@ describe("the stat takeover through real XHR sends", () => {
     });
     const xhr = request("POST", `${API}/api/authenticate/current`, "{}", saved);
     const [entry] = JSON.parse(xhr.responseText).user.private.options.filters.USERS;
-    expect(entry.enabledValues).toEqual({ "stats.endowment": false, "stats.age": true });
+    expect(entry.enabledValues).toEqual({ "stats.endowment": false, "health.hivStatus": true });
     // And what it had saved is kept, to start our row from.
     expect(JSON.parse(localStorage.getItem("snp-native-stat-picks")!)).toEqual({
       endowment: { min: 20, max: 30, cut: "cut" },

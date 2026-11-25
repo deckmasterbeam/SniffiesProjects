@@ -14,6 +14,32 @@ export const WS_USER_ID_PARAM = "userId";
 
 export type SniffiesGender = "man" | "woman" | "nonbinary" | null;
 
+/** Position: `sexuality.attitude`. */
+export type SniffiesPosition =
+  | "side"
+  | "bottom-sub"
+  | "bottom"
+  | "bottom-power"
+  | "vers-bottom"
+  | "vers"
+  | "vers-top"
+  | "top-sub"
+  | "top"
+  | "top-dom";
+
+/** Sexuality: `sexuality.spectrum`. */
+export type SniffiesSexuality = "straight" | "straight-curious" | "bicurious" | "bi" | "gay";
+
+/** Body type: `stats.body`. */
+export type SniffiesBodyType =
+  | "slim"
+  | "athletic"
+  | "muscular"
+  | "average"
+  | "stocky"
+  | "chubby"
+  | "large";
+
 /** A Sniffies account as it appears on the wire. `data` is absent when only the id is known. */
 export interface FilterableProfile {
   _id: string;
@@ -23,15 +49,15 @@ export interface FilterableProfile {
       extended?: {
         sexuality?: {
           gender?: SniffiesGender;
-          // TODO: why?
-          attitude?: string | null;
-          spectrum?: string | null;
+          attitude?: SniffiesPosition | null;
+          spectrum?: SniffiesSexuality | null;
         };
         /** Whole numbers, whatever units the profile was entered in. */
         stats?: {
+          age?: number | null;
           heightInCm?: number | null;
           weightInKg?: number | null;
-          body?: string | null;
+          body?: SniffiesBodyType | null;
           endowment?: { lengthInCm?: number | null; isCut?: boolean | null } | null;
         };
       };

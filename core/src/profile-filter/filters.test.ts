@@ -15,12 +15,14 @@ describe("profile filters", () => {
           bodyType: [],
           sexuality: "gay",
           endowment: { min: 3, max: "x", cut: "cut", extra: 1 },
+          age: { min: 21, max: 40, cut: "cut" },
         },
       });
       expect(parsed.picks).toEqual({
         position: ["top", "vers"],
         bodyType: [],
         endowment: { min: 3, cut: "cut" },
+        age: { min: 21, max: 40 },
       });
       expect(parseProfileFilters(null).picks).toEqual({});
     });
@@ -67,6 +69,7 @@ describe("profile filters", () => {
       expect(statPickLabel("position", ["top", "bottom-sub"])).toBe("Top, Submissive bottom");
       expect(statPickLabel("endowment", { min: 20, max: 30, cut: "cut" })).toBe('8" - 12", cut');
       expect(statPickLabel("endowment", { min: 20 })).toBe('8" +');
+      expect(statPickLabel("age", { min: 21, max: 40 })).toBe(STRINGS.range.between("21", "40"));
       expect(statPickLabel("endowment", { max: 13, cut: "uncut" })).toBe(
         `${STRINGS.range.upTo('5"')}, uncut`,
       );

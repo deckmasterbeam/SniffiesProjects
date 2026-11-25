@@ -3,47 +3,61 @@ import { STRINGS } from "../strings.js";
 import { type ProfileFilters } from "./filters.js";
 import { rangeLabel, type RangeOptions } from "./range.js";
 
-// ── Native stat filters: Position, Body Type, Sexuality, Endowment ───────────
 // Sniffies' server applies these, so it never sends profiles that don't list the stat. While a
 // stat's "include unlisted" switch is on, we strip it from the outgoing request and match it here.
 
-export const STAT_IDS = ["position", "bodyType", "sexuality", "endowment"] as const;
+export const STAT_IDS = ["age", "position", "bodyType", "sexuality", "endowment"] as const;
 export type StatId = (typeof STAT_IDS)[number];
 
-/** The key in `filters.CRUISER_STATS.value` (also the `for` of the native row's label). */
 export const STAT_KEYS: Record<StatId, string> = {
+  age: "stats.age",
   position: "sexuality.attitude",
   bodyType: "stats.body",
   sexuality: "sexuality.spectrum",
   endowment: "stats.endowment",
 };
 
-/** Endowment pick: cm, as Sniffies has it; `cut` is "cut" or "uncut". */
-export interface EndowmentPick {
+export interface RangePick {
   min?: number;
   max?: number;
+}
+
+export interface EndowmentPick extends RangePick {
   cut?: string;
 }
-/** The wheel's top stop, 12 inches or 30 cm, means "and up". */
-export const ENDOWMENT_TOP_CM = 30;
+
+/** The stats picked as a range, rather than from a list. */
+export const RANGE_STAT_IDS = ["age", "endowment"] as const;
+export type RangeStatId = (typeof RANGE_STAT_IDS)[number];
+export const isRangeStat = (id: StatId): id is RangeStatId =>
+  (RANGE_STAT_IDS as readonly string[]).includes(id);
 
 export type StatPick = string[] | EndowmentPick;
 export type StatPicks = Partial<Record<StatId, StatPick>>;
 
-export type ListStatId = Exclude<StatId, "endowment">;
+export type ListStatId = Exclude<StatId, RangeStatId>;
+
+/** The wheel's top stop of each range, which means "and up". */
+export const RANGE_STAT_TOP: Record<RangeStatId, number> = { age: 90, endowment: 30 };
 
 const options = (labels: Record<string, string>): { value: string; label: string }[] =>
   Object.entries(labels).map(([value, label]) => ({ value, label }));
 
-/** The values (as Sniffies' API spells them) and labels of the three pick-list stats. */
 export const STAT_OPTIONS: Record<ListStatId, { value: string; label: string }[]> = {
   position: options(STRINGS.stats.position),
   bodyType: options(STRINGS.stats.bodyType),
   sexuality: options(STRINGS.stats.sexuality),
 };
 
+const AGES = {
+  choices: Array.from({ length: RANGE_STAT_TOP.age - 17 }, (_, i) => ({
+    value: i + 18,
+    label: String(i + 18),
+  })),
+};
+
 // What Sniffies offers: 1" to 12" in half inches, or 2cm to 30cm.
-export const ENDOWMENT_OPTIONS: RangeOptions = {
+const ENDOWMENT_OPTIONS: RangeOptions = {
   imperial: {
     choices: Array.from({ length: 23 }, (_, i) => {
       const inches = 1 + i / 2;
@@ -58,14 +72,19 @@ export const ENDOWMENT_OPTIONS: RangeOptions = {
   },
 };
 
-export const isEndowmentPick = (value: unknown): value is EndowmentPick =>
+export const RANGE_STAT_OPTIONS: Record<RangeStatId, RangeOptions> = {
+  age: { imperial: AGES, metric: AGES },
+  endowment: ENDOWMENT_OPTIONS,
+};
+
+const isPickObject = (value: unknown): value is EndowmentPick =>
   !!value && typeof value === "object" && !Array.isArray(value);
 
 export const hasStatPick = (id: StatId, pick: StatPick | undefined): boolean => {
   if (pick === undefined) {
     return false;
   }
-  if (id !== "endowment") {
+  if (!isRangeStat(id)) {
     return Array.isArray(pick) && pick.length > 0;
   }
   const { min, max, cut } = pick as EndowmentPick;
@@ -77,13 +96,13 @@ export const parseStatPicks = (value: unknown): StatPicks => {
   const picks: StatPicks = {};
   for (const id of STAT_IDS) {
     const pick = raw[id];
-    if (id === "endowment") {
-      if (isEndowmentPick(pick)) {
+    if (isRangeStat(id)) {
+      if (isPickObject(pick)) {
         const { min, max, cut } = pick;
-        picks.endowment = {
+        picks[id] = {
           ...(typeof min === "number" && { min }),
           ...(typeof max === "number" && { max }),
-          ...(typeof cut === "string" && { cut }),
+          ...(id === "endowment" && typeof cut === "string" && { cut }),
         };
       }
     } else if (Array.isArray(pick)) {
@@ -95,27 +114,23 @@ export const parseStatPicks = (value: unknown): StatPicks => {
 
 /** What our row's value button reads. */
 export const statPickLabel = (id: StatId, pick: StatPick): string => {
-  if (id !== "endowment") {
+  if (!isRangeStat(id)) {
     const labels = new Map(STAT_OPTIONS[id as ListStatId].map((o) => [o.value, o.label]));
     return (pick as string[]).map((value) => labels.get(value) ?? value).join(", ");
   }
   const { min, max, cut } = pick as EndowmentPick;
-  const length = rangeLabel({ min: min ?? null, max: max ?? null }, ENDOWMENT_OPTIONS);
+  const length = rangeLabel({ min: min ?? null, max: max ?? null }, RANGE_STAT_OPTIONS[id]);
   return [length, cut].filter(Boolean).join(", ");
 };
 
-/** What a stat's row filters for; different from at page load, it needs a reload. */
 export const statKey = (filters: ProfileFilters, id: StatId): string =>
   hasStatPick(id, filters.picks[id])
     ? `${JSON.stringify(filters.picks[id])}${filters.unlisted[id] ? "+unlisted" : ""}`
     : "";
 
-/** Whether any native stat is ours and filtering: Sniffies then shows its own Cruiser Stats off. */
 export const ownsAnyStat = (filters: ProfileFilters): boolean =>
   STAT_IDS.some((id) => statKey(filters, id) !== "");
 
-// The last picks Sniffies sent for each stat while it was still the native row's, kept so that
-// handing a stat over to our row can start from them. Shared by the page hook and the menu UI.
 const NATIVE_PICKS_KEY = "snp-native-stat-picks";
 
 export const loadNativePicks = (): StatPicks => {
@@ -134,7 +149,6 @@ export const saveNativePicks = (picks: StatPicks): void => {
   }
 };
 
-/** Forgets the native pick a stat started from, once our row has taken it. */
 export const clearNativePick = (id: StatId): void => {
   const native = loadNativePicks();
   if (native[id] !== undefined) {

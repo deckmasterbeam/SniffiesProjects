@@ -4,7 +4,9 @@ import {
   STAT_IDS,
   STAT_KEYS,
   type EndowmentPick,
-  ENDOWMENT_TOP_CM,
+  RANGE_STAT_TOP,
+  type RangePick,
+  type RangeStatId,
   type ListStatId,
   type StatPicks,
   hasStatPick,
@@ -39,6 +41,26 @@ const listRule = (
   },
 });
 
+/** Whether a listed value is outside the pick; the top stop of a range means "and up". */
+const outsideRange = (value: number, { min, max }: RangePick, id: RangeStatId): boolean =>
+  (typeof min === "number" && value < min) ||
+  (typeof max === "number" && max < RANGE_STAT_TOP[id] && value > max);
+
+const ageRule = (getFilters: () => ProfileFilters, owns: () => boolean): ProfileFilterRule => ({
+  name: "age",
+  mapOnly: true,
+  isActive: () => owns() && hasStatPick("age", getFilters().picks.age),
+  hides: (profile) => {
+    if (!profile.data) {
+      return false;
+    }
+    const age = profile.data.profile?.extended?.stats?.age;
+    return typeof age === "number"
+      ? outsideRange(age, getFilters().picks.age as RangePick, "age")
+      : !getFilters().unlisted.age;
+  },
+});
+
 const endowmentRule = (
   getFilters: () => ProfileFilters,
   owns: () => boolean,
@@ -59,10 +81,7 @@ const endowmentRule = (
         if (!unlisted) {
           return true;
         }
-      } else if (
-        (typeof min === "number" && length < min) ||
-        (typeof max === "number" && max < ENDOWMENT_TOP_CM && length > max)
-      ) {
+      } else if (outsideRange(length, { min, max }, "endowment")) {
         return true;
       }
     }
@@ -76,7 +95,6 @@ const endowmentRule = (
   },
 });
 
-/** One of the filters Sniffies saves and restores on login (`authenticate/current`). */
 interface SavedFilter {
   filterType?: string;
   value?: Record<string, unknown>;
@@ -104,6 +122,7 @@ export const statTakeover = (
   owns: () => boolean = () => true,
 ) => {
   const rules = [
+    ageRule(getFilters, owns),
     listRule("position", getFilters, owns, (p) => p.data?.profile?.extended?.sexuality?.attitude),
     listRule("bodyType", getFilters, owns, (p) => p.data?.profile?.extended?.stats?.body),
     listRule("sexuality", getFilters, owns, (p) => p.data?.profile?.extended?.sexuality?.spectrum),

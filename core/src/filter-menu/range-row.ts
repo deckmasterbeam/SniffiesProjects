@@ -1,7 +1,6 @@
 import {
   HEIGHT_OPTIONS,
   rangeKey,
-  ownsAnyStat,
   rangeLabel,
   WEIGHT_OPTIONS,
   type ProfileFilters,
@@ -50,40 +49,11 @@ const buildRangeRow =
         root.closest("smart-select-filter"),
         checkbox,
       );
-    const nativeList = anchor.closest(".smart-options-container");
-    let suspended = false;
-    let wasOn: boolean | null = null;
-    // Sniffies shows Cruiser Stats off while all its own stats are, even if we own one that's on.
-    const followCruiserStats = (): void => {
-      const on = (nativeList?.classList.contains("active") ?? true) || ownsAnyStat(filters);
-      if (on === wasOn) {
-        return;
-      }
-      wasOn = on;
-      item.classList.toggle("parent-enabled", on);
-      if (!on && filter.enabled) {
-        suspended = true;
-        filter.enabled = false;
-        changed();
-      } else if (on && suspended) {
-        suspended = false;
-        filter.enabled = true;
-        changed();
-      }
-    };
-    if (nativeList) {
-      new MutationObserver(followCruiserStats).observe(nativeList, {
-        attributes: true,
-        attributeFilter: ["class"],
-      });
-    }
-    followCruiserStats();
+    // Every native Cruiser Stats line is ours, so Sniffies' own Cruiser Stats switch has no say.
+    item.classList.add("parent-enabled");
 
     label.addEventListener("click", (event) => {
       event.preventDefault();
-      if (!item.classList.contains("parent-enabled")) {
-        return;
-      }
       if (!filter.enabled && filter.min === null && filter.max === null) {
         openSheet();
         return;
@@ -91,18 +61,13 @@ const buildRangeRow =
       filter.enabled = !filter.enabled;
       changed();
     });
-    statButton.addEventListener("click", () => {
-      if (item.classList.contains("parent-enabled")) {
-        openSheet();
-      }
-    });
+    statButton.addEventListener("click", openSheet);
 
     return {
       root,
       // While there's something to apply, the apply button takes the range button's place
       placeApply: (apply) => button.after(apply),
       sync: (needsReload) => {
-        followCruiserStats();
         button.style.display = needsReload ? "none" : "";
         label.classList.toggle("active", filter.enabled);
         checkbox.classList.toggle("fa-check-square", filter.enabled);

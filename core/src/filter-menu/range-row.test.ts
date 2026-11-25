@@ -37,48 +37,17 @@ describe("installProfileFiltersMenu", () => {
       expect(row("weight").classList.contains("snp-native-hidden")).toBe(false);
     });
 
-    describe("Cruiser Stats off", () => {
-      const nativeLine = (): Element => document.querySelector(".smart-options-container")!;
-      const cruiserStats = async (on: boolean): Promise<void> => {
-        nativeLine().classList.toggle("active", on);
-        await Promise.resolve(); // MutationObserver callbacks run as a microtask
-      };
-
-      it("greys the lines out and switches the filters off, keeping the ranges", async () => {
-        install(filters({ height: range({ min: 178, max: 191 }) }));
-        await cruiserStats(false);
-        expect(row("height").querySelector(".list-item")!.classList).not.toContain(
-          "parent-enabled",
-        );
-        expect(lastChange().height).toEqual(range({ enabled: false, min: 178, max: 191 }));
-        expect(isChecked("height")).toBe(false);
-        expect(statValue("height")).toBe(`5'10" - 6'3"`);
-      });
-
-      it("turns the filters back on when it comes back on", async () => {
-        install(filters({ height: range({ min: 178, max: 191 }) }));
-        await cruiserStats(false);
-        await cruiserStats(true);
-        expect(lastChange().height.enabled).toBe(true);
-        expect(isChecked("height")).toBe(true);
-      });
-
-      it("leaves a filter that was already off alone", async () => {
-        install(filters({ height: range({ enabled: false, min: 178, max: 191 }) }));
-        await cruiserStats(false);
-        await cruiserStats(true);
-        expect(onChange).not.toHaveBeenCalled();
-      });
-
-      it("ignores clicks on the checkbox and the value button", async () => {
-        install(filters({ weight: range({ min: 68, max: 79 }) }));
-        await cruiserStats(false);
-        onChange.mockClear();
-        statCheckbox("weight").click();
-        openSheet("weight");
-        expect(sheet()).toBeNull();
-        expect(onChange).not.toHaveBeenCalled();
-      });
+    it("stay usable while Sniffies' Cruiser Stats switch is off", () => {
+      document.querySelector(".smart-options-container")!.classList.remove("active");
+      install(filters({ weight: range({ min: 68, max: 79 }) }));
+      const line = row("height").querySelector(".list-item")!;
+      expect(line.classList).toContain("parent-enabled");
+      statCheckbox("weight").click();
+      expect(lastChange().weight.enabled).toBe(false);
+      statCheckbox("weight").click();
+      expect(lastChange().weight.enabled).toBe(true);
+      openSheet("height");
+      expect(sheet()).not.toBeNull();
     });
 
     it("show the range and a ticked checkbox once set", () => {

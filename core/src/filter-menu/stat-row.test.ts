@@ -5,6 +5,7 @@ import {
   filters,
   isChecked,
   openSheet,
+  range,
   pick,
   row,
   sheet,
@@ -78,6 +79,14 @@ describe("installProfileFiltersMenu", () => {
         install(withPicks({ endowment: { min: 20, max: 30 } }));
         expect(master.checked).toBe(true);
         statCheckbox("endowment").click();
+        expect(master.checked).toBe(false);
+      });
+
+      it("shows it on while Height or Weight is filtering too", () => {
+        const master = withMaster();
+        install(filters({ height: range({ min: 178, max: 191 }) }));
+        expect(master.checked).toBe(true);
+        statCheckbox("height").click();
         expect(master.checked).toBe(false);
       });
 
@@ -161,6 +170,23 @@ describe("installProfileFiltersMenu", () => {
         expect(lastChange().unlisted.sexuality).toBe(true);
         expect(lastChange().picks.sexuality).toEqual(["gay"]);
         expect(statValue("sexuality")).toBe(`Gay, ${STRINGS.filterMenu.noneListed}`);
+      });
+
+      it("saves an age range, with none listed, and no cut column", () => {
+        install(filters());
+        openSheet("age");
+        expect(wheelLabels("min").slice(1, 3)).toEqual(["18", "19"]);
+        expect(wheelLabels("min").at(-1)).toBe("90 +");
+        expect(wheelItems("column")).toHaveLength(0);
+        pick("min", "25");
+        pick("max", "40");
+        document.querySelector<HTMLElement>(".snp-flyout-option")!.click();
+        sheetButton(STRINGS.range.done).click();
+        expect(lastChange().picks.age).toEqual({ min: 25, max: 40 });
+        expect(lastChange().unlisted.age).toBe(true);
+        expect(statValue("age")).toBe(
+          `${STRINGS.range.between("25", "40")}, ${STRINGS.filterMenu.noneListed}`,
+        );
       });
 
       it("saves an endowment range and cut", () => {
