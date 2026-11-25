@@ -1,6 +1,6 @@
 import type { Page } from "@playwright/test";
-import path from "node:path";
 import { readFileSync } from "node:fs";
+import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { SNIFFIES_ORIGIN } from "./constants.js";
 import { mockSniffiesPage, seedLocalStorage } from "./core.js";
@@ -11,6 +11,6 @@ const USERSCRIPT_CODE = readFileSync(
   "utf-8",
 );
 
-export { SNIFFIES_ORIGIN, mockSniffiesPage, seedLocalStorage as seedUserscriptStorage };
+export { mockSniffiesPage, seedLocalStorage as seedUserscriptStorage, SNIFFIES_ORIGIN };
 
 export const injectUserscript = (page: Page) => page.addInitScript({ content: USERSCRIPT_CODE });

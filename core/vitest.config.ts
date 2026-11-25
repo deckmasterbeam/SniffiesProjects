@@ -1,4 +1,6 @@
 import { readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
@@ -12,6 +14,11 @@ export default defineConfig({
       },
     },
   ],
+  resolve: {
+    alias: {
+      "@core": resolve(dirname(fileURLToPath(import.meta.url)), "src"),
+    },
+  },
   define: {
     __DEBUG__: "false",
   },

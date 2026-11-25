@@ -1,7 +1,5 @@
-// Sniffies bookmarklet injection script
-// Bookmarklet loader:
-//   javascript:(function(){var s=document.createElement('script');s.src='https://YOUR_VERCEL_URL/inject.js?t='+Date.now();document.head.appendChild(s);})();
-
+import PANEL_HTML from "@bookmarklet/panel.html";
+import FAB_ICON_PNG from "@icons/icon48.png";
 import {
   getPremiumFeatureFlags,
   getPremiumFeaturesEnabled,
@@ -12,19 +10,12 @@ import {
   installHidePhotoClick,
   installHidePhotoMenuButtons,
   installProfileBorderRedirect,
-  installSentPhotoHider,
+  installReadReceipt,
   installSelectionLimitOverride,
-  installOwnIdHook,
-  installUserIdHook,
+  installSentPhotoHider,
   logInit,
   mountFab,
   PANEL_CSS,
-  UPDATE_BANNER_CSS,
-  UPDATE_BANNER_HTML,
-  VERSION_BADGE_CSS,
-  VERSION_BADGE_HTML,
-  wireVersionBadge,
-  wireUpdateBanner,
   PREMIUM_FEATURES_CSS,
   PREMIUM_FEATURES_HTML,
   PROFILE_FILTERS_CSS,
@@ -35,11 +26,16 @@ import {
   setProfileBorderOpen,
   setProfileFiltersEnabled,
   setProfileFiltersSectionOpen,
+  UPDATE_BANNER_CSS,
+  UPDATE_BANNER_HTML,
+  VERSION_BADGE_CSS,
+  VERSION_BADGE_HTML,
+  watchOwnIdInDom,
   wirePremiumFeaturesForm,
   wireProfileFiltersForm,
+  wireUpdateBanner,
+  wireVersionBadge,
 } from "@sniffies-projects/core";
-import FAB_ICON_PNG from "../../client/icons/icon48.png";
-import PANEL_HTML from "./panel.html";
 
 // ── Guard ────────────────────────────────────────────────────────────────────
 
@@ -51,20 +47,13 @@ declare global {
 
 // ── Main ─────────────────────────────────────────────────────────────────────
 
-function main(): void {
+const main = () => {
   if (!location.hostname.endsWith("sniffies.com")) {
     return;
   }
   alert("Sniffies Tools loaded! Tap the Sniffies Tools button on the map to open the panel.");
 
-  // A bookmarklet loads too late to see the id Sniffies sends at startup, so log the install the
-  // first time Sniffies' traffic reveals it: a socket (re)connect, or an API request or response that carries it.
-  let initLogged = false;
-  const logInstall = (userId: string): void => {
-    if (initLogged) {
-      return;
-    }
-    initLogged = true;
+  watchOwnIdInDom((userId) => {
     void logInit({
       serverBase: __SERVER_BASE__,
       clientSecret: __CLIENT_SECRET__,
@@ -72,9 +61,7 @@ function main(): void {
       clientType: "bookmarklet",
       version: __VERSION__,
     });
-  };
-  installUserIdHook(logInstall);
-  installOwnIdHook(logInstall);
+  });
 
   let currentProfileBorderOpen = getProfileBorderOpen();
   let premiumEnabled = getPremiumFeaturesEnabled();
@@ -90,6 +77,7 @@ function main(): void {
     isPhotosEnabled,
   );
   installHidePhotoMenuButtons(isPhotosEnabled);
+  installReadReceipt(() => premiumEnabled && premiumFlags.readReceipts);
 
   // Takes effect the next time the filter menu is opened. The other profile filters need to hook
   // the page's network requests from the start, which a bookmarklet can't.
@@ -193,7 +181,7 @@ function main(): void {
   closeBtn.addEventListener("click", () => {
     panel.style.display = "none";
   });
-}
+};
 
 // ── Entry point ───────────────────────────────────────────────────────────────
 

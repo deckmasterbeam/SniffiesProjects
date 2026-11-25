@@ -1,4 +1,4 @@
-import { installPlusHook, installUserIdHook, createLogger } from "@sniffies-projects/core";
+import { createLogger, installPlusHook, installUserIdHook } from "@sniffies-projects/core";
 
 (() => {
   const log = createLogger("user-id");

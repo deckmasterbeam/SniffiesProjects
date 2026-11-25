@@ -1,5 +1,5 @@
+import { DEFAULT_LOCAL_SETTINGS } from "@client/shared/settings.js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { DEFAULT_LOCAL_SETTINGS } from "../shared/settings.js";
 
 const SETTINGS_HTML = `
   <main class="page">
@@ -64,7 +64,7 @@ const loadModule = async () => {
   vi.resetModules();
   vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false, json: async () => ({}) }));
   document.body.innerHTML = SETTINGS_HTML;
-  await import("./settings.js");
+  await import("@client/settings/settings.js");
   await flushPromises();
 };
 

@@ -1,8 +1,8 @@
-import type { BotBlockFormContract } from "./contracts.js";
-import RAW_CSS from "./bot-block.css";
-import SWITCH_CSS from "./switch.css";
-import RAW_BOT_BLOCK_HTML from "./bot-block.html";
-import { STRINGS, render } from "./strings.js";
+import RAW_CSS from "@core/bot-block.css";
+import RAW_BOT_BLOCK_HTML from "@core/bot-block.html";
+import type { BotBlockFormContract } from "@core/contracts.js";
+import { STRINGS, render } from "@core/strings.js";
+import SWITCH_CSS from "@core/switch.css";
 
 const BOT_BLOCK_HTML = render(RAW_BOT_BLOCK_HTML);
 const BOT_BLOCK_CSS = SWITCH_CSS + RAW_CSS;

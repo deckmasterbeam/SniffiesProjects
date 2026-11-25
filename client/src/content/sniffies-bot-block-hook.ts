@@ -3,8 +3,10 @@ import {
   createLogger,
   installProfileFilterHook,
   installSelectionLimitOverride,
+  loadFiltersMirror,
   parseProfileFilters,
   profileFilterRules,
+  statTakeover,
   type BotBlockState,
 } from "@sniffies-projects/core";
 
@@ -12,8 +14,9 @@ import {
   const log = createLogger("bot-block");
 
   let state: BotBlockState = { blockedIds: new Set(), enabled: false };
-  let profileFilters = parseProfileFilters(null);
-  let profileFiltersEnabled = false;
+  const mirror = loadFiltersMirror();
+  let profileFilters = mirror.filters;
+  let profileFiltersEnabled = mirror.enabled;
   let boundaryEnabled = false;
 
   window.addEventListener("message", (event) => {
@@ -37,6 +40,10 @@ import {
     });
   });
 
+  const takeover = statTakeover(
+    () => profileFilters,
+    () => profileFiltersEnabled,
+  );
   const result = installProfileFilterHook(
     [
       botBlockRule(
@@ -46,8 +53,11 @@ import {
         },
       ),
       ...profileFilterRules(() => profileFilters),
+      ...takeover.rules,
     ],
     () => boundaryEnabled,
+    takeover.rewriteBody,
+    takeover.disableSavedStats,
   );
   log("profile-filter hook installed", result);
 

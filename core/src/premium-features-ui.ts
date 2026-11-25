@@ -1,14 +1,14 @@
-import RAW_PREMIUM_FEATURES_HTML from "./premium-features.html";
-import { STRINGS, render } from "./strings.js";
-import RAW_CSS from "./premium-features.css";
-import SWITCH_CSS from "./switch.css";
-import { hasCapturedCoords, type GeoOverride, type ProfileBorderOpen } from "./settings.js";
-import type { PremiumFeaturesFormContract } from "./contracts.js";
+import type { PremiumFeaturesFormContract } from "@core/contracts.js";
+import RAW_CSS from "@core/premium-features.css";
+import RAW_PREMIUM_FEATURES_HTML from "@core/premium-features.html";
+import { hasCapturedCoords, type GeoOverride, type ProfileBorderOpen } from "@core/settings.js";
+import { STRINGS, render } from "@core/strings.js";
+import SWITCH_CSS from "@core/switch.css";
 
 const PREMIUM_FEATURES_HTML = render(RAW_PREMIUM_FEATURES_HTML);
 const PREMIUM_FEATURES_CSS = SWITCH_CSS + RAW_CSS;
 
-export { PREMIUM_FEATURES_HTML, PREMIUM_FEATURES_CSS };
+export { PREMIUM_FEATURES_CSS, PREMIUM_FEATURES_HTML };
 export type { PremiumFeaturesFormContract };
 
 export interface PremiumFeaturesFormHandle {
@@ -51,6 +51,7 @@ export const wirePremiumFeaturesForm = (
     location: "premium-flag-location",
     boundary: "premium-flag-boundary",
     photos: "premium-flag-photos",
+    readReceipts: "premium-flag-read-receipts",
   } as const;
   for (const [key, id] of Object.entries(FLAG_INPUTS) as [keyof typeof FLAG_INPUTS, string][]) {
     const input = el<HTMLInputElement>(id);

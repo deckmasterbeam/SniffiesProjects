@@ -1,4 +1,4 @@
-import { CITY_ENDPOINT_PATTERN, type CityPayload } from "./sniffies-api.js";
+import { CITY_ENDPOINT_PATTERN, type CityPayload } from "@core/sniffies-api.js";
 
 export const isCitySearchUrl = (url: string): boolean => CITY_ENDPOINT_PATTERN.test(url);
 

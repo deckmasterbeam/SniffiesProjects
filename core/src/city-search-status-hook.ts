@@ -1,5 +1,5 @@
-import { CITIES_INPUT_SELECTOR } from "./sniffies-selectors.js";
-import { STRINGS } from "./strings.js";
+import { CITIES_INPUT_SELECTOR } from "@core/sniffies-selectors.js";
+import { STRINGS } from "@core/strings.js";
 
 const STATUS_ELEMENT_ID = "snp-city-search-status";
 

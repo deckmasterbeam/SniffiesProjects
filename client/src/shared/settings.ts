@@ -1,13 +1,13 @@
 import {
   DEFAULT_LOCAL_SETTINGS,
   ExtensionLocalSettings,
-  ProfileFilters,
   GeoOverride,
-  PremiumFeatureFlags,
-  parsePremiumFeatureFlags,
   PHONE_E164_REGEX,
+  PremiumFeatureFlags,
+  ProfileFilters,
   SETTINGS_KEYS,
   SNIFFIES_USER_ID_REGEX,
+  parsePremiumFeatureFlags,
   recordBlockedBotIds,
 } from "@sniffies-projects/core";
 

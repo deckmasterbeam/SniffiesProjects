@@ -1,5 +1,5 @@
-import type { BlockedBotDailyLog } from "./blocked-bot-log.js";
-import { DEFAULT_PROFILE_FILTERS, type ProfileFilters } from "./profile-filter.js";
+import type { BlockedBotDailyLog } from "@core/blocked-bot-log.js";
+import { DEFAULT_PROFILE_FILTERS, type ProfileFilters } from "@core/profile-filter.js";
 
 export interface GeoOverride {
   enabled: boolean;
@@ -32,12 +32,14 @@ export interface PremiumFeatureFlags {
   location: boolean;
   boundary: boolean;
   photos: boolean;
+  readReceipts: boolean;
 }
 
 export const DEFAULT_PREMIUM_FEATURE_FLAGS: PremiumFeatureFlags = {
   location: true,
   boundary: true,
   photos: true,
+  readReceipts: true,
 };
 
 export const parsePremiumFeatureFlags = (value: unknown): PremiumFeatureFlags => {
@@ -46,6 +48,7 @@ export const parsePremiumFeatureFlags = (value: unknown): PremiumFeatureFlags =>
     location: raw.location !== false,
     boundary: raw.boundary !== false,
     photos: raw.photos !== false,
+    readReceipts: raw.readReceipts !== false,
   };
 };
 

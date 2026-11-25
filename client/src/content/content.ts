@@ -1,5 +1,3 @@
-// Content script - runs in the context of web pages (isolated world).
-
 import { createLogger } from "@sniffies-projects/core";
 
 const log = createLogger("content");

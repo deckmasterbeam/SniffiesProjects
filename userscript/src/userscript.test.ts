@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("./shared/env.js", () => ({
+vi.mock("@userscript/shared/env.js", () => ({
   SERVER_BASE: "https://server.example",
   CLIENT_SECRET: "test-secret",
   VERSION: "1.2.3",
@@ -16,7 +16,7 @@ const loadModule = async () => {
   document.head.innerHTML = "";
   // Skip the module's own auto hook-install/mount so tests can call mountUI directly.
   (window as WindowWithFlag).__sniffiesInjected = true;
-  return import("./userscript.js");
+  return import("@userscript/userscript.js");
 };
 
 // ── Tests ─────────────────────────────────────────────────────────────────────

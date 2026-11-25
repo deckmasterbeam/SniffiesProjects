@@ -1,17 +1,18 @@
 import {
-  createLogger,
-  gateProfileFilters,
-  installProfileFiltersMenu,
-  parseProfileFilters,
-  type ExtensionLocalSettings,
-  type ProfileFilters,
-} from "@sniffies-projects/core";
-import {
   SETTINGS_KEYS,
   getLocalSettings,
   recordBlockedBotEvent,
   setProfileFilters,
-} from "../shared/settings.js";
+} from "@client/shared/settings.js";
+import {
+  createLogger,
+  gateProfileFilters,
+  installProfileFiltersMenu,
+  parseProfileFilters,
+  saveFiltersMirror,
+  type ExtensionLocalSettings,
+  type ProfileFilters,
+} from "@sniffies-projects/core";
 
 const log = createLogger("bot-block-relay");
 
@@ -22,6 +23,7 @@ const postState = (
   profileFiltersEnabled: boolean,
   premiumFeaturesEnabled: boolean,
   boundaryEnabled: boolean,
+  readReceiptsEnabled: boolean,
 ): void => {
   window.postMessage(
     {
@@ -32,6 +34,7 @@ const postState = (
       profileFiltersEnabled,
       premiumFeaturesEnabled,
       boundaryEnabled,
+      readReceiptsEnabled,
     },
     "*",
   );
@@ -49,6 +52,8 @@ const relay = (settings: ExtensionLocalSettings): void => {
 
   const effective = gateProfileFilters(stored, profileFiltersEnabled);
   appliedFilters ??= effective;
+  // What the next page load will apply; the hook reads it before its first request.
+  saveFiltersMirror(effective, profileFiltersEnabled);
   postState(
     blockedBots,
     botBlockingEnabled,
@@ -56,6 +61,7 @@ const relay = (settings: ExtensionLocalSettings): void => {
     profileFiltersEnabled,
     premiumFeaturesEnabled,
     settings.premiumFeaturesEnabled && settings.premiumFeatureFlags.boundary,
+    settings.premiumFeaturesEnabled && settings.premiumFeatureFlags.readReceipts,
   );
 
   if (profileFiltersEnabled && !removeFiltersMenu) {

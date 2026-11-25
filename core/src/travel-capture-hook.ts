@@ -1,6 +1,6 @@
-import { createLogger } from "./log.js";
-import type { LocationPutBody } from "./sniffies-api.js";
-import { TRAVEL_HERE_BUTTON_SELECTOR } from "./sniffies-selectors.js";
+import { createLogger } from "@core/log.js";
+import type { LocationPutBody } from "@core/sniffies-api.js";
+import { TRAVEL_HERE_BUTTON_SELECTOR } from "@core/sniffies-selectors.js";
 
 const log = createLogger("travel-capture");
 const ARM_TIMEOUT_MS = 5000;

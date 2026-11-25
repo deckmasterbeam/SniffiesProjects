@@ -1,4 +1,4 @@
-import { createLogger } from "./log.js";
+import { createLogger } from "@core/log.js";
 import {
   ALL_PHOTOS_VISIBILITY_PATH,
   CHAT_DATA_PATH,
@@ -10,7 +10,7 @@ import {
   type Message,
   type MessagesPayload,
   type PhotoVisibilityBody,
-} from "./sniffies-api.js";
+} from "@core/sniffies-api.js";
 
 const log = createLogger("sent-photos");
 

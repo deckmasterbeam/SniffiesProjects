@@ -1,5 +1,5 @@
-import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { neon, type NeonQueryFunction } from "@neondatabase/serverless";
+import type { VercelRequest, VercelResponse } from "@vercel/node";
 
 export const json = (res: VercelResponse, status: number, body: Record<string, unknown>): void => {
   res.status(status).json(body);

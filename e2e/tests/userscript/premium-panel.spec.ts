@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import {
   SNIFFIES_ORIGIN,
   injectUserscript,
@@ -73,11 +73,11 @@ test("master off greys out the per-feature switches", async ({ page }) => {
   await page.goto(`${SNIFFIES_ORIGIN}/`);
   await openPremium(page);
 
-  for (const id of ["location", "boundary", "photos"]) {
+  for (const id of ["location", "boundary", "photos", "read-receipts"]) {
     await expect(page.locator(`#premium-flag-${id}`)).toBeDisabled();
   }
   await page.locator("#premium-enabled").check();
-  for (const id of ["location", "boundary", "photos"]) {
+  for (const id of ["location", "boundary", "photos", "read-receipts"]) {
     await expect(page.locator(`#premium-flag-${id}`)).toBeEnabled();
   }
 });

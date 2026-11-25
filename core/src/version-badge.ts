@@ -1,7 +1,7 @@
-import VERSION_BADGE_HTML from "./version-badge.html";
-import VERSION_BADGE_CSS from "./version-badge.css";
+import VERSION_BADGE_CSS from "@core/version-badge.css";
+import VERSION_BADGE_HTML from "@core/version-badge.html";
 
-export { VERSION_BADGE_HTML, VERSION_BADGE_CSS };
+export { VERSION_BADGE_CSS, VERSION_BADGE_HTML };
 
 /** Renders `version` into the `#snp-version` element inside `container`. */
 export const wireVersionBadge = (container: Element, version: string): void => {

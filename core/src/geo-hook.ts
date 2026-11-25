@@ -1,6 +1,6 @@
-import type { GeoOverride } from "./settings.js";
-import { hasCapturedCoords } from "./settings.js";
-import { createLogger } from "./log.js";
+import { createLogger } from "@core/log.js";
+import type { GeoOverride } from "@core/settings.js";
+import { hasCapturedCoords } from "@core/settings.js";
 
 type PatchedGeo = Geolocation & { __sniffiesPatched?: boolean };
 

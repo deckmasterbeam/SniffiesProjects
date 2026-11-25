@@ -1,4 +1,4 @@
-import { createLogger } from "./log.js";
+import { createLogger } from "@core/log.js";
 
 const log = createLogger("update-check");
 

@@ -1,6 +1,6 @@
-import { context, build } from "esbuild";
-import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { build, context } from "esbuild";
 import { existsSync } from "node:fs";
+import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { REQUIRED_RELEASE_ENV_VARS } from "../../scripts/release-env.mjs";
@@ -36,7 +36,7 @@ const tsEntries = [
   "src/content/sniffies-user-id-relay.ts",
   "src/content/sniffies-bot-block-hook.ts",
   "src/content/sniffies-bot-block-relay.ts",
-  "src/content/sniffies-photos-hook.ts",
+  "src/content/sniffies-chat-view-hook.ts",
   "src/popup/popup.ts",
   "src/options/options.ts",
   "src/settings/settings.ts",
@@ -84,6 +84,8 @@ const copyAssets = async () => {
 const buildOptions = {
   alias: {
     "@sniffies-projects/core": resolve(root, "../core/src/index.ts"),
+    "@core": resolve(root, "../core/src"),
+    "@client": resolve(root, "src"),
   },
   loader: {
     ".css": "text",

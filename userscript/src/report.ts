@@ -3,12 +3,13 @@ import {
   gateProfileFilters,
   installProfileFilterHook,
   installReportButtonInjection,
-  refreshBlockedBotsIfStale as refreshBlockedBotsIfStaleShared,
-  type BotBlockState,
   profileFilterRules,
+  refreshBlockedBotsIfStale as refreshBlockedBotsIfStaleShared,
+  statTakeover,
+  type BotBlockState,
   type ProfileFilters,
 } from "@sniffies-projects/core";
-import { CLIENT_SECRET, SERVER_BASE } from "./shared/env.js";
+import { CLIENT_SECRET, SERVER_BASE } from "@userscript/shared/env.js";
 import {
   getBlockedBots,
   getBlockedBotsFetchedAt,
@@ -17,7 +18,7 @@ import {
   getProfileFiltersEnabled,
   recordBlockedBotEvent,
   setBlockedBots,
-} from "./shared/local-storage.js";
+} from "@userscript/shared/local-storage.js";
 
 export interface ReportFeatureState {
   currentSniffiesUserId: string;
@@ -33,13 +34,18 @@ const clientHeaders = (): Record<string, string> => ({
 
 /** Installs the profile-filter network hook (blocked bots + the filter menu's filters) */
 export const installReportFeature = (raiseRadius?: () => boolean): ReportFeatureState => {
+  const filtersEnabled = getProfileFiltersEnabled();
   const state: ReportFeatureState = {
     currentSniffiesUserId: "",
     botBlockState: { blockedIds: new Set(getBlockedBots()), enabled: getBotBlockingEnabled() },
 
-    appliedProfileFilters: gateProfileFilters(getProfileFilters(), getProfileFiltersEnabled()),
+    appliedProfileFilters: gateProfileFilters(getProfileFilters(), filtersEnabled),
   };
 
+  const takeover = statTakeover(
+    () => state.appliedProfileFilters,
+    () => filtersEnabled,
+  );
   installProfileFilterHook(
     [
       botBlockRule(
@@ -47,8 +53,11 @@ export const installReportFeature = (raiseRadius?: () => boolean): ReportFeature
         (ids) => recordBlockedBotEvent(ids),
       ),
       ...profileFilterRules(() => state.appliedProfileFilters),
+      ...takeover.rules,
     ],
     raiseRadius,
+    takeover.rewriteBody,
+    takeover.disableSavedStats,
   );
 
   installReportButtonInjection({

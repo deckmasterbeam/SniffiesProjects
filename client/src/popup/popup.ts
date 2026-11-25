@@ -1,24 +1,4 @@
-import {
-  BOT_BLOCK_CSS,
-  BOT_BLOCK_HTML,
-  countDistinctBlockedBotsLast24h,
-  createLogger,
-  DEFAULT_GEO_OVERRIDE,
-  PREMIUM_FEATURES_CSS,
-  PREMIUM_FEATURES_HTML,
-  UPDATE_BANNER_CSS,
-  UPDATE_BANNER_HTML,
-  VERSION_BADGE_CSS,
-  VERSION_BADGE_HTML,
-  wireUpdateBanner,
-  wireVersionBadge,
-  wirePremiumFeaturesForm,
-  wireBotBlockForm,
-  PROFILE_FILTERS_HTML,
-  PROFILE_FILTERS_CSS,
-  wireProfileFiltersForm,
-} from "@sniffies-projects/core";
-import { DEBUG, FAVORITES_NOTIFICATIONS_ENABLED } from "../shared/env.js";
+import { DEBUG, FAVORITES_NOTIFICATIONS_ENABLED } from "@client/shared/env.js";
 import {
   getLocalSettings,
   setBotBlockingEnabled,
@@ -31,7 +11,27 @@ import {
   setPremiumSectionOpen,
   setProfileFiltersEnabled,
   setProfileFiltersSectionOpen,
-} from "../shared/settings.js";
+} from "@client/shared/settings.js";
+import {
+  BOT_BLOCK_CSS,
+  BOT_BLOCK_HTML,
+  countDistinctBlockedBotsLast24h,
+  createLogger,
+  DEFAULT_GEO_OVERRIDE,
+  PREMIUM_FEATURES_CSS,
+  PREMIUM_FEATURES_HTML,
+  PROFILE_FILTERS_CSS,
+  PROFILE_FILTERS_HTML,
+  UPDATE_BANNER_CSS,
+  UPDATE_BANNER_HTML,
+  VERSION_BADGE_CSS,
+  VERSION_BADGE_HTML,
+  wireBotBlockForm,
+  wirePremiumFeaturesForm,
+  wireProfileFiltersForm,
+  wireUpdateBanner,
+  wireVersionBadge,
+} from "@sniffies-projects/core";
 
 const log = createLogger("popup");
 

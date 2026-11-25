@@ -1,10 +1,10 @@
-import { createLogger } from "./log.js";
+import { createLogger } from "@core/log.js";
 import {
   HIDE_ALL_PHOTOS_BUTTON_SELECTOR,
   PROFILE_OPTIONS_MENU_SELECTOR,
   UNHIDE_ALL_PHOTOS_BUTTON_SELECTOR,
-} from "./sniffies-selectors.js";
-import { STRINGS } from "./strings.js";
+} from "@core/sniffies-selectors.js";
+import { STRINGS } from "@core/strings.js";
 
 const log = createLogger("hide-photo-menu");
 
@@ -63,10 +63,6 @@ const mountButtons = (menu: Element): void => {
   }
 };
 
-/**
- * Adds Hide All My Photos / Unhide All My Photos to the profile options menu when Sniffies didn't
- * render them (free accounts). The clicks are handled by installHidePhotoClick.
- */
 export const installHidePhotoMenuButtons = (isEnabled: () => boolean): (() => void) => {
   const observer = new MutationObserver((mutations) => {
     if (!isEnabled()) {

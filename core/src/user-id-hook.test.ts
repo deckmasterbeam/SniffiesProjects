@@ -1,5 +1,5 @@
+import { installUserIdHook } from "@core/user-id-hook.js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { installUserIdHook } from "./user-id-hook.js";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

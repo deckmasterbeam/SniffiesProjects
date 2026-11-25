@@ -1,5 +1,5 @@
+import { isPlusMembership } from "@core/plus-hook.js";
 import { describe, expect, it } from "vitest";
-import { isPlusMembership } from "./plus-hook.js";
 
 const now = Date.parse("2026-01-01T00:00:00Z");
 const member = (m: object | null | undefined) => ({ user: { private: { appstoreMembership: m } } });

@@ -1,11 +1,11 @@
-import RAW_UPDATE_BANNER_HTML from "./update-banner.html";
-import { STRINGS, render } from "./strings.js";
-import UPDATE_BANNER_CSS from "./update-banner.css";
-import { isUpdateAvailable, type ReleaseChannel } from "./update-check.js";
+import { render } from "@core/strings.js";
+import UPDATE_BANNER_CSS from "@core/update-banner.css";
+import RAW_UPDATE_BANNER_HTML from "@core/update-banner.html";
+import { isUpdateAvailable, type ReleaseChannel } from "@core/update-check.js";
 
 const UPDATE_BANNER_HTML = render(RAW_UPDATE_BANNER_HTML);
 
-export { UPDATE_BANNER_HTML, UPDATE_BANNER_CSS };
+export { UPDATE_BANNER_CSS, UPDATE_BANNER_HTML };
 
 const DISMISS_KEY_PREFIX = "snp-update-dismissed-";
 const DISMISS_TTL_MS = 24 * 60 * 60 * 1000;

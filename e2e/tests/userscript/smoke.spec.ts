@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import { SNIFFIES_ORIGIN, injectUserscript, mockSniffiesPage } from "../../fixtures/userscript.js";
 
 test("userscript direct-injects and mounts the FAB panel", async ({ page, context }) => {

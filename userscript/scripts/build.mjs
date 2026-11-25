@@ -1,6 +1,6 @@
-import { context, build } from "esbuild";
-import { spawn } from "node:child_process";
-import { mkdir, rm, readFile, writeFile } from "node:fs/promises";
+import { build, context } from "esbuild";
+import { spawnSync } from "node:child_process";
+import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { REQUIRED_RELEASE_ENV_VARS } from "../../scripts/release-env.mjs";
@@ -11,16 +11,10 @@ const distDir = join(root, "dist");
 const watch = process.argv.includes("--watch");
 const prod = process.argv.includes("--prod");
 
-// Load .env for local dev convenience. Deployed builds have no .env file —
-// env vars are injected into process.env directly there — so a missing file
-// here is expected, not an error.
-if (typeof process.loadEnvFile === "function") {
-  try {
-    process.loadEnvFile(join(root, ".env"));
-  } catch {
-    // no .env file present — rely on process.env as already set
-  }
-}
+// Load .env if present (absent on Vercel, which injects real env vars).
+try {
+  process.loadEnvFile(join(root, ".env"));
+} catch {}
 
 if (prod) {
   const missingEnvVars = REQUIRED_RELEASE_ENV_VARS.filter((key) => !process.env[key]);
@@ -71,6 +65,9 @@ const buildOptions = {
   logLevel: "info",
   alias: {
     "@sniffies-projects/core": resolve(root, "../core/src/index.ts"),
+    "@core": resolve(root, "../core/src"),
+    "@icons": resolve(root, "../client/icons"),
+    "@userscript": resolve(root, "src"),
   },
   loader: {
     ".css": "text",
@@ -92,30 +89,9 @@ const prependMetadata = async () => {
   console.log("[build] dist/sniffies-tools.user.js ready");
 };
 
-// Local dev convenience: copy the built script straight to the clipboard so
-// it can be pasted into a userscript manager (e.g. Tampermonkey) without
-// hunting for dist/sniffies-tools.user.js. Skipped on Vercel (no clipboard
-// there) and never allowed to fail the build.
-const copyToClipboard = async (text) => {
-  if (process.env.VERCEL) {
-    return;
-  }
-  const [cmd, args] =
-    process.platform === "win32"
-      ? ["clip", []]
-      : process.platform === "darwin"
-        ? ["pbcopy", []]
-        : ["xclip", ["-selection", "clipboard"]];
-  try {
-    await new Promise((res, reject) => {
-      const child = spawn(cmd, args, { stdio: ["pipe", "ignore", "ignore"] });
-      child.on("error", reject);
-      child.on("exit", (code) => (code === 0 ? res() : reject(new Error(`${cmd} exited ${code}`))));
-      child.stdin.end(text);
-    });
-    console.log("[build] copied dist/sniffies-tools.user.js to clipboard");
-  } catch (err) {
-    console.warn("[build] could not copy to clipboard:", err.message);
+const copyToClipboard = (text) => {
+  if (!process.env.VERCEL) {
+    spawnSync("clip", { input: text });
   }
 };
 
@@ -130,7 +106,7 @@ const run = async () => {
         build.onEnd(async (result) => {
           if (result.errors.length === 0) {
             await prependMetadata();
-            await copyToClipboard(await readFile(outFile, "utf8"));
+            copyToClipboard(await readFile(outFile, "utf8"));
           }
         });
       },
@@ -141,7 +117,7 @@ const run = async () => {
   } else {
     await build(buildOptions);
     await prependMetadata();
-    await copyToClipboard(await readFile(outFile, "utf8"));
+    copyToClipboard(await readFile(outFile, "utf8"));
   }
 };
 

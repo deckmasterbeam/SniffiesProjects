@@ -1,10 +1,11 @@
+import FAB_ICON_PNG from "@icons/icon48.png";
 import {
   BOT_BLOCK_CSS,
   BOT_BLOCK_HTML,
   countDistinctBlockedBotsLast24h,
   createLogger,
-  DEFAULT_PROFILE_FILTERS,
   DEFAULT_GEO_OVERRIDE,
+  DEFAULT_PROFILE_FILTERS,
   getHasPlus,
   getPremiumFeatureFlags,
   getPremiumFeaturesEnabled,
@@ -12,11 +13,12 @@ import {
   hasCapturedCoords,
   installHidePhotoClick,
   installHidePhotoMenuButtons,
-  installSentPhotoHider,
-  installProfileFiltersMenu,
-  installSelectionLimitOverride,
   installLocationOverrideController,
   installPlusHook,
+  installProfileFiltersMenu,
+  installReadReceipt,
+  installSelectionLimitOverride,
+  installSentPhotoHider,
   mountFab,
   PANEL_CSS,
   PREMIUM_FEATURES_CSS,
@@ -27,42 +29,41 @@ import {
   setPremiumFeatureFlags,
   setPremiumFeaturesEnabled,
   setPremiumSectionOpen,
+  UPDATE_BANNER_CSS,
+  UPDATE_BANNER_HTML,
   VERSION_BADGE_CSS,
   VERSION_BADGE_HTML,
   wireBotBlockForm,
   wirePremiumFeaturesForm,
   wireProfileFiltersForm,
-  wireVersionBadge,
-  UPDATE_BANNER_CSS,
-  UPDATE_BANNER_HTML,
   wireUpdateBanner,
+  wireVersionBadge,
   type LocationOverrideController,
   type PremiumFeatureFlags,
 } from "@sniffies-projects/core";
-import FAB_ICON_PNG from "../../client/icons/icon48.png";
-import PANEL_HTML from "./panel.html";
+import PANEL_HTML from "@userscript/panel.html";
 import {
   installReportFeature,
   refreshBlockedBotsIfStale,
   type ReportFeatureState,
-} from "./report.js";
-import { VERSION } from "./shared/env.js";
+} from "@userscript/report.js";
+import { VERSION } from "@userscript/shared/env.js";
 import {
   getBlockedBotEventsByDay,
   getBotBlockingEnabled,
   getBotBlockingSectionOpen,
-  getProfileFilters,
   getGeoOverride,
+  getProfileFilters,
   getProfileFiltersEnabled,
   getProfileFiltersSectionOpen,
   setBotBlockingEnabled,
   setBotBlockingSectionOpen,
-  setProfileFilters,
   setGeoOverride,
+  setProfileFilters,
   setProfileFiltersEnabled,
   setProfileFiltersSectionOpen,
-} from "./shared/local-storage.js";
-import { installUserIdLogging } from "./user-id-logger.js";
+} from "@userscript/shared/local-storage.js";
+import { installUserIdLogging } from "@userscript/user-id-logger.js";
 
 const log = createLogger("tools");
 
@@ -107,6 +108,7 @@ function installHooks(): HookState {
     isPhotosEnabled,
   );
   installHidePhotoMenuButtons(isPhotosEnabled);
+  installReadReceipt(() => premium.enabled && premium.flags.readReceipts);
 
   const geoController = installLocationOverrideController({
     initialOverride: getGeoOverride(),

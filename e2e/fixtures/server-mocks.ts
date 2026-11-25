@@ -3,8 +3,7 @@ import { CLIENT_SERVER_BASE } from "./client-env.js";
 
 /**
  * Stubs every server/api endpoint the extension calls, so tests never hit a
- * real (or even local dev) server — see PLAYWRIGHT_TESTING_TODO.md §0's
- * "Server stubbing" item. Register this once per test via the `context`
+ * real (or even local dev) server. Register this once per test via the `context`
  * fixture; override a specific route afterward (`context.route(...)` again
  * with the same pattern) in an individual test that needs different
  * behavior, e.g. a failure response.

@@ -1,6 +1,6 @@
+import { installCitySearchStatusUI } from "@core/city-search-status-hook.js";
+import { STRINGS } from "@core/strings.js";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { installCitySearchStatusUI } from "./city-search-status-hook.js";
-import { STRINGS } from "./strings.js";
 
 const buildCitiesInput = (): HTMLElement => {
   const root = document.createElement("cities-input");

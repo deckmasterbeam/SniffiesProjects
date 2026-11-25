@@ -3,8 +3,8 @@
 // userscript runs entirely in the page's own world, so the observed userId
 // can be reported directly — no postMessage relay is needed.
 
-import { installUserIdHook, logInit, createLogger } from "@sniffies-projects/core";
-import { CLIENT_SECRET, SERVER_BASE, VERSION } from "./shared/env.js";
+import { createLogger, installUserIdHook, logInit } from "@sniffies-projects/core";
+import { CLIENT_SECRET, SERVER_BASE, VERSION } from "@userscript/shared/env.js";
 
 const log = createLogger("user-id-logger");
 

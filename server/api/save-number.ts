@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { json, applyCors, requireClientAuth, requireDb, requireFeatureFlag } from "./_shared.js";
+import { applyCors, json, requireClientAuth, requireDb, requireFeatureFlag } from "./_shared.js";
 
 interface SaveNumberBody {
   phone?: unknown;

@@ -3,7 +3,7 @@
 Status: **proposed**.
 
 Add an "Expressions" filter to the Cruiser Stats filters, next to Height and Weight (rows are
-added via `ROWS` in `core/src/filter-menu-ui.ts`, mounted after the Endowment line, see
+added via `ROWS` in `core/src/filter-menu/menu.ts`, mounted after the Endowment line, see
 `sniffies-selectors.ts`).
 
 A profile can list 0–2 expressions from: Bear, Biker, Bro, Clean cut, Corporate, Curious, Daddy,
@@ -54,7 +54,7 @@ default. Persist the same way as the other filters (`chrome.storage.local` for t
       and its exact string values; build the list from those, not from this doc
 - [ ] Pure matcher `isHiddenByExpressions(profile, settings)` in core, with unit tests: 0, 1, 2
       expressions; none-chip on/off; multi-tag rule; unknown expression stays shown
-- [ ] Add the row to `ROWS` in `filter-menu-ui.ts` and apply the matcher where the other
+- [ ] Add the row to `ROWS` in `filter-menu/menu.ts` and apply the matcher where the other
       cruiser-stats filters are applied
 - [ ] Chip UI + CSS, wired to `settings.ts` in popup, userscript panel and bookmarklet panel
 - [ ] `contracts.ts` form contract and tests (`popup.test.ts`, panel tests)

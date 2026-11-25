@@ -1,8 +1,8 @@
-import type { ProfileFiltersFormContract } from "./contracts.js";
-import RAW_CSS from "./profile-filters.css";
-import SWITCH_CSS from "./switch.css";
-import RAW_PROFILE_FILTERS_HTML from "./profile-filters.html";
-import { STRINGS, render } from "./strings.js";
+import type { ProfileFiltersFormContract } from "@core/contracts.js";
+import RAW_CSS from "@core/profile-filters.css";
+import RAW_PROFILE_FILTERS_HTML from "@core/profile-filters.html";
+import { render } from "@core/strings.js";
+import SWITCH_CSS from "@core/switch.css";
 
 const PROFILE_FILTERS_HTML = render(RAW_PROFILE_FILTERS_HTML);
 const PROFILE_FILTERS_CSS = SWITCH_CSS + RAW_CSS;

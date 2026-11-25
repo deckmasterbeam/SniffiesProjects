@@ -1,9 +1,9 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   extractCitySearchResult,
   installCitySearchXhrObserver,
   isCitySearchUrl,
-} from "./city-search-hook.js";
+} from "@core/city-search-hook.js";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 describe("isCitySearchUrl", () => {
   it("matches the city endpoint on either regional API host", () => {

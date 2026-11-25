@@ -1,9 +1,9 @@
 import { test as base, chromium, type BrowserContext } from "@playwright/test";
-import path from "node:path";
 import { readFileSync } from "node:fs";
+import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { mockServerApis } from "./server-mocks.js";
 import { SNIFFIES_ORIGIN } from "./constants.js";
+import { mockServerApis } from "./server-mocks.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const EXTENSION_PATH = path.resolve(__dirname, "../../client/dist");

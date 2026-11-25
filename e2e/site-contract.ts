@@ -1,13 +1,3 @@
-// The e2e drift canary's view of "what do we depend on" — pairs each real
-// selector (imported from core/src/sniffies-selectors.ts, the actual single
-// source of truth used by client/, userscript/, and bookmarklet/) with a
-// human-readable description and its source file.
-//
-// SELECTOR_METADATA is typed as Record<SniffiesSelectorName, ...>, so adding
-// a new selector to SNIFFIES_SELECTORS in core without adding a matching
-// entry here is a TypeScript error in THIS file ("Property '<name>' is
-// missing") — the two can't silently fall out of sync.
-
 import { SNIFFIES_SELECTORS, type SniffiesSelectorName } from "../core/src/sniffies-selectors.js";
 
 interface SelectorMeta {
@@ -22,7 +12,7 @@ const SELECTOR_METADATA: Record<SniffiesSelectorName, SelectorMeta> = {
     source: "core/src/profile-border-hook.ts",
   },
   MARKER_AVATAR_SELECTOR: {
-    description: "Map marker avatar image — click target that resolves a profile's user id",
+    description: "Map marker avatar image. Click target that resolves a profile's user id",
     source: "core/src/report-button-hook.ts",
   },
   APP_SCREEN_SELECTOR: {
@@ -34,11 +24,11 @@ const SELECTOR_METADATA: Record<SniffiesSelectorName, SelectorMeta> = {
     source: "core/src/report-button-hook.ts, client/src/content/sniffies-profile-id.ts",
   },
   PIN_BUTTON_SELECTOR: {
-    description: "Pin-user button — its appearance signals a (re)rendered profile panel",
+    description: "Pin-user button. Its appearance signals a (re)rendered profile panel",
     source: "core/src/report-button-hook.ts",
   },
   PROFILE_OPTIONS_MENU_SELECTOR: {
-    description: "Profile three-dot options menu — the report button mounts inside it",
+    description: "Profile three-dot options menu. The report button mounts inside it",
     source: "core/src/report-button-hook.ts",
   },
   ICON_HOLDER_RIGHT_BOTTOM_SELECTOR: {
@@ -51,26 +41,26 @@ const SELECTOR_METADATA: Record<SniffiesSelectorName, SelectorMeta> = {
     source: "core/src/city-search-hook.ts",
   },
   CITIES_INPUT_SELECTOR: {
-    description: "Travel Mode's city search box — anchors the pending-capture status message",
+    description: "Travel Mode's city search box. Anchors the pending-capture status message",
     source: "core/src/city-search-status-hook.ts",
   },
   PROFILE_TYPE_FILTER_LABEL_SELECTOR: {
-    description: "Profile Type row in the Cruisers filter menu — our filter rows mount after it",
-    source: "core/src/filter-menu-ui.ts",
+    description: "Profile Type row in the Cruisers filter menu. Our filter rows mount after it",
+    source: "core/src/filter-menu/gender-row.ts",
   },
   CONNECTED_NOW_FILTER_LABEL_SELECTOR: {
     description:
-      "Cruising Now row in the Cruisers filter menu — our Last Online row mounts after it",
-    source: "core/src/filter-menu-ui.ts",
+      "Cruising Now row in the Cruisers filter menu. Our Last Online row mounts after it",
+    source: "core/src/filter-menu/online-row.ts",
   },
   ENDOWMENT_FILTER_LABEL_SELECTOR: {
     description:
-      "Endowment line under Cruiser Stats in the filter menu — our Height and Weight lines mount after it",
-    source: "core/src/filter-menu-ui.ts",
+      "Endowment line under Cruiser Stats in the filter menu. Our Height and Weight lines mount after it",
+    source: "core/src/filter-menu/range-row.ts",
   },
   HIDE_PHOTO_BUTTON_SELECTOR: {
     description:
-      "Sniffies' own Hide Photo tooltip button on a sent chat photo — the hide-photo hook takes over its click",
+      "Sniffies' own Hide Photo tooltip button on a sent chat photo. The hide-photo hook takes over its click",
     source: "core/src/hide-photo-click-hook.ts",
   },
   PHOTO_MESSAGE_SELECTOR: {
@@ -80,13 +70,26 @@ const SELECTOR_METADATA: Record<SniffiesSelectorName, SelectorMeta> = {
   },
   HIDE_ALL_PHOTOS_BUTTON_SELECTOR: {
     description:
-      "Hide All My Photos in the profile options menu (only in the DOM while the menu is open) — the hide-photo hook takes over its click",
+      "Hide All My Photos in the profile options menu (only in the DOM while the menu is open). The hide-photo hook takes over its click",
     source: "core/src/hide-photo-click-hook.ts",
   },
   UNHIDE_ALL_PHOTOS_BUTTON_SELECTOR: {
     description:
-      "Unhide All My Photos in the profile options menu (only in the DOM while the menu is open) — the hide-photo hook takes over its click",
+      "Unhide All My Photos in the profile options menu (only in the DOM while the menu is open). The hide-photo hook takes over its click",
     source: "core/src/hide-photo-click-hook.ts",
+  },
+  CHAT_MESSAGE_CONTAINER_SELECTOR: {
+    description: "One chat message row. The read-receipt hook appends the Seen marker to it",
+    source: "core/src/read-receipt-hook.ts",
+  },
+  READ_MARKER_SELECTOR: {
+    description:
+      "Sniffies' own Seen marker in a message row (paid accounts). The read-receipt hook skips drawing its own when present",
+    source: "core/src/read-receipt-hook.ts",
+  },
+  OWN_MARKER_SELECTOR: {
+    description: "The account's own map marker. Its element id is the user id the bookmarklet logs",
+    source: "core/src/own-id-dom.ts",
   },
 };
 

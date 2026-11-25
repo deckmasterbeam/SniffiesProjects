@@ -1,10 +1,10 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { neon } from "@neondatabase/serverless";
 import type { VercelResponse } from "@vercel/node";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import handler from "../api/dashboard.js";
 import { makeReq, makeRes } from "./_helpers.js";
 
 vi.mock("@neondatabase/serverless", () => ({ neon: vi.fn() }));
-import { neon } from "@neondatabase/serverless";
 const mockNeon = vi.mocked(neon);
 
 const totals = {
@@ -32,7 +32,8 @@ const savedEnv: Record<string, string | undefined> = {};
 
 beforeEach(() => {
   vi.clearAllMocks();
-  for (const k of ["DASHBOARD_ENABLED", "DASHBOARD_SECRET", "POSTGRES_URL"]) savedEnv[k] = process.env[k];
+  for (const k of ["DASHBOARD_ENABLED", "DASHBOARD_SECRET", "POSTGRES_URL"])
+    savedEnv[k] = process.env[k];
   process.env.DASHBOARD_ENABLED = "true";
   process.env.DASHBOARD_SECRET = "s3cret";
   process.env.POSTGRES_URL = "postgres://localhost/test";

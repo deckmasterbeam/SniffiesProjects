@@ -1,5 +1,5 @@
-import type { ProfileFilters } from "./profile-filter.js";
-import type { GeoOverride, PremiumFeatureFlags, ProfileBorderOpen } from "./settings.js";
+import type { ProfileFilters } from "@core/profile-filter.js";
+import type { GeoOverride, PremiumFeatureFlags, ProfileBorderOpen } from "@core/settings.js";
 
 // ---- UI forms ----
 

@@ -9,34 +9,41 @@ A monorepo of tools to recreate and expand functionality for [sniffies.com](http
 These features recreate or bypass premium Sniffies functionality. In the extension and userscript, they're grouped behind one "Premium Features" switch (on by default; the section notes if your account already has Sniffies Plus, in which case you don't really need any of these features). Extension and userscript only.
 
 #### Location spoofing
+
 Override the GPS coordinates Sniffies sees, letting you browse any location on the map. This works by intercepting Sniffies' "Travel Here" location search, extracting the coordinates from the response, and injecting them into the browser's geolocation API. Because of this implementation, the project can only see location searches, not map drags within "Travel Here".
 
 #### Opening profiles outside geofence
+
 Click profiles outside the free radius to view them without hitting the paywall. In the bookmarklet, this works as a standalone feature without needing location spoofing.
 
 #### Hiding sent photos
+
 Hide photos you've sent in conversations.
 
 ### Profile online notification service
-*(In progress)* — Favorite profiles and receive an SMS when they come online.
+
+_(In progress)_ — Favorite profiles and receive an SMS when they come online.
 
 ### Bot reporting/blocking
+
 Flag a profile as a suspected bot from its profile screen; confirmed reports get hidden from the map, chat, and live updates for everyone with blocking enabled.
 
 ### Profile filters
+
 Extra filters in the Sniffies' filter menu, and no cap on how many options you can pick in some of Sniffies' existing filters.
 
 #### Profile filter support
 
-| Filter       | What it does                                                                        | Chrome extension | Userscript | Bookmarklet |
-| ------------ | ----------------------------------------------------------------------------------- | ---------------- | ---------- | ----------- |
-| Gender       | New filter with: Male / Female / Nonbinary / Not specified buttons | Yes              | Yes        | No          |
-| Online After | Pick how long to look back (15 min to 48 hours) for recently online people         | Yes              | Yes        | No          |
-| Height       | New filter under Cruiser Stats                   | Yes              | Yes        | No          |
-| Weight       | New filter under Cruiser Stats                 | Yes              | Yes        | No          |
-| Sexuality    | Choose any number of options                                 | Yes              | Yes        | Yes         |
-| Body Type    | Choose any number of options                                 | Yes              | Yes        | Yes         |
-| Position     | Choose any number of options                                 | Yes              | Yes        | Yes         |
+| Filter       | What it does                                                               | Chrome extension | Userscript | Bookmarklet |
+| ------------ | -------------------------------------------------------------------------- | ---------------- | ---------- | ----------- |
+| Gender       | New filter with: Man / Woman / Nonbinary / Not specified buttons           | Yes              | Yes        | No          |
+| Online After | Pick how long to look back (15 min to 48 hours) for recently online people | Yes              | Yes        | No          |
+| Height       | New filter under Cruiser Stats                                             | Yes              | Yes        | No          |
+| Weight       | New filter under Cruiser Stats                                             | Yes              | Yes        | No          |
+| Age          | Includes profiles that don't list an age                                   | Yes              | Yes        | No          |
+| Sexuality    | Choose any number of options                                               | Yes              | Yes        | Yes         |
+| Body Type    | Choose any number of options                                               | Yes              | Yes        | Yes         |
+| Position     | Choose any number of options                                               | Yes              | Yes        | Yes         |
 
 Gender, Height, Weight, Online After (and Blocked bots) work by filtering Sniffies' network responses as the page loads, which a bookmarklet is too late for. Changing them needs a page reload to take effect.
 

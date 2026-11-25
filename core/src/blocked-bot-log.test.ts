@@ -1,5 +1,5 @@
+import { countDistinctBlockedBotsLast24h, recordBlockedBotIds } from "@core/blocked-bot-log.js";
 import { describe, expect, it } from "vitest";
-import { countDistinctBlockedBotsLast24h, recordBlockedBotIds } from "./blocked-bot-log.js";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const NOON_JAN_2 = new Date("2026-01-02T12:00:00.000Z");
